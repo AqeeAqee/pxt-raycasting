@@ -1,6 +1,4 @@
 game.stats = true
-
-let sprMiniMapCursor: Sprite = null
 scene.setBackgroundImage(img`
     9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
     9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
@@ -123,16 +121,7 @@ scene.setBackgroundImage(img`
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 `)
-sprMiniMapCursor = sprites.create(img`
-    . . . . .
-    . . 2 . .
-    . 2 2 2 .
-    . . 2 . .
-    . . . . .
-`, 0)
-sprMiniMapCursor.z=999
-
-
+// scene.setBackgroundColor(1)
 //////////////////////// engine operations /////////////////////////
 let map = img`
     66666666666665656663666366666366
@@ -500,18 +489,19 @@ img`
     . . . f f f . .
 `
 let sprs:CompactSprite[]=[]
+//animations, see animations.ts for description in detail
 sprs.push(new CompactSprite(20.3, 9, 0, -0.8, texturesDog))
 sprs.push(new CompactSprite(17.3, 9, 0, -0.7, texturesSkelly))
 sprs.push(new CompactSprite(18.3, 9, 0, -0.6, texturesPrincess2))
 sprs.push(new CompactSprite(19, 9, 0, -.1, texturesPlane))
 sprs.push(new CompactSprite(22, 8.5, 0.4, 0, texturesPrincess))
 sprs.push(new CompactSprite(22, 7, 0.5, 0, texturesHero))
-// sprs.push(new CompactSprite(22, 8, 0, 0, texturesBigCake))
-let testSprite = new CompactSprite(22, 8, 0.5, 0, texturesBigCake)
-sprs.push(testSprite)
-testSprite.radiusRate/=4
-testSprite.heightRate/=4
 sprs.push(new CompactSprite(22, 6.5, 0.2, 0, texturesCoin,100))
+// change size of sprite, or auto calculate based on fist image size
+let testSprite = new CompactSprite(22, 8, 0.5, 0, texturesBigCake)
+    sprs.push(testSprite)
+    testSprite.radiusRate/=4
+    testSprite.heightRate/=4
 
 const st = new State(map, textures, 18.5, 7.5, defaultFov, sprs)
 
@@ -520,8 +510,15 @@ game.onPaint(function () {
 })
 game.onUpdate(function () {
     st.updateControls()
-    paintCursorOnMiniMap()
 })
+
+//////////////////////// end engine operations /////////////////////////
+
+//minimap
+let myMiniMap=miniMap.createMiniMap(map)
+game.onUpdate(() => myMiniMap.paintCursorOnMiniMap(st.x/fpx_scale, st.y/fpx_scale, st.dirX/fpx_scale, st.dirY/fpx_scale))
+
+//update sprites
 game.onUpdateInterval(33, ()=>{
     sprs.forEach((v,i)=>{
         v.x+=v.vx/33
@@ -534,26 +531,3 @@ game.onUpdateInterval(33, ()=>{
     })
 })
 
-
-//////////////////////// end engine operations /////////////////////////
-
-
-let sprMiniMap = sprites.create(map.clone(), 0)
-for(let i=1;i<16;i++){
-    sprMiniMap.image.replace(i,6)
-}
-sprMiniMap.left = 0
-sprMiniMap.top = 0
-
-let sprMiniMapMapXY = sprites.create(img`
-    . 5 .
-    5 5 5
-    . 5 .
-`, 0)
-function paintCursorOnMiniMap() {
-    sprMiniMapCursor.setPosition((st.x >> 10)+1, (st.y >> 10)+1)
-    sprMiniMapCursor.image.fill(0)
-    // map.width-
-    sprMiniMapCursor.image.drawLine(2, 2, 2+(st.dirX * 3 >> fpx), 2+(st.dirY * 3>>fpx), 5)
-    sprMiniMapCursor.image.setPixel(2, 2, 2)
-}

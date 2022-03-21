@@ -15,7 +15,8 @@
         "tilemap.g.jres",
         "tilemap.g.ts",
         "engine_raycasting.ts",
-        "animations.ts"
+        "animations.ts",
+        "mimimap.ts"
     ],
     "testFiles": [
         "test.ts"

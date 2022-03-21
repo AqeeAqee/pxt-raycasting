@@ -1,3 +1,4 @@
+//based on mmoskal's "3d map", https://forum.makecode.com/t/3d-raycasting-in-arcade/474
 const fpx = 10
 const fpx_scale = 2 ** fpx
 const defaultFov = screen.width / screen.height / 2  //Wall just fill screen height when standing 1 unit away
