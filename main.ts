@@ -501,13 +501,6 @@ let testSprite = new CompactSprite(22, 8, 0.5, 0, texturesBigCake)
 
 const st = new State(map, wallTextures, 18.5, 7.5, defaultFov, sprs)
 
-game.onPaint(function () {
-    st.trace()
-})
-game.onUpdate(function () {
-    st.updateControls()
-})
-
 //////////////////////// end engine operations /////////////////////////
 
 //minimap

@@ -1,5 +1,19 @@
- 
+A extension for Makecode Arcade, render a tilemap to 2.5D view, with directional animations of sprites, and minimap
+based on mmoskal's "3d map", https://forum.makecode.com/t/3d-raycasting-in-arcade/474
 
+## features:
+* Directional multi sprites with animation
+* Auto tex calculate, any count
+* Simply interface, 
+* Manipulate sprite in your main code, not need update to engine
+
+## todo:
+* collide & events
+* enclose into blocks
+
+## known issues:
+sprite isn't drawn when it's center not inside screen, will fix later
+sprite floating when reducing height rate, will fix later
 
 > Open this page at [https://aqeeaqee.github.io/pxt-raycasting/](https://aqeeaqee.github.io/pxt-raycasting/)
 
