@@ -72,6 +72,13 @@ class State {
         if(this.sprites){
             this.sprites=sprites
         }
+
+        game.onPaint(function () {
+            st.trace()
+        })
+        game.onUpdate(function () {
+            st.updateControls()
+        })
     }
 
     setFov(fov: number) {
