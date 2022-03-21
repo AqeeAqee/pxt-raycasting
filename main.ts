@@ -121,8 +121,9 @@ scene.setBackgroundImage(img`
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 `)
-// scene.setBackgroundColor(1)
+
 //////////////////////// engine operations /////////////////////////
+
 let map = img`
     66666666666665656663666366666366
     6.......6......................6
@@ -157,7 +158,7 @@ let map = img`
     6..............................6
     66666666666666666666666666666666
 `
-let textures = [
+let wallTextures = [
     img`
         8888888888bbbbbb8888888888888888
         8888888bbb444444bb88888888888888
@@ -470,25 +471,18 @@ let textures = [
         ddbdddddddddddddddddddddddddd1dd
     `
     ]
-let t0 = textures[0]
-for (let i = 0; i <= textures.length - 1; i++) {
-    if (textures[i]) {
-        t0 = textures[i]
+let t0 = wallTextures[0]
+for (let i = 0; i <= wallTextures.length - 1; i++) {
+    if (wallTextures[i]) {
+        t0 = wallTextures[i]
     } else {
-        textures[i] = t0
+        wallTextures[i] = t0
     }
 }
-img`
-    . . . b b b . .
-    . . b 5 5 5 b .
-    . b 5 d 3 d 5 b
-    . b 5 1 5 3 5 b
-    . c d 1 5 3 5 c
-    . c d d 1 d 5 c
-    . . f d d d f .
-    . . . f f f . .
-`
+
+// sprites operations
 let sprs:CompactSprite[]=[]
+
 //animations, see animations.ts for description in detail
 sprs.push(new CompactSprite(20.3, 9, 0, -0.8, texturesDog))
 sprs.push(new CompactSprite(17.3, 9, 0, -0.7, texturesSkelly))
@@ -497,13 +491,15 @@ sprs.push(new CompactSprite(19, 9, 0, -.1, texturesPlane))
 sprs.push(new CompactSprite(22, 8.5, 0.4, 0, texturesPrincess))
 sprs.push(new CompactSprite(22, 7, 0.5, 0, texturesHero))
 sprs.push(new CompactSprite(22, 6.5, 0.2, 0, texturesCoin,100))
-// change size of sprite, or auto calculate based on fist image size
+
+// change size of sprite, or auto calculate fist image size divid by wall size (presuming wall size as 32)
 let testSprite = new CompactSprite(22, 8, 0.5, 0, texturesBigCake)
     sprs.push(testSprite)
     testSprite.radiusRate/=4
     testSprite.heightRate/=4
 
-const st = new State(map, textures, 18.5, 7.5, defaultFov, sprs)
+
+const st = new State(map, wallTextures, 18.5, 7.5, defaultFov, sprs)
 
 game.onPaint(function () {
     st.trace()

@@ -2,7 +2,7 @@
 namespace miniMap {
 
     export class MiniMap {
-        constructor(public map: Sprite, public cursor: Sprite) { }
+        constructor(public map: Sprite, private cursor: Sprite) { }
 
         public paintCursorOnMiniMap(x: number, y: number, dirX: number, dirY: number) {
             this.cursor.setPosition(x + 1 + this.map.left, y + 1 + this.map.top)
@@ -12,11 +12,11 @@ namespace miniMap {
         }
     }
 
-    export function createMiniMap(map: Image, monoColor: boolean = true, color: number = 1, left: number = 0, top: number = 0): MiniMap {
+    export function createMiniMap(map: Image, color: number = 3, left: number = 0, top: number = 0): MiniMap {
 
         let sprMiniMap = sprites.create(map.clone())
 
-        if (monoColor)
+        if (color>0&&color<16)
             for (let i = 1; i < 16; i++) {
                 sprMiniMap.image.replace(i, color)
             }
