@@ -1,0 +1,35 @@
+{
+    "name": "pxt-Raycasting",
+    "description": "",
+    "dependencies": {
+        "device": "*",
+        "pxt-status-bar": "github:jwunderl/pxt-status-bar#v0.4.1",
+        "pxt-arcade-image-transform": "github:robo-technical-group/pxt-arcade-image-transform#v1.0.8",
+        "Timers": "github:microsoft/arcade-timers#v1.1.0",
+        "Color Fading": "github:jwunderl/pxt-color#v0.2.1"
+    },
+    "files": [
+        "main.blocks",
+        "main.ts",
+        "README.md",
+        "tilemap.g.jres",
+        "tilemap.g.ts",
+        "engine_raycasting.ts",
+        "animations.ts"
+    ],
+    "testFiles": [
+        "test.ts"
+    ],
+    "targetVersions": {
+        "branch": "v0.14.3",
+        "tag": "v0.14.3",
+        "commits": "https://github.com/microsoft/pxt-arcade/commits/aef27bb278de89a83ecb6ab02af5319c06d617e2",
+        "target": "1.8.22",
+        "pxt": "5.21.6",
+        "targetId": "arcade"
+    },
+    "supportedTargets": [
+        "arcade"
+    ],
+    "preferredEditor": "tsprj"
+}
