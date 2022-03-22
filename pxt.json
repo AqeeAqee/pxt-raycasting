@@ -3,18 +3,10 @@
     "version": "0.1.1",
     "description": "",
     "dependencies": {
-        "device": "*",
-        "pxt-status-bar": "github:jwunderl/pxt-status-bar#v0.4.1",
-        "pxt-arcade-image-transform": "github:robo-technical-group/pxt-arcade-image-transform#v1.0.8",
-        "Timers": "github:microsoft/arcade-timers#v1.1.0",
-        "Color Fading": "github:jwunderl/pxt-color#v0.2.1"
+        "device": "*"
     },
     "files": [
-        "main.blocks",
-        "main.ts",
         "README.md",
-        "tilemap.g.jres",
-        "tilemap.g.ts",
         "engine_raycasting.ts",
         "animations.ts",
         "mimimap.ts"

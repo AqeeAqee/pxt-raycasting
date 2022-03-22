@@ -16,7 +16,6 @@ class CompactSprite{
     radiusRate: number
     heightRate: number
     textures: Image[][]
-    textureBlitData:number[][][][]=[]
     aniInterval:number
     constructor(x: number, y: number, vx: number, vy: number, textures: Image[][], aniInterval:number=150){
         this.x = tofpx(x)
@@ -250,15 +249,26 @@ class State {
         const transformX = this.invDet * (this.dirY * spriteX - this.dirX * spriteY) >> fpx;
         const transformY = this.invDet * (-this.planeY * spriteX + this.planeX * spriteY) >> fpx; //this is actually the depth inside the screen, that what Z is in 3D
         const spriteScreenX = Math.ceil((screen.width / 2) * (1 - transformX / transformY));
+        const spriteScreenHalfWidth = Math.idiv(spr.radiusRate* this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
 
-        if (this.dist[spriteScreenX]>transformY){
-            const spriteScreenHalfWidth = Math.idiv(spr.radiusRate* this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
-            const lineHeight = Math.idiv(this.wallHeightInView * spr.heightRate >> fpx, transformY) | 1
-            const drawStart = (screen.height >> 1) + (lineHeight * ((fpx_scale >> 1) - spr.heightRate)>>fpx)
-            const myAngle = Math.atan2(spriteX, spriteY)
-            // const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vx, spr.vy) - myAngle) / Math.PI / 2 + .5 + 1) * spr.textures.length + .5 - .5) % spr.textures.length)
-            const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vx, spr.vy) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
-            helpers.imageBlit(screen, spriteScreenX - spriteScreenHalfWidth, drawStart, spriteScreenHalfWidth * 2, lineHeight, texSpr, 0, 0, texSpr.width, texSpr.height,true,false)
+        //calculate drawing range in X direction
+        //assume there is one range only
+        let blitX=0, blitWidth=0
+        for (let sprX = Math.max(0, spriteScreenX - spriteScreenHalfWidth); sprX < Math.min(screen.width,spriteScreenX + spriteScreenHalfWidth);sprX++){
+            if (this.dist[sprX] > transformY){
+                if(blitWidth==0)
+                    blitX=sprX
+                blitWidth++
+            }else if(blitWidth>0)
+                break
         }
+        if(blitWidth==0)
+            return
+        // screen.print(blitX+"," + blitWidth,40,index*10)
+        const lineHeight = Math.idiv(this.wallHeightInView * spr.heightRate >> fpx, transformY) | 1
+        const drawStart = (screen.height >> 1) + (lineHeight * ((fpx_scale >> 1) - spr.heightRate)>>fpx)
+        const myAngle = Math.atan2(spriteX, spriteY)
+        const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vx, spr.vy) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
+        helpers.imageBlit(screen, blitX, drawStart, blitWidth, lineHeight, texSpr, (blitX-(spriteScreenX-spriteScreenHalfWidth))*texSpr.width/spriteScreenHalfWidth/2, 0, blitWidth*texSpr.width/spriteScreenHalfWidth/2, texSpr.height,true,false)
     }
 }
