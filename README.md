@@ -2,13 +2,13 @@ An extension for Makecode Arcade, render a tilemap to 2.5D view, with directiona
 based on mmoskal's "3d map", https://forum.makecode.com/t/3d-raycasting-in-arcade/474
 
 ## features:
-Simply interface
-Directional multi sprites with animation, see animation.ts
-Auto direction/animate calculate, any count
-Predefined animations(hero, princess, skelly, …), or define yours as Image[][]
-Manipulate sprite in your own main code, no need update to engine
-Mimimap
-FOV(field of view), zoom in/out by change fov value
+* Simply interface
+* Directional multi sprites with animation, see animation.ts
+* Auto direction/animate calculate, any count
+* Predefined animations(hero, princess, skelly, …), or define yours as Image[][]
+* Manipulate sprite in your own main code, no need update to engine
+* Mimimap
+* FOV(field of view), zoom in/out by change fov value
 
 ## todo:
 * collide & events
