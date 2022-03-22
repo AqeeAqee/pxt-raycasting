@@ -18,9 +18,8 @@ based on mmoskal's [3d map](https://forum.makecode.com/t/3d-raycasting-in-arcade
 * enclose into blocks
 
 ## known issues:
-* sprite isn't drawn when it's center not inside screen, will fix later
+* ~~sprite isn't drawn when it's center not inside screen~~, fixed
 * sprite floating when reducing height rate, will fix later
-
 
 
 > Open this page at [https://aqeeaqee.github.io/pxt-raycasting/](https://aqeeaqee.github.io/pxt-raycasting/)
