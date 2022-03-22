@@ -1,5 +1,5 @@
-Discuss on Makecode Arcade forum at: 
-[Raycasting 3D render with directional animation sprites](https://forum.makecode.com/t/raycasting-3d-render-with-directional-animation-sprites/12802)
+(Discuss on Makecode Arcade forum at: 
+[Raycasting 3D render with directional animation sprites](https://forum.makecode.com/t/raycasting-3d-render-with-directional-animation-sprites/12802) )
 
 An extension for Makecode Arcade, render a tilemap to 2.5D view, with directional animations of sprites, and minimap
 based on mmoskal's [3d map](https://forum.makecode.com/t/3d-raycasting-in-arcade/474)
