@@ -122,7 +122,9 @@ scene.setBackgroundImage(img`
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 `)
-
+namespace SpriteKind {
+    export const bullet = SpriteKind.create()
+}
 //////////////////////// engine operations /////////////////////////
 
 let map = img`
@@ -485,23 +487,42 @@ for (let i = 0; i <= wallTextures.length - 1; i++) {
 let sprs: CompactSprite[] = []
 
 //animations, see animations.ts for description in detail
-sprs.push(new CompactSprite(20.3, 9, 0, -0.8, texturesDog))
-sprs.push(new CompactSprite(17.3, 9, 0, -0.7, texturesSkelly))
-sprs.push(new CompactSprite(18.3, 9, 0, -0.6, texturesPrincess2))
-sprs.push(new CompactSprite(19, 9, 0, -1, texturesPlane))
-sprs.push(new CompactSprite(22, 8.5, 0.4, 0, texturesPrincess))
-sprs.push(new CompactSprite(22, 7, 0.5, 0, texturesHero))
-sprs.push(new CompactSprite(22, 6.5, 0.2, 0, texturesCoin, 100))
+    sprs.push(new CompactSprite(20.3, 9, 0, -0.8, texturesDog))
+    sprs.push(new CompactSprite(17.3, 9, 0, -0.7, texturesSkelly))
+    sprs.push(new CompactSprite(18.3, 9, 0, -0.6, texturesPrincess2))
+    sprs.push(new CompactSprite(19, 9, 0, -1, texturesPlane))
+    sprs.push(new CompactSprite(22, 8.5, 0.4, 0, texturesPrincess))
+    sprs.push(new CompactSprite(22, 7, 0.5, 0, texturesHero))
+    sprs.push(new CompactSprite(22, 6.5, 0.2, 0, texturesCoin, 100))
 
-// change size of sprite, or auto calculate fist image size divid by wall size (presuming wall size as 32)
-let testSprite = new CompactSprite(22, 8, 0.5, 0, texturesBigCake)
-sprs.push(testSprite)
-testSprite.radiusRate /= 4
-testSprite.heightRate /= 4
+//coin floating
+    sprs[sprs.length-1].offsetY=-.5
 
+// change size of sprite, relative ratio to wall size 
+// default is auto calculated using fist image size (presuming wall size = 32)
+    let testSprite = new CompactSprite(22, 8, 0.5, 0, texturesBigCake)
+    sprs.push(testSprite)
+    testSprite.heightRate=1/4
+    testSprite.radiusRate=1/8
+
+// // shink all sprites
+    // sprs.forEach((v)=>{
+    //     v.setHeightRate(1/4)
+    //     v.setRadiusRate(1/8)
+    // })
 
 const st = new State(map, wallTextures, 18.5, 7.5, defaultFov, sprs)
 
+img`
+    . . b b b b . .
+    . b 5 5 5 5 b .
+    b 5 d 3 3 d 5 b
+    b 5 3 5 5 1 5 b
+    c 5 3 5 5 1 d c
+    c d d 1 1 d d c
+    . f d d d d f .
+    . . f f f f . .
+`
 //////////////////////// end engine operations /////////////////////////
 
 //minimap
@@ -510,14 +531,66 @@ game.onUpdate(() => myMiniMap.paintCursorOnMiniMap(st.x / fpx_scale, st.y / fpx_
 
 //update sprites
 game.onUpdateInterval(33, () => {
+    let removing:CompactSprite[]=[]
     sprs.forEach((v, i) => {
         v.x += v.vx / 33
         v.y += v.vy / 33
         //bounce
+        let bounce=false
         if (!st.canGoSpriteX(v))
+        {
             v.vx *= -1
+            bounce=true
+        }
         if (!st.canGoSpriteY(v))
-            v.vy *= -1
+           { v.vy *= -1
+            bounce=true
+           }
+        if(bounce&&v.kind==SpriteKind.bullet){
+            v.vx*=0.5
+            v.vy*=0.5
+            // game.splash(((v.vx ** 2 + v.vy ** 2) / fpx_scale / fpx_scale))
+            if(((v.vx**2+v.vy**2)/fpx_scale/fpx_scale)<=1){
+                // music.knock.play()
+                removing.push(v)
+                v=null
+            }
+        }
     })
+    removing.forEach((v) => sprs.removeElement(v))        
 })
-
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Player, function(sprite: Sprite, otherSprite: Sprite) {
+    
+})
+    let ms=0
+controller.A.onEvent(ControllerButtonEvent.Pressed, ()=>{
+    if(control.millis()<ms)
+        return
+    ms=control.millis()+500
+    let textruesBullet=[[img`
+        . . . . . b b b b b b . . . . .
+        . . . b b 9 9 9 9 9 9 b b . . .
+        . . b b 9 9 9 9 9 9 9 9 b b . .
+        . b b 9 d 9 9 9 9 9 9 9 9 b b .
+        . b 9 d 9 9 9 9 9 1 1 1 9 9 b .
+        b 9 d d 9 9 9 9 9 1 1 1 9 9 9 b
+        b 9 d 9 9 9 9 9 9 1 1 1 9 9 9 b
+        b 9 3 9 9 9 9 9 9 9 9 9 1 9 9 b
+        b 5 3 d 9 9 9 9 9 9 9 9 9 9 9 b
+        b 5 3 3 9 9 9 9 9 9 9 9 9 d 9 b
+        b 5 d 3 3 9 9 9 9 9 9 9 d d 9 b
+        . b 5 3 3 3 d 9 9 9 9 d d 5 b .
+        . b d 5 3 3 3 3 3 3 3 d 5 b b .
+        . . b d 5 d 3 3 3 3 5 5 b b . .
+        . . . b b 5 5 5 5 5 5 b b . . .
+        . . . . . b b b b b b . . . . .
+    `]] 
+    music.playSound(music.sounds(Sounds.BaDing))
+    let bullet = new CompactSprite(st.x / fpx_scale, st.y / fpx_scale, st.dirX / fpx_scale *4, st.dirY / fpx_scale*4, textruesBullet)
+    // game.splash(bullet.vx,bullet.vy)
+    bullet.kind=SpriteKind.bullet
+    bullet.radiusRate = 1/8
+    bullet.heightRate=1/4
+    bullet.offsetY=-1/8
+    sprs.push(bullet)
+})

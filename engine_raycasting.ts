@@ -13,19 +13,45 @@ class CompactSprite{
     y:number
     vx:number
     vy:number
-    radiusRate: number
-    heightRate: number
+    _radiusRate: number
+    _heightRate: number
+    _offsetY:number=0
     textures: Image[][]
     aniInterval:number
+    kind: number
     constructor(x: number, y: number, vx: number, vy: number, textures: Image[][], aniInterval:number=150){
         this.x = tofpx(x)
         this.y = tofpx(y)
         this.vx = tofpx(vx)
         this.vy = tofpx(vy)
-        this.radiusRate = tofpx(textures[0][0].width) / wallSize >> 1
-        this.heightRate = tofpx(textures[0][0].height) / wallSize
+        this._radiusRate = tofpx(textures[0][0].width) / wallSize >> 1
+        this._heightRate = tofpx(textures[0][0].height) / wallSize
         this.textures=textures
         this.aniInterval=aniInterval
+    }
+
+    get radiusRate(): number {
+        return this._radiusRate / fpx_scale
+    }
+
+    set radiusRate(value: number) {
+        this._radiusRate = value * fpx_scale
+    }
+
+    get heightRate(): number {
+        return this._heightRate / fpx_scale
+    }
+
+    set heightRate(value: number) {
+        this._heightRate = value * fpx_scale
+    }
+
+    get offsetY(): number {
+        return this._offsetY / fpx_scale
+    }
+
+    set offsetY(value: number) {
+        this._offsetY = value * fpx_scale
     }
 
     private indexAnimation=0
@@ -101,11 +127,11 @@ class State {
     }
 
     public canGoSpriteX(spr: CompactSprite) {
-        return st.canGo(spr.x + spr.vx / 33 + (spr.vx > 0 ? spr.radiusRate : -spr.radiusRate), spr.y + spr.vy / 33)
+        return st.canGo(spr.x + spr.vx / 33 + (spr.vx > 0 ? spr._radiusRate : -spr._radiusRate), spr.y + spr.vy / 33)
     }
 
     public canGoSpriteY(spr: CompactSprite) {
-        return st.canGo(spr.x + spr.vx / 33 , spr.y + spr.vy / 33 + (spr.vy > 0 ? spr.radiusRate : -spr.radiusRate))
+        return st.canGo(spr.x + spr.vx / 33 , spr.y + spr.vy / 33 + (spr.vy > 0 ? spr._radiusRate : -spr._radiusRate))
     }
 
     updateControls() {
@@ -249,7 +275,7 @@ class State {
         const transformX = this.invDet * (this.dirY * spriteX - this.dirX * spriteY) >> fpx;
         const transformY = this.invDet * (-this.planeY * spriteX + this.planeX * spriteY) >> fpx; //this is actually the depth inside the screen, that what Z is in 3D
         const spriteScreenX = Math.ceil((screen.width / 2) * (1 - transformX / transformY));
-        const spriteScreenHalfWidth = Math.idiv(spr.radiusRate* this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
+        const spriteScreenHalfWidth = Math.idiv(spr._radiusRate* this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
 
         //calculate drawing range in X direction
         //assume there is one range only
@@ -264,11 +290,20 @@ class State {
         }
         if(blitWidth==0)
             return
-        // screen.print(blitX+"," + blitWidth,40,index*10)
-        const lineHeight = Math.idiv(this.wallHeightInView * spr.heightRate >> fpx, transformY) | 1
-        const drawStart = (screen.height >> 1) + (lineHeight * ((fpx_scale >> 1) - spr.heightRate)>>fpx)
+        const lineHeight = Math.idiv(this.wallHeightInView , transformY) | 1
+        const drawStart = (screen.height >> 1) + (lineHeight * (spr._offsetY+(fpx_scale >> 1) - spr._heightRate)>>fpx)
         const myAngle = Math.atan2(spriteX, spriteY)
         const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vx, spr.vy) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
-        helpers.imageBlit(screen, blitX, drawStart, blitWidth, lineHeight, texSpr, (blitX-(spriteScreenX-spriteScreenHalfWidth))*texSpr.width/spriteScreenHalfWidth/2, 0, blitWidth*texSpr.width/spriteScreenHalfWidth/2, texSpr.height,true,false)
+        helpers.imageBlit(
+            screen, 
+            blitX, 
+            drawStart, 
+            blitWidth, 
+            lineHeight * spr._heightRate >> fpx, 
+            texSpr, 
+            (blitX-(spriteScreenX-spriteScreenHalfWidth))*texSpr.width/spriteScreenHalfWidth/2
+            , 
+            0, 
+            blitWidth*texSpr.width/spriteScreenHalfWidth/2, texSpr.height,true,false)
     }
 }
