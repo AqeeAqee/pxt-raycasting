@@ -138,13 +138,17 @@ sprs.push(new sprites.XYZAniSprite(5.3, 9, 8, 0, texturesSkelly, SpriteKind.Frie
 sprs.push(new sprites.XYZAniSprite(7.3, 9, 8, 0, texturesPrincess2, SpriteKind.Friend))
 sprs.push(new sprites.XYZAniSprite(8, 9, -1, 0, texturesPlane, SpriteKind.Friend))
 sprs.push(new sprites.XYZAniSprite(9, 8.5, -4, 0, texturesPrincess, SpriteKind.Friend))
-sprs.push(new sprites.XYZAniSprite(9, 7, -11, 0, texturesHero, SpriteKind.Friend))
-sprs.push(new sprites.XYZAniSprite(9, 6.5, -12, 0, texturesCoin, SpriteKind.Food, 100))
+let sprHero = new sprites.XYZAniSprite(10, 7, 0, -11, texturesHero, SpriteKind.Friend)
+scene.cameraFollowSprite(sprHero)
+sprs.push(sprHero)
+sprs.push(new sprites.XYZAniSprite(10, 6, 0, 0, texturesCoin, SpriteKind.Food, 100))
 sprs[sprs.length - 1].offsetY = -.25
 
 const st = new State(6,6, defaultFov, sprs)
 
-
+for(const spr of sprs){
+    spr.setBounceOnWall(true)
+}
 //////////////////////// end engine operations /////////////////////////
 
 let ms = 0
@@ -177,19 +181,21 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     bullet.heightRate = 1 / 4
     bullet.offsetY = -1 / 8
     sprs.push(bullet)
+    bullet.onDestroyed(()=>st.sprites.removeElement(bullet))
 })
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
-    music.playSound(music.sounds(Sounds.BaDing))
+sprites.onOverlap(SpriteKind.Friend, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
+    // music.playSound(music.sounds(Sounds.BaDing))
 
 })
 
 sprites.onOverlap(SpriteKind.Friend, SpriteKind.Bullet, function (sprite: Sprite, otherSprite: Sprite) {
     music.playSound(music.sounds(Sounds.BaDing))
-
+    otherSprite.destroy()
+    sprite.destroy()
 })
 
 scene.onHitWall(SpriteKind.Bullet, function(sprite: Sprite, location: tiles.Location) {
-    game.splash("wow")
+    // game.splash("wow")
     sprite.destroy()
 })
 

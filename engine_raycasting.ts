@@ -8,6 +8,12 @@ function tofpx(n: number) {
     return (n * fpx_scale) | 0
 }
 
+// class MyRenderable extends scene.Renderable{
+//     constructor(){
+//         super((target, camera) => {}, ()=>true, -1)
+//     }
+// }
+
 class State {
     x: number
     y: number
@@ -25,6 +31,8 @@ class State {
     dist: number[] = []
     //for sprite
     invDet: number //required for correct matrix multiplication
+    oldRender:scene.Renderable
+    myRender:scene.Renderable
 
     constructor( x: number, y: number, fov: number, sprites?: sprites.XYZAniSprite[]) {
         this.angle = 0
@@ -37,14 +45,20 @@ class State {
         
         if(this.sprites){
             this.sprites=sprites
+            for(const spr of sprites){
+                spr.onDestroyed(()=>sprites.removeElement(spr))
+            }
         }
 
         if (game.currentScene().tileMap){
-        game.currentScene().tileMap.renderable.destroy()
-        game.currentScene().tileMap.renderable = scene.createRenderable(
+        this.oldRender=game.currentScene().tileMap.renderable
+        game.currentScene().allSprites.removeElement(this.oldRender)
+        // game.currentScene().tileMap.renderable =
+        this.myRender=scene.createRenderable(
             scene.TILE_MAP_Z,
             (t, c) => this.trace(t, c)
         )
+            // game.currentScene().allSprites.push(this.myRender)
         }
         // game.onPaint(function () {
         //     st.trace()
@@ -52,6 +66,23 @@ class State {
         game.onUpdate(function () {
             st.updateControls()
         })
+
+        controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
+            game.currentScene().allSprites.removeElement(this.myRender)
+            game.currentScene().allSprites.push(this.oldRender)
+
+        })
+        controller.B.onEvent(ControllerButtonEvent.Released, () => {
+            game.currentScene().allSprites.removeElement(this.oldRender)
+            game.currentScene().allSprites.push(this.myRender)
+
+        })
+    }
+
+    render(target: Image, camera: scene.Camera) {
+        
+        //if(controller.B.isPressed())
+        // this.__
     }
 
     setFov(fov: number) {

@@ -13,14 +13,14 @@ export class XYZAniSprite extends Sprite {
         this.setPosition(x * 16, y * 16)
         this.vx = vx
         this.vy = vy
-        this._radiusRate = tofpx(textures[0][0].height) / wallSize >> 1
+        this._radiusRate = tofpx(textures[0][0].width) / wallSize >> 1
         this._heightRate = tofpx(textures[0][0].height) / wallSize
         this.textures = textures
         this.aniInterval = aniInterval
-        this.setBounceOnWall(true)
 
+        //sprites.create()
+        this.setKind(kind)
         game.currentScene().physicsEngine.addSprite(this);
-
         // run on created handlers
         game.currentScene().createdHandlers
             .filter(h => h.kind == kind)
@@ -28,7 +28,7 @@ export class XYZAniSprite extends Sprite {
 
     }
 
-    __drawCore(camera: scene.Camera) { }
+     __drawCore(camera: scene.Camera) { }
 
     get xFx8(): number {
         return this._x as any as number/16
