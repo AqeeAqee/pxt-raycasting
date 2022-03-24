@@ -1,5 +1,5 @@
 {
-    "name": "pxt-Raycasting",
+    "name": "Raycasting_render",
     "version": "0.1.1",
     "description": "",
     "dependencies": {
@@ -9,7 +9,11 @@
         "README.md",
         "engine_raycasting.ts",
         "animations.ts",
-        "mimimap.ts"
+        "mimimap.ts",
+        "tilemap.g.jres",
+        "tilemap.g.ts",
+        "main.ts",
+        "sprites.ts"
     ],
     "testFiles": [
         "test.ts"

@@ -1,5 +1,5 @@
 //based on mmoskal's "3d map", https://forum.makecode.com/t/3d-raycasting-in-arcade/474
-const fpx = 10
+const fpx = 8
 const fpx_scale = 2 ** fpx
 const defaultFov = screen.width / screen.height / 2  //Wall just fill screen height when standing 1 unit away
 const wallSize = 32
@@ -8,50 +8,17 @@ function tofpx(n: number) {
     return (n * fpx_scale) | 0
 }
 
-class CompactSprite{
-    x:number
-    y:number
-    vx:number
-    vy:number
-    radiusRate: number
-    heightRate: number
-    textures: Image[][]
-    aniInterval:number
-    constructor(x: number, y: number, vx: number, vy: number, textures: Image[][], aniInterval:number=150){
-        this.x = tofpx(x)
-        this.y = tofpx(y)
-        this.vx = tofpx(vx)
-        this.vy = tofpx(vy)
-        this.radiusRate = tofpx(textures[0][0].width) / wallSize >> 1
-        this.heightRate = tofpx(textures[0][0].height) / wallSize
-        this.textures=textures
-        this.aniInterval=aniInterval
-    }
-
-    private indexAnimation=0
-    private msLastAni=0
-    getTexture(indexDir:number){
-        if (control.millis() > this.msLastAni + this.aniInterval){
-            this.indexAnimation++
-            this.msLastAni=control.millis()
-        }
-        if(this.indexAnimation>=this.textures[indexDir].length)
-            this.indexAnimation=0
-        return this.textures[indexDir][this.indexAnimation]
-    }
-}
-
 class State {
     x: number
     y: number
-    map: Image
+    map:tiles.TileMapData
     dirX: number
     dirY: number
     planeX: number
     planeY: number
     angle: number
     fov: number
-    sprites:CompactSprite[]=[]
+    sprites:sprites.XYZAniSprite[]=[]
     textures: Image[]
     wallHeightInView: number
     wallWidthInView: number
@@ -59,22 +26,29 @@ class State {
     //for sprite
     invDet: number //required for correct matrix multiplication
 
-    constructor( map: Image, textures: Image[], x: number, y: number, fov: number, sprites?:CompactSprite[]) {
+    constructor( x: number, y: number, fov: number, sprites?: sprites.XYZAniSprite[]) {
         this.angle = 0
         this.x = tofpx(x)
         this.y = tofpx(y)
 
         this.setFov(fov)
-        this.map = map//.clone()
-        this.textures = textures
+        this.map = game.currentScene().tileMap.data
+        this.textures = game.currentScene().tileMap.data.getTileset()
         
         if(this.sprites){
             this.sprites=sprites
         }
 
-        game.onPaint(function () {
-            st.trace()
-        })
+        if (game.currentScene().tileMap){
+        game.currentScene().tileMap.renderable.destroy()
+        game.currentScene().tileMap.renderable = scene.createRenderable(
+            scene.TILE_MAP_Z,
+            (t, c) => this.trace(t, c)
+        )
+        }
+        // game.onPaint(function () {
+        //     st.trace()
+        // })
         game.onUpdate(function () {
             st.updateControls()
         })
@@ -97,15 +71,15 @@ class State {
     }
 
     public canGo(x: number, y: number) {
-        return this.map.getPixel(x >> fpx, y >> fpx) == 0
+        return this.map.getTile(x>>fpx, y>>fpx ) == 0
     }
 
-    public canGoSpriteX(spr: CompactSprite) {
-        return st.canGo(spr.x + spr.vx / 33 + (spr.vx > 0 ? spr.radiusRate : -spr.radiusRate), spr.y + spr.vy / 33)
+    public canGoSpriteX(spr: sprites.XYZAniSprite) {
+        return st.canGo(spr.x + spr.vx / 33 + (spr.vx > 0 ? spr._radiusRate : -spr._radiusRate), spr.y + spr.vy / 33)
     }
 
-    public canGoSpriteY(spr: CompactSprite) {
-        return st.canGo(spr.x + spr.vx / 33 , spr.y + spr.vy / 33 + (spr.vy > 0 ? spr.radiusRate : -spr.radiusRate))
+    public canGoSpriteY(spr: sprites.XYZAniSprite) {
+        return st.canGo(spr.x + spr.vx / 33 , spr.y + spr.vy / 33 + (spr.vy > 0 ? spr._radiusRate : -spr._radiusRate))
     }
 
     updateControls() {
@@ -133,7 +107,7 @@ class State {
         //    console.log(`${this.x},${this.y},${this.angle}`)
     }
 
-    trace() {
+    trace(target: Image, camera: scene.Camera) {
         // based on https://lodev.org/cgtutor/raycasting.html
         const w = screen.width
         const h = screen.height
@@ -196,7 +170,7 @@ class State {
                     sideWallHit = true;
                 }
 
-                color = this.map.getPixel(mapX, mapY)
+                color = this.map.getTile(mapX, mapY)
                 if (color)
                     break; // hit!
             }
@@ -212,8 +186,8 @@ class State {
             }
             wallX &= (1 << fpx) - 1
 
-            color = (color - 1) * 2
-            if (sideWallHit) color++
+            // color = (color - 1) * 2
+            // if (sideWallHit) color++
 
             const tex = this.textures[color]
             if (!tex)
@@ -235,21 +209,22 @@ class State {
 /////////////////// sprites ///////////////////
 
         this.sprites.filter((spr,i)=>{ // transformY>0
-            return (-this.planeY * (spr.x - this.x) + this.planeX * (spr.y - this.y)) > 0 
+            return (-this.planeY * (spr.xFx8 - this.x) + this.planeX * (spr.yFx8  - this.y)) > 0
         }).sort((spr1, spr2) => {   // far to near
-            return ((spr2.x - this.x) ** 2 + (spr2.y - this.y) ** 2) - ((spr1.x - this.x) ** 2 + (spr1.y - this.y) ** 2)
-        }).forEach((v,i)=>{
-            this.drawSprite(v, i)
+            return ((spr2.xFx8  - this.x) ** 2 + (spr2.yFx8  - this.y) ** 2) - ((spr1.xFx8 - this.x) ** 2 + (spr1.yFx8 - this.y) ** 2)
+        }).forEach((spr,index)=>{
+            this.drawSprite(spr, index)
         })
+        screen.print([this.x/fpx_scale, this.y/fpx_scale].join(), 0, 0,13)
     }
 
-    drawSprite(spr: CompactSprite, index: number) {
-        const spriteX = (spr.x) - this.x
-        const spriteY = (spr.y) - this.y
+    drawSprite(spr: sprites.XYZAniSprite, index: number) {
+        const spriteX = spr.xFx8 - this.x
+        const spriteY = spr.yFx8 - this.y
         const transformX = this.invDet * (this.dirY * spriteX - this.dirX * spriteY) >> fpx;
         const transformY = this.invDet * (-this.planeY * spriteX + this.planeX * spriteY) >> fpx; //this is actually the depth inside the screen, that what Z is in 3D
         const spriteScreenX = Math.ceil((screen.width / 2) * (1 - transformX / transformY));
-        const spriteScreenHalfWidth = Math.idiv(spr.radiusRate* this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
+        const spriteScreenHalfWidth = Math.idiv(spr._radiusRate* this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
 
         //calculate drawing range in X direction
         //assume there is one range only
@@ -262,13 +237,23 @@ class State {
             }else if(blitWidth>0)
                 break
         }
+        // screen.print([spr.xFx8, spr.yFx8].join(), 0,index*10+10)
         if(blitWidth==0)
             return
-        // screen.print(blitX+"," + blitWidth,40,index*10)
-        const lineHeight = Math.idiv(this.wallHeightInView * spr.heightRate >> fpx, transformY) | 1
-        const drawStart = (screen.height >> 1) + (lineHeight * ((fpx_scale >> 1) - spr.heightRate)>>fpx)
+        const lineHeight = Math.idiv(this.wallHeightInView , transformY) | 1
+        const drawStart = (screen.height >> 1) + (lineHeight * (spr._offsetY+(fpx_scale >> 1) - spr._heightRate)>>fpx)
         const myAngle = Math.atan2(spriteX, spriteY)
-        const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vx, spr.vy) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
-        helpers.imageBlit(screen, blitX, drawStart, blitWidth, lineHeight, texSpr, (blitX-(spriteScreenX-spriteScreenHalfWidth))*texSpr.width/spriteScreenHalfWidth/2, 0, blitWidth*texSpr.width/spriteScreenHalfWidth/2, texSpr.height,true,false)
+        const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
+        helpers.imageBlit(
+            screen, 
+            blitX, 
+            drawStart, 
+            blitWidth, 
+            lineHeight * spr._heightRate >> fpx, 
+            texSpr, 
+            (blitX-(spriteScreenX-spriteScreenHalfWidth))*texSpr.width/spriteScreenHalfWidth/2
+            , 
+            0, 
+            blitWidth*texSpr.width/spriteScreenHalfWidth/2, texSpr.height,true,false)
     }
 }
