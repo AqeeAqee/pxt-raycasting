@@ -1,49 +1,51 @@
 // Add your code here
-namespace sprites{
-export class XYZAniSprite extends Sprite {
+    let EmptyImage=img`
+        .
+    `
+class XYZAniSprite extends Sprite {
     _radiusRate: number
     _heightRate: number
     _offsetY: number = 0
     textures: Image[][]
     aniInterval: number
-    constructor(x: number, y: number, vx: number, vy: number, textures: Image[][], kind: number, aniInterval: number = 150) {
-        super(textures[0][0])
+    tilemapScale=16  //todo, update when tilemap changed
+    constructor(x: number, y: number, vx: number, vy: number, kind: number, textures: Image[][], aniInterval: number = 150) {
+        super(EmptyImage)
+        const sc = game.currentScene()
 
-        // game.splash(this.scale)
-        this.setPosition(x * 16, y * 16)
-        this.vx = vx
-        this.vy = vy
-        this._radiusRate = tofpx(textures[0][0].width) / wallSize >> 1
-        this._heightRate = tofpx(textures[0][0].height) / wallSize
+        this.tilemapScale= 1<<game.currentScene().tileMap.scale
         this.textures = textures
+        this.setPosition(x * this.tilemapScale, y * this.tilemapScale)
+        this.setVelocity(vx,vy)
+        this.radiusRate = textures[0][0].width / wallSize /2
+        this.heightRate = textures[0][0].height / wallSize
         this.aniInterval = aniInterval
 
-        //sprites.create()
-        this.setKind(kind)
-        game.currentScene().physicsEngine.addSprite(this);
-        // run on created handlers
-        game.currentScene().createdHandlers
-            .filter(h => h.kind == kind)
-            .forEach(h => h.handler(this));
-
+        //as sprites.create() does:
+            this.setKind(kind)
+            sc.physicsEngine.addSprite(this);
+            // run on created handlers
+            sc.createdHandlers
+                .filter(h => h.kind == kind)
+                .forEach(h => h.handler(this));
     }
 
-     __drawCore(camera: scene.Camera) { }
+     __drawCore(camera: scene.Camera) {if(controller.B.isPressed()) super.__drawCore(camera)}
 
     get xFx8(): number {
-        return this._x as any as number/16
+        return this._x as any as number / this.tilemapScale +(1<<fpx>>2)
     }
 
     get yFx8(): number {
-        return this._y as any as number / 16
+        return this._y as any as number / this.tilemapScale +(1<<fpx>>2)
     }
 
     get vxFx8(): number {
-        return this._vx as any as number / 16
+        return this._vx as any as number / this.tilemapScale
     }
 
     get vyFx8(): number {
-        return this._vy as any as number / 16
+        return this._vy as any as number / this.tilemapScale
     }
 
     get radiusRate(): number {
@@ -51,7 +53,14 @@ export class XYZAniSprite extends Sprite {
     }
 
     set radiusRate(value: number) {
-        this._radiusRate = value * fpx_scale
+        this._radiusRate = tofpx(value)
+        const width =( this._radiusRate << game.currentScene().tileMap.scale <<1 >>fpx) 
+        let img = image.create(width, width)
+
+        img.drawRect(0,0,width,width,1)
+        const imgTx = this.textures[0][0]
+        img.blit(0,0,width,width,imgTx,0,0,imgTx.width,imgTx.height,false, false)
+        this.setImage(img)
     }
 
     get heightRate(): number {
@@ -70,6 +79,7 @@ export class XYZAniSprite extends Sprite {
         this._offsetY = value * fpx_scale
     }
 
+    //choose texture by direction, and loop animation
     private indexAnimation = 0
     private msLastAni = 0
     getTexture(indexDir: number) {
@@ -81,6 +91,4 @@ export class XYZAniSprite extends Sprite {
             this.indexAnimation = 0
         return this.textures[indexDir][this.indexAnimation]
     }
-}
-
 }

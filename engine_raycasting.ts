@@ -24,17 +24,18 @@ class State {
     planeY: number
     angle: number
     fov: number
-    sprites:sprites.XYZAniSprite[]=[]
     textures: Image[]
     wallHeightInView: number
     wallWidthInView: number
     dist: number[] = []
-    //for sprite
+    sprSelf: XYZAniSprite
+    tilemapScaleSize=16
+    //for drawing sprites
     invDet: number //required for correct matrix multiplication
     oldRender:scene.Renderable
     myRender:scene.Renderable
-
-    constructor( x: number, y: number, fov: number, sprites?: sprites.XYZAniSprite[]) {
+    
+    constructor( x: number, y: number, fov: number) {
         this.angle = 0
         this.x = tofpx(x)
         this.y = tofpx(y)
@@ -43,26 +44,22 @@ class State {
         this.map = game.currentScene().tileMap.data
         this.textures = game.currentScene().tileMap.data.getTileset()
         
-        if(this.sprites){
-            this.sprites=sprites
-            for(const spr of sprites){
-                spr.onDestroyed(()=>sprites.removeElement(spr))
-            }
-        }
-
         if (game.currentScene().tileMap){
-        this.oldRender=game.currentScene().tileMap.renderable
-        game.currentScene().allSprites.removeElement(this.oldRender)
-        // game.currentScene().tileMap.renderable =
-        this.myRender=scene.createRenderable(
-            scene.TILE_MAP_Z,
-            (t, c) => this.trace(t, c)
-        )
-            // game.currentScene().allSprites.push(this.myRender)
+            this.tilemapScaleSize=1<<game.currentScene().tileMap.scale
+            this.oldRender=game.currentScene().tileMap.renderable
+            game.currentScene().allSprites.removeElement(this.oldRender)
+            // game.currentScene().tileMap.renderable =
+            this.myRender=scene.createRenderable(
+                scene.TILE_MAP_Z,
+                (t, c) => this.trace(t, c)
+            )
         }
-        // game.onPaint(function () {
-        //     st.trace()
-        // })
+        
+        //self sprite
+        this.sprSelf = new XYZAniSprite(x, y, 0, 0, SpriteKind.Player, [[image.create(wallSize >> 1, wallSize >> 1)]])
+        scene.cameraFollowSprite(this.sprSelf)
+        this.updateSelfImage()
+
         game.onUpdate(function () {
             st.updateControls()
         })
@@ -105,12 +102,20 @@ class State {
         return this.map.getTile(x>>fpx, y>>fpx ) == 0
     }
 
-    public canGoSpriteX(spr: sprites.XYZAniSprite) {
+    public canGoSpriteX(spr: XYZAniSprite) {
         return st.canGo(spr.x + spr.vx / 33 + (spr.vx > 0 ? spr._radiusRate : -spr._radiusRate), spr.y + spr.vy / 33)
     }
 
-    public canGoSpriteY(spr: sprites.XYZAniSprite) {
+    public canGoSpriteY(spr: XYZAniSprite) {
         return st.canGo(spr.x + spr.vx / 33 , spr.y + spr.vy / 33 + (spr.vy > 0 ? spr._radiusRate : -spr._radiusRate))
+    }
+
+    public updateSelfImage() {
+        const img=this.sprSelf.image
+        img.fill(2)
+        const arrowLength=img.width/2
+        img.drawLine(arrowLength, arrowLength, arrowLength + this.dirX * arrowLength, arrowLength + this.dirY * arrowLength, 5)
+        img.setPixel(2, 2, 2)
     }
 
     updateControls() {
@@ -119,20 +124,23 @@ class State {
         if (dx) {
             this.angle += dx
             this.setVectors()
+            this.updateSelfImage()
         }
-        const dy = controller.dy(5)
+        const dy = controller.dy(4)
         if (dy) {
             const nx = this.x - Math.round(this.dirX * dy)
             const ny = this.y - Math.round(this.dirY * dy)
             if (!this.canGo(nx, ny) && this.canGo(this.x, this.y)) {
-                if (this.canGo(this.x, ny))
+                if (this.canGo(this.x, ny)){
                     this.y = ny
-                else if (this.canGo(nx, this.y))
+                }else if (this.canGo(nx, this.y)){
                     this.x = nx
+                }
             } else {
                 this.x = nx
                 this.y = ny
             }
+            this.sprSelf.setPosition((nx * this.tilemapScaleSize >> fpx) + this.tilemapScaleSize / 4, (ny * this.tilemapScaleSize >> fpx) + this.tilemapScaleSize/4)
         }
         //if (dx || dy)
         //    console.log(`${this.x},${this.y},${this.angle}`)
@@ -239,17 +247,22 @@ class State {
 
 /////////////////// sprites ///////////////////
 
-        this.sprites.filter((spr,i)=>{ // transformY>0
-            return (-this.planeY * (spr.xFx8 - this.x) + this.planeX * (spr.yFx8  - this.y)) > 0
+        // game.splash("begin")
+
+        game.currentScene().allSprites.map((spr)=>(spr as XYZAniSprite))
+        //add selfSprite
+        .filter((spr ,i)=>{ // transformY>0
+            // game.splash(spr instanceof XYZAniSprite)
+            return (spr instanceof XYZAniSprite)&& spr.kind()!=SpriteKind.Player && (-this.planeY * (spr.xFx8 - this.x) + this.planeX * (spr.yFx8  - this.y)) > 0
         }).sort((spr1, spr2) => {   // far to near
             return ((spr2.xFx8  - this.x) ** 2 + (spr2.yFx8  - this.y) ** 2) - ((spr1.xFx8 - this.x) ** 2 + (spr1.yFx8 - this.y) ** 2)
         }).forEach((spr,index)=>{
             this.drawSprite(spr, index)
         })
-        screen.print([this.x/fpx_scale, this.y/fpx_scale].join(), 0, 0,13)
     }
 
-    drawSprite(spr: sprites.XYZAniSprite, index: number) {
+    drawSprite(spr: XYZAniSprite, index: number) {
+        // screen.print([spr.image.width].join(), 0, index*10)
         const spriteX = spr.xFx8 - this.x
         const spriteY = spr.yFx8 - this.y
         const transformX = this.invDet * (this.dirY * spriteX - this.dirX * spriteY) >> fpx;
