@@ -1,6 +1,5 @@
 // tests go here; this will not be compiled when this package is used as an extension.
 namespace SpriteKind {
-    export const Bullet = SpriteKind.create()
     export const Friend = SpriteKind.create()
 }
 
@@ -142,10 +141,10 @@ sprs.push(new XYZAniSprite(9, 8.5, -4, 0, SpriteKind.Friend, texturesPrincess))
 let sprHero = new XYZAniSprite(10, 8, 0, 15, SpriteKind.Friend, texturesHero)
 scene.cameraFollowSprite(sprHero)
 sprs.push(sprHero)
-for(let i=0;i<10;i++){
+for(let i=0;i<20;i++){
     let sprCoin = new XYZAniSprite(9, 6, 0, 0, SpriteKind.Food, texturesCoin, 100)
     sprs.push(sprCoin)
-    sprCoin.offsetY = -.25
+    sprCoin.offsetY = -1/4
     tiles.placeOnRandomTile(sprCoin, myTiles.transparency16)
 }
 const st = new State(6,6, defaultFov)
@@ -154,11 +153,6 @@ for(const spr of sprs){
     spr.setBounceOnWall(true)
 }
 //////////////////////// end engine operations /////////////////////////
-
-scene.onHitWall(SpriteKind.Bullet, function (sprite: Sprite, location: tiles.Location) {
-    // game.splash("wow")
-    sprite.destroy()
-})
 
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
     music.baDing.play()
@@ -171,7 +165,7 @@ sprites.onOverlap(SpriteKind.Friend, SpriteKind.Food, function (sprite: Sprite, 
     otherSprite.destroy()
 })
 
-sprites.onOverlap(SpriteKind.Friend, SpriteKind.Bullet, function (sprite: Sprite, otherSprite: Sprite) {
+sprites.onOverlap(SpriteKind.Friend, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
     music.knock.play()
     otherSprite.destroy()
     sprite.destroy()
@@ -183,28 +177,23 @@ sprites.onOverlap(SpriteKind.Friend, SpriteKind.Friend, function (sprite: Sprite
         return
     if(otherSprite==sprHero)
         otherSprite=sprite
-    // game.splash(sprite.toString(),otherSprite.toString())
     
     otherSprite.follow(sprHero, 5,110)
 })
 
 let ms = 0
 controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
-    if (control.millis() < ms)
+    if (control.millis() < ms) //slow down
         return
     ms = control.millis() + 500
-    let texturesBullet = [[sprites.projectile.heart1]]
+    let texturesBullet = texturesDuck // [[sprites.projectile.bubble1]]
     music.playSound(music.sounds(Sounds.BaDing))
-    let bullet = new XYZAniSprite(st.x / fpx_scale, st.y / fpx_scale, st.dirX / fpx_scale * 33, st.dirY / fpx_scale * 33, SpriteKind.Bullet, texturesBullet)
-    // game.splash(bullet.vx,bullet.vy)
+    let bullet = new XYZAniSprite(st.xFpx , st.y , st.dirX * 33, st.dirY * 33, SpriteKind.Projectile, texturesBullet)
     bullet.radiusRate = 1 / 8
     bullet.heightRate = 1 / 4
-    bullet.offsetY = -1 / 8
-    sprs.push(bullet)
-    // bullet.onDestroyed(()=>st.sprites.removeElement(bullet))
+    bullet.offsetY = -1 / 8     // float a litte
 })
 
-//minimap
-// let myMiniMap = miniMap.createMiniMap(map)
-// game.onUpdate(() => myMiniMap.paintCursorOnMiniMap(st.x / fpx_scale, st.y / fpx_scale, st.dirX / fpx_scale, st.dirY / fpx_scale))
-
+scene.onHitWall(SpriteKind.Projectile, function (sprite: Sprite, location: tiles.Location) {
+    sprite.destroy()
+})
