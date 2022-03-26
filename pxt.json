@@ -1,9 +1,10 @@
 {
-    "name": "pxt-RaycastingRender",
-    "version": "0.1.1",
+    "name": "pxt-RaycastingAni",
+    "version": "0.2.0",
     "description": "",
     "dependencies": {
-        "device": "*"
+        "device": "*",
+        "character-animations": "github:riknoll/character-animations#v0.3.2"
     },
     "files": [
         "README.md",
