@@ -182,8 +182,10 @@ tiles.setCurrentTilemap(map)
 // animations, see animations.ts for description in detail
 
 let sprHero = new XYZAniSprite(10, 8, 15, 0, SpriteKind.Friend, sprites.castle.heroFrontAttack1)
-scene.cameraFollowSprite(sprHero)
 sprs.push(sprHero)
+scene.cameraFollowSprite(sprHero)
+let sprPriness = new XYZAniSprite(10, 7, 15, 0, SpriteKind.Friend, sprites.castle.princessFront0)
+sprs.push(sprPriness)
 const st = new State(6, 6, defaultFov)
 for (let spr of sprs) {
     spr.setBounceOnWall(true)
@@ -260,7 +262,7 @@ character.loopFrames(
     . . . . . f f f f f f f . . . . 
     . . . . . . . . . f f f . . . . 
     `],
-    500,
+    150,
     character.rule(Predicate.MovingDown)
 )
 character.loopFrames(
@@ -334,7 +336,7 @@ character.loopFrames(
     . . . 4 e e f f f f f f e . . . 
     . . . . . . . . . f f f . . . . 
     `],
-    500,
+    150,
     character.rule(Predicate.MovingUp)
 )
 character.loopFrames(
@@ -408,7 +410,7 @@ character.loopFrames(
     . . . . . . f f f f f f . . . . 
     . . . . . . . f f f . . . . . . 
     `],
-    500,
+    150,
     character.rule(Predicate.MovingRight)
 )
 character.loopFrames(
@@ -482,7 +484,7 @@ character.loopFrames(
     . . f f f f f f f f f f . . . . 
     . . . f f f . . . f f . . . . . 
     `],
-    500,
+    150,
     character.rule(Predicate.MovingLeft)
 )
 character.loopFrames(
@@ -556,11 +558,11 @@ character.loopFrames(
     . . . f f 1 1 d 1 d 1 f f . . . 
     . . . . . f b b f f f . . . . . 
     `],
-    500,
+    150,
     character.rule(Predicate.NotMoving)
 )
 character.loopFrames(
-    sprHero,
+    sprPriness,
     [img`
     . . . . . . f f f f 4 4 f . . . 
     . . . . f f b f 5 4 5 5 4 f . . 
@@ -596,11 +598,11 @@ character.loopFrames(
     . . . . f b d d 1 d 1 d b f . . 
     . . . . . f f f b b f f f . . . 
     `],
-    500,
-    character.rule(Predicate.FacingRight)
+    150,
+    character.rule(Predicate.MovingRight)
 )
 character.loopFrames(
-    sprHero,
+    sprPriness,
     [img`
     . . . f 4 4 f f f f . . . . . . 
     . . f 4 5 5 4 5 f b f f . . . . 
@@ -636,11 +638,11 @@ character.loopFrames(
     . . f b d 1 d 1 d d b f . . . . 
     . . . f f f b b f f f . . . . . 
     `],
-    500,
-    character.rule(Predicate.FacingLeft)
+    150,
+    character.rule(Predicate.MovingLeft)
 )
 character.loopFrames(
-    sprHero,
+    sprPriness,
     [img`
     . . . . . f f 4 4 f f . . . . . 
     . . . . f 5 4 5 5 4 5 f . . . . 
@@ -710,11 +712,11 @@ character.loopFrames(
     . . . f f 1 1 d 1 d 1 f f . . . 
     . . . . . f b b f f f . . . . . 
     `],
-    500,
-    character.rule(Predicate.FacingDown)
+    150,
+    character.rule(Predicate.MovingDown)
 )
 character.loopFrames(
-    sprHero,
+    sprPriness,
     [img`
     . . . . . f f 4 4 f f . . . . . 
     . . . . f 5 4 5 5 4 5 f . . . . 
@@ -784,8 +786,8 @@ character.loopFrames(
     . . . f e e d 1 d 1 1 f f . . . 
     . . . . . f f f b b f . . . . . 
     `],
-    500,
-    character.rule(Predicate.FacingUp)
+    150,
+    character.rule(Predicate.MovingUp)
 )
 // forever(function () {
 //     if (controller.A.isPressed()) {
@@ -800,13 +802,13 @@ character.loopFrames(
 //         }
 //     } else {
 //         if (controller.left.isPressed()) {
-//             character.setCharacterState(sprHero, character.rule(Predicate.FacingLeft))
+//             character.setCharacterState(sprHero, character.rule(Predicate.MovingLeft))
 //         } else if (controller.up.isPressed()) {
-//             character.setCharacterState(sprHero, character.rule(Predicate.FacingUp))
+//             character.setCharacterState(sprHero, character.rule(Predicate.MovingUp))
 //         } else if (controller.right.isPressed()) {
-//             character.setCharacterState(sprHero, character.rule(Predicate.FacingRight))
+//             character.setCharacterState(sprHero, character.rule(Predicate.MovingRight))
 //         } else if (controller.down.isPressed()) {
-//             character.setCharacterState(sprHero, character.rule(Predicate.FacingDown))
+//             character.setCharacterState(sprHero, character.rule(Predicate.MovingDown))
 //         }
 //     }
 // })
