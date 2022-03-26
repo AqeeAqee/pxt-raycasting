@@ -1,5 +1,5 @@
 {
-    "name": "Raycasting_render",
+    "name": "pxt-RaycastingRender",
     "version": "0.1.1",
     "description": "",
     "dependencies": {
@@ -10,8 +10,6 @@
         "engine_raycasting.ts",
         "animations.ts",
         "mimimap.ts",
-        "tilemap.g.jres",
-        "tilemap.g.ts",
         "main.ts",
         "sprites.ts"
     ],

@@ -78,7 +78,7 @@ class State {
         this.updateSelfImage()
 
         game.onUpdate(function () {
-            st.updateControls()
+            this.updateControls()
         })
 
         controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
@@ -126,11 +126,11 @@ class State {
     }
 
     public canGoSpriteX(spr: XYZAniSprite) {
-        return st.canGo(spr.x + spr.vx / 33 + (spr.vx > 0 ? spr._radiusRate : -spr._radiusRate), spr.y + spr.vy / 33)
+        return this.canGo(spr.x + spr.vx / 33 + (spr.vx > 0 ? spr._radiusRate : -spr._radiusRate), spr.y + spr.vy / 33)
     }
 
     public canGoSpriteY(spr: XYZAniSprite) {
-        return st.canGo(spr.x + spr.vx / 33 , spr.y + spr.vy / 33 + (spr.vy > 0 ? spr._radiusRate : -spr._radiusRate))
+        return this.canGo(spr.x + spr.vx / 33 , spr.y + spr.vy / 33 + (spr.vy > 0 ? spr._radiusRate : -spr._radiusRate))
     }
 
     public updateSelfImage() {
