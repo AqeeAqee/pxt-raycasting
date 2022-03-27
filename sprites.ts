@@ -15,10 +15,10 @@ class XYZAniSprite extends Sprite {
 
         this.tilemapScale= 1<<game.currentScene().tileMap.scale
         this.textures = textures
+        this.radiusRate = (textures[0][0].width / wallSize /2)
+        this.heightRate = textures[0][0].height / wallSize
         this.setPosition(x * this.tilemapScale, y * this.tilemapScale)
         this.setVelocity(vx,vy)
-        this.radiusRate = textures[0][0].width / wallSize /2
-        this.heightRate = textures[0][0].height / wallSize
         this.aniInterval = aniInterval
 
         //as sprites.create() does:
@@ -33,11 +33,13 @@ class XYZAniSprite extends Sprite {
      __drawCore(camera: scene.Camera) {if(controller.B.isPressed()) super.__drawCore(camera)}
 
     get xFx8(): number {
-        return this._x as any as number / this.tilemapScale +(1<<fpx>>2)
+        // console.log(`${this._x as any as number / this.tilemapScale} , ${this._radiusRate}`)
+        return this._x as any as number / this.tilemapScale +  this._radiusRate
+        
     }
 
     get yFx8(): number {
-        return this._y as any as number / this.tilemapScale +(1<<fpx>>2)
+        return this._y as any as number / this.tilemapScale +  this._radiusRate
     }
 
     get vxFx8(): number {
