@@ -119,19 +119,20 @@ class State {
     }
 
     public canGo(x: number, y: number) {
-        return this.map.getTile((x + this.sprSelf._radiusRate) >> fpx, (y + this.sprSelf._radiusRate) >> fpx) == 0 &&
-            this.map.getTile((x + this.sprSelf._radiusRate) >> fpx, (y - this.sprSelf._radiusRate) >> fpx) == 0 &&
-            this.map.getTile((x - this.sprSelf._radiusRate) >> fpx, (y + this.sprSelf._radiusRate) >> fpx) == 0 &&
-            this.map.getTile((x - this.sprSelf._radiusRate) >> fpx, (y - this.sprSelf._radiusRate) >> fpx) == 0
+        const radiusRate = this.sprSelf._sx as any as number /2
+        return this.map.getTile((x + radiusRate) >> fpx, (y + radiusRate) >> fpx) == 0 &&
+            this.map.getTile((x + radiusRate) >> fpx, (y - radiusRate) >> fpx) == 0 &&
+            this.map.getTile((x - radiusRate) >> fpx, (y + radiusRate) >> fpx) == 0 &&
+            this.map.getTile((x - radiusRate) >> fpx, (y - radiusRate) >> fpx) == 0
     }
 
-    public canGoSpriteX(spr: XYZAniSprite) {
-        return this.canGo(spr.x + spr.vx / 33 + (spr.vx > 0 ? spr._radiusRate : -spr._radiusRate), spr.y + spr.vy / 33)
-    }
+    // public canGoSpriteX(spr: XYZAniSprite) {
+    //     return this.canGo(spr.x + spr.vx / 33 + (spr.vx > 0 ? spr._radiusRate : -spr._radiusRate), spr.y + spr.vy / 33)
+    // }
 
-    public canGoSpriteY(spr: XYZAniSprite) {
-        return this.canGo(spr.x + spr.vx / 33, spr.y + spr.vy / 33 + (spr.vy > 0 ? spr._radiusRate : -spr._radiusRate))
-    }
+    // public canGoSpriteY(spr: XYZAniSprite) {
+    //     return this.canGo(spr.x + spr.vx / 33, spr.y + spr.vy / 33 + (spr.vy > 0 ? spr._radiusRate : -spr._radiusRate))
+    // }
 
     public updateSelfImage() {
         const img = this.sprSelf.image
@@ -272,26 +273,39 @@ class State {
 
         // game.splash("begin")
 
-        game.currentScene().allSprites.map((spr) => (spr as XYZAniSprite))
+        game.currentScene().allSprites.map((spr) => (spr as Sprite))
             //add selfSprite
             .filter((spr, i) => { // transformY>0
                 // game.splash(spr instanceof XYZAniSprite)
-                return (spr instanceof XYZAniSprite) && spr.kind() != SpriteKind.Player && (-this.planeY * (spr.xFx8 - this.xFpx) + this.planeX * (spr.yFx8 - this.yFpx)) > 0
+                return (spr instanceof Sprite) && spr.kind() != SpriteKind.Player && (-this.planeY * (this.getxFx8(spr) - this.xFpx) + this.planeX * (this.getyFx8(spr) - this.yFpx)) > 0
             }).sort((spr1, spr2) => {   // far to near
-                return ((spr2.xFx8 - this.xFpx) ** 2 + (spr2.yFx8 - this.yFpx) ** 2) - ((spr1.xFx8 - this.xFpx) ** 2 + (spr1.yFx8 - this.yFpx) ** 2)
+                return ((this.getxFx8(spr2) - this.xFpx) ** 2 + (this.getyFx8(spr2) - this.yFpx) ** 2) - ((this.getxFx8(spr1) - this.xFpx) ** 2 + (this.getyFx8(spr1) - this.yFpx) ** 2)
             }).forEach((spr, index) => {
                 this.drawSprite(spr, index)
             })
     }
 
-    drawSprite(spr: XYZAniSprite, index: number) {
+    getxFx8(spr: Sprite) {
+        return Fx.add(spr._x, Fx.div(spr._width, Fx.twoFx8)) as any as number /this.tilemapScaleSize
+    }
+
+    getyFx8(spr: Sprite) {
+        return Fx.add(spr._y, Fx.div(spr._height, Fx.twoFx8)) as any as number /this.tilemapScaleSize
+    }
+
+    //todo: move to Sprite.Data ?
+    getOffsetZ(spr: Sprite){
+        return 0
+    }
+
+    drawSprite(spr: Sprite, index: number) {
         // screen.print([spr.image.width].join(), 0, index*10)
-        const spriteX = spr.xFx8 - this.xFpx
-        const spriteY = spr.yFx8 - this.yFpx
+        const spriteX = this.getxFx8(spr) - this.xFpx
+        const spriteY = this.getyFx8(spr) - this.yFpx
         const transformX = this.invDet * (this.dirYFpx * spriteX - this.dirXFpx * spriteY) >> fpx;
         const transformY = this.invDet * (-this.planeY * spriteX + this.planeX * spriteY) >> fpx; //this is actually the depth inside the screen, that what Z is in 3D
         const spriteScreenX = Math.ceil((screen.width / 2) * (1 - transformX / transformY));
-        const spriteScreenHalfWidth = Math.idiv(spr._radiusRate * this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
+        const spriteScreenHalfWidth = Math.idiv((spr._sx as any as number)/2 * this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
 
         //calculate drawing range in X direction
         //assume there is one range only
@@ -304,28 +318,27 @@ class State {
             } else if (blitWidth > 0)
                 break
         }
-        // screen.print([spr.xFx8, spr.yFx8].join(), 0,index*10+10)
+        // screen.print([this.getxFx8(spr), this.getyFx8(spr)].join(), 0,index*10+10)
         if (blitWidth == 0)
             return
         const lineHeight = Math.idiv(this.wallHeightInView, transformY) | 1
-        const drawStart = (screen.height >> 1) + (lineHeight * (spr._offsetY + (fpx_scale >> 1) - spr._heightRate) >> fpx)
+        const drawStart = (screen.height >> 1) + (lineHeight * (this.getOffsetZ(spr) + (fpx_scale >> 1) - (spr._sy as any as number)) >> fpx)
         const myAngle = Math.atan2(spriteX, spriteY)
 
-        
         //for CharacterAnimation ext.
         if (character.setCharacterState){
-            const iTexture=Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2 - .25) * 4 + .5) % 4
+            const iTexture = Math.floor(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25) * 4 + .5) % 4
             const characterAniDirs = [Predicate.MovingLeft,Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
             character.setCharacterState(spr, character.rule(characterAniDirs[iTexture]))
         }
         // const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
-        const texSpr = spr.texture
+        const texSpr = spr.image
         helpers.imageBlit(
             screen,
             blitX,
             drawStart,
             blitWidth,
-            lineHeight * spr._heightRate >> fpx,
+            lineHeight * spr.sy,
             texSpr,
             (blitX - (spriteScreenX - spriteScreenHalfWidth)) * texSpr.width / spriteScreenHalfWidth / 2
             ,
