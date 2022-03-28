@@ -25,6 +25,8 @@ enum ViewMode{
 }
 class State {
     _viewMode:ViewMode
+    spriteOffsetZ: number[]=[]
+
     xFpx: number
     yFpx: number
     map: tiles.TileMapData
@@ -80,6 +82,10 @@ class State {
             game.currentScene().background.image = this.bg
         }
 
+    }
+
+    setOffsetZ(v:number, spr:Sprite){
+        this.spriteOffsetZ[spr.id]= tofpx(v)
     }
 
     constructor(x: number, y: number, fov: number) {
@@ -305,7 +311,7 @@ class State {
 
     //todo: move to Sprite.Data ?
     getOffsetZ(spr: Sprite){
-        return 0
+        return this.spriteOffsetZ[spr.id]||0
     }
 
     drawSprite(spr: Sprite, index: number) {
