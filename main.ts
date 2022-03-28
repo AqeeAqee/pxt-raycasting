@@ -151,19 +151,35 @@ tiles.setCurrentTilemap(map)
 // tiles.setCurrentTilemap(tiles.tilemap`level1`)
 let tilemapScale = 1<<game.currentScene().tileMap.scale
 
-function createSprite(x: number, y: number, vx: number, vy: number, kind: number, texture: Image) {
-    const spr= sprites.create(texture, kind)
+const characterAniDirs = [Predicate.MovingLeft, Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
+function setCharacterAnimationForSprite(spr:Sprite, textures:Image[][]){
+    characterAniDirs.forEach((dir, i) => {
+        character.loopFrames(spr, textures[Math.floor(i*textures.length/characterAniDirs.length)],150,character.rule(dir))
+    })
+}
+
+function createSprite(x: number, y: number, vx: number, vy: number, kind: number, textures: Image[][]) {
+    const spr= sprites.create(textures[0][0], kind)
     const tilemapScale = 1 << game.currentScene().tileMap.scale
     spr.setPosition(x * tilemapScale, y * tilemapScale)
     spr.setVelocity(vx, vy)
     spr.setBounceOnWall(true)
     spr.setScale(0.5)
+    setCharacterAnimationForSprite(spr, textures)
 
     return spr
 }
 
-let sprHero = createSprite(10, 8, 0, 11, SpriteKind.Friend, trans16)
-let sprPriness = createSprite(10, 7, 0, 11, SpriteKind.Friend, trans16)
+let sprPriness2 = createSprite(11, 8, 0, 11, SpriteKind.Friend, texturesPrincess2)
+let sprSkelly = createSprite(11, 7, 0, 11, SpriteKind.Friend, texturesSkelly)
+let sprHero = createSprite(10, 8, 0, 11, SpriteKind.Friend, texturesHero)
+let sprPriness = createSprite(10, 7, 0, 11, SpriteKind.Friend, texturesPrincess)
+createSprite(5, 7, 0, 11, SpriteKind.Friend, texturesCoin)
+createSprite(9, 7, 0, 11, SpriteKind.Friend, texturesPlane)
+createSprite(8, 7, 0, 11, SpriteKind.Friend, texturesDuck)
+createSprite(7, 7, 0, 11, SpriteKind.Friend, texturesFish)
+createSprite(6, 7, 0, 11, SpriteKind.Friend, texturesDonut)
+createSprite(4, 7, 0, 11, SpriteKind.Friend, texturesBigCake)
 
 const st = new State(8 * tilemapScale, 8 * tilemapScale, defaultFov)
 
@@ -184,13 +200,8 @@ sprites.onOverlap(SpriteKind.Friend, SpriteKind.Food, function (sprite, otherSpr
     otherSprite.destroy()
 })
 sprites.onOverlap(SpriteKind.Friend, SpriteKind.Friend, function (sprite, otherSprite) {
-    // music.smallCrash.play()
-    if (sprite != sprHero && otherSprite != sprHero) {
-        return
-    }
-    if (otherSprite == sprHero) {
-        otherSprite = sprite
-    }
+    sprite.setVelocity(-sprite.vx, -sprite.vy)
+    otherSprite.setVelocity(-otherSprite.vx, -otherSprite.vy)
     // otherSprite.follow(sprHero, 5, 110)
 })
 
@@ -212,8 +223,8 @@ controller.B.onEvent(ControllerButtonEvent.Released, () => {
 })
 
 //ani
+if(0)
 {
-
     character.loopFrames(
         sprHero,
         [img`
@@ -812,28 +823,5 @@ controller.B.onEvent(ControllerButtonEvent.Released, () => {
         150,
         character.rule(Predicate.MovingUp)
     )
-    // forever(function () {
-    //     if (controller.A.isPressed()) {
-    //         if (controller.left.isPressed()) {
-    //             character.setCharacterState(sprHero, character.rule(Predicate.MovingLeft))
-    //         } else if (controller.up.isPressed()) {
-    //             character.setCharacterState(sprHero, character.rule(Predicate.MovingUp))
-    //         } else if (controller.right.isPressed()) {
-    //             character.setCharacterState(sprHero, character.rule(Predicate.MovingRight))
-    //         } else if (controller.down.isPressed()) {
-    //             character.setCharacterState(sprHero, character.rule(Predicate.MovingDown))
-    //         }
-    //     } else {
-    //         if (controller.left.isPressed()) {
-    //             character.setCharacterState(sprHero, character.rule(Predicate.MovingLeft))
-    //         } else if (controller.up.isPressed()) {
-    //             character.setCharacterState(sprHero, character.rule(Predicate.MovingUp))
-    //         } else if (controller.right.isPressed()) {
-    //             character.setCharacterState(sprHero, character.rule(Predicate.MovingRight))
-    //         } else if (controller.down.isPressed()) {
-    //             character.setCharacterState(sprHero, character.rule(Predicate.MovingDown))
-    //         }
-    //     }
-    // })
 
 }
