@@ -8,13 +8,23 @@ function tofpx(n: number) {
     return (n * fpx_scale) | 0
 }
 
-// class MyRenderable extends scene.Renderable{
-//     constructor(){
-//         super((target, camera) => {}, ()=>true, -1)
-//     }
-// }
+function setSpriteDefaultScale(kind: number, defaultSpirteScale: number = 0.5){
+    defaultSpirteScale = defaultSpirteScale || 0.5
+    game.currentScene().allSprites.forEach(spr => {
+        if (spr instanceof Sprite)
+            (spr as Sprite).setScale(defaultSpirteScale)
+    })
+    game.currentScene().createdHandlers.push(new scene.SpriteHandler(SpriteKind.Friend, spr => {
+        spr.setScale(defaultSpirteScale)
+    }))
+}
 
+enum ViewMode{
+    tilemapView,
+    raycastingView,
+}
 class State {
+    _viewMode:ViewMode
     xFpx: number
     yFpx: number
     map: tiles.TileMapData
@@ -28,8 +38,8 @@ class State {
     wallHeightInView: number
     wallWidthInView: number
     dist: number[] = []
-    sprSelf: XYZAniSprite
-    tilemapScaleSize = 16
+    sprSelf: RCSprite
+    tilemapScaleSize = 1<<TileScale.Sixteen
     bg: Image
     //for drawing sprites
     invDet: number //required for correct matrix multiplication
@@ -52,10 +62,30 @@ class State {
         return this.dirYFpx / fpx_scale
     }
 
+    get viewMode():ViewMode{
+        return this._viewMode
+    }
+
+    set viewMode(v:ViewMode){
+        this._viewMode=v
+        if(v==ViewMode.tilemapView){
+            // game.currentScene().allSprites.removeElement(this.myRender)
+            game.currentScene().allSprites.push(this.oldRender)
+            this.bg = game.currentScene().background.image
+            scene.setBackgroundImage(img`15`) //todo, add bgTilemap property for tilemap mode
+        }
+        else{
+            game.currentScene().allSprites.removeElement(this.oldRender)
+            // game.currentScene().allSprites.push(this.myRender)
+            game.currentScene().background.image = this.bg
+        }
+
+    }
+
     constructor(x: number, y: number, fov: number) {
         this.angle = 0
-        this.xFpx = tofpx(x)
-        this.yFpx = tofpx(y)
+        this.xFpx = tofpx(x)/this.tilemapScaleSize
+        this.yFpx = tofpx(y)/this.tilemapScaleSize
 
         this.setFov(fov)
         this.map = game.currentScene().tileMap.data
@@ -65,15 +95,20 @@ class State {
             this.tilemapScaleSize = 1 << game.currentScene().tileMap.scale
             this.oldRender = game.currentScene().tileMap.renderable
             game.currentScene().allSprites.removeElement(this.oldRender)
-            // game.currentScene().tileMap.renderable =
-            this.myRender = scene.createRenderable(
-                scene.TILE_MAP_Z,
-                (t, c) => this.trace(t, c)
-            )
+
+            game.eventContext().registerFrameHandler(scene.RENDER_SPRITES_PRIORITY+1, ()=>{
+                screen.drawImage(game.currentScene().background.image,0,0)
+                if(this._viewMode!=ViewMode.tilemapView)
+                    this.trace()
+                })
+            // this.myRender = scene.createRenderable(
+            //     scene.TILE_MAP_Z,
+            //     (t, c) => this.trace(t, c)
+            // )
         }
 
         //self sprite
-        this.sprSelf = new XYZAniSprite(x, y, 0, 0, SpriteKind.Player, image.create(wallSize >> 1, wallSize >> 1))
+        this.sprSelf = new RCSprite(x, y, 0, 0, SpriteKind.Player, image.create(wallSize >> 1, wallSize >> 1))
         scene.cameraFollowSprite(this.sprSelf)
         this.updateSelfImage()
 
@@ -81,25 +116,6 @@ class State {
             this.updateControls()
         })
 
-        controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
-            game.currentScene().allSprites.removeElement(this.myRender)
-            game.currentScene().allSprites.push(this.oldRender)
-            this.bg = game.currentScene().background.image
-            scene.setBackgroundImage(img`15`)
-
-        })
-        controller.B.onEvent(ControllerButtonEvent.Released, () => {
-            game.currentScene().allSprites.removeElement(this.oldRender)
-            game.currentScene().allSprites.push(this.myRender)
-            game.currentScene().background.image = this.bg
-
-        })
-    }
-
-    render(target: Image, camera: scene.Camera) {
-
-        //if(controller.B.isPressed())
-        // this.__
     }
 
     setFov(fov: number) {
@@ -126,24 +142,18 @@ class State {
             this.map.getTile((x - radiusRate) >> fpx, (y - radiusRate) >> fpx) == 0
     }
 
-    // public canGoSpriteX(spr: XYZAniSprite) {
-    //     return this.canGo(spr.x + spr.vx / 33 + (spr.vx > 0 ? spr._radiusRate : -spr._radiusRate), spr.y + spr.vy / 33)
-    // }
-
-    // public canGoSpriteY(spr: XYZAniSprite) {
-    //     return this.canGo(spr.x + spr.vx / 33, spr.y + spr.vy / 33 + (spr.vy > 0 ? spr._radiusRate : -spr._radiusRate))
-    // }
-
+    //todo, pre-drawn dirctional image
     public updateSelfImage() {
         const img = this.sprSelf.image
-        img.fill(2)
+        img.fill(6)
         const arrowLength = img.width / 2
-        img.drawLine(arrowLength, arrowLength, arrowLength + this.dirXFpx * arrowLength, arrowLength + this.dirYFpx * arrowLength, 5)
-        img.setPixel(2, 2, 2)
+        img.drawLine(arrowLength, arrowLength, arrowLength + this.dirXFpx * arrowLength, arrowLength + this.dirYFpx * arrowLength, 2)
+        img.drawLine(arrowLength+1, arrowLength, arrowLength + this.dirXFpx * arrowLength+1, arrowLength + this.dirYFpx * arrowLength, 2)
+        img.drawLine(arrowLength, arrowLength+1, arrowLength + this.dirXFpx * arrowLength, arrowLength + this.dirYFpx * arrowLength+1, 2)
+        img.fillRect(arrowLength-2,arrowLength-2,4,4,2)
     }
 
     updateControls() {
-
         const dx = controller.dx(2)
         if (dx) {
             this.angle += dx
@@ -170,7 +180,7 @@ class State {
         //    console.log(`${this.xFpx},${this.yFpx},${this.angle}`)
     }
 
-    trace(target: Image, camera: scene.Camera) {
+    trace() {
         // based on https://lodev.org/cgtutor/raycasting.html
         const w = screen.width
         const h = screen.height

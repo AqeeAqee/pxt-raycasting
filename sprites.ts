@@ -3,15 +3,14 @@ let EmptyImage = img`
         .
     `
 
-class XYZAniSprite extends Sprite {
-    tilemapScale = 16  //todo, update when tilemap changed
+class RCSprite extends Sprite {
     constructor(x: number, y: number, vx: number, vy: number, kind: number, texture: Image) {
         super(texture)
-        const sc = game.currentScene()
 
-        this.tilemapScale = 1 << game.currentScene().tileMap.scale
-        this.setPosition(x * this.tilemapScale, y * this.tilemapScale)
+        const sc = game.currentScene()
+        this.setPosition(x , y)
         this.setVelocity(vx, vy)
+        this.setScale(0.5)
 
         //as sprites.create() does:
         this.setKind(kind)
@@ -22,6 +21,7 @@ class XYZAniSprite extends Sprite {
             .forEach(h => h.handler(this));
     }
 
+    //todo: add toggle
     __drawCore(camera: scene.Camera) { if (controller.B.isPressed()) super.__drawCore(camera) }
 
 }

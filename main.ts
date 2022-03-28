@@ -22,12 +22,7 @@ namespace SpriteKind {
     export const Friend = SpriteKind.create()
 }
 
-game.currentScene().createdHandlers.push(new scene.SpriteHandler(SpriteKind.Friend, spr=>{
-    spr.setScale(0.5)
-}))
-
 let ms = 0
-let TileMapMode = true
 game.stats = true
 scene.setBackgroundImage(img`
     ................................................................................................................................................................
@@ -154,6 +149,7 @@ scene.setBackgroundImage(img`
 
 tiles.setCurrentTilemap(map)
 // tiles.setCurrentTilemap(tiles.tilemap`level1`)
+let tilemapScale = 1<<game.currentScene().tileMap.scale
 
 function createSprite(x: number, y: number, vx: number, vy: number, kind: number, texture: Image) {
     const spr= sprites.create(texture, kind)
@@ -161,6 +157,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, kind: number
     spr.setPosition(x * tilemapScale, y * tilemapScale)
     spr.setVelocity(vx, vy)
     spr.setBounceOnWall(true)
+    spr.setScale(0.5)
 
     return spr
 }
@@ -168,7 +165,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, kind: number
 let sprHero = createSprite(10, 8, 0, 11, SpriteKind.Friend, trans16)
 let sprPriness = createSprite(10, 7, 0, 11, SpriteKind.Friend, trans16)
 
-const st = new State(8, 6, defaultFov)
+const st = new State(8 * tilemapScale, 8 * tilemapScale, defaultFov)
 
 controller.A.onEvent(ControllerButtonEvent.Pressed,()=>{
     music.baDing.play()
@@ -204,6 +201,14 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSpr
 })
 scene.onHitWall(SpriteKind.Projectile, function (sprite, location) {
     sprite.destroy()
+})
+
+controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
+    st.viewMode = ViewMode.tilemapView
+})
+
+controller.B.onEvent(ControllerButtonEvent.Released, () => {
+    st.viewMode = ViewMode.raycastingView
 })
 
 //ani
