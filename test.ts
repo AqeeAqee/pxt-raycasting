@@ -22,10 +22,6 @@ tiles.setCurrentTilemap(map)
 const tilemapScale = 1 << game.currentScene().tileMap.scale
 const st = new State(8 * tilemapScale, 8 * tilemapScale)
 
-namespace SpriteKind {
-    export const Friend = SpriteKind.create()
-}
-
 scene.setBackgroundImage(img`
     ................................................................................................................................................................
     ................................................................................................................................................................
@@ -173,16 +169,21 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     return spr
 }
 
-let sprPriness2 = createSprite(11, 8, 0, 11, texturesPrincess2, SpriteKind.Friend)
-let sprSkelly = createSprite(11, 7, 0, 11, texturesSkelly, SpriteKind.Friend)
-let sprHero = createSprite(10, 8, 0, 11, texturesHero, SpriteKind.Friend)
-let sprPriness = createSprite(10, 7, 0, 11, texturesPrincess, SpriteKind.Friend)
-createSprite(5, 7, 0, 11, texturesDog, SpriteKind.Friend)
-createSprite(9, 7, 0, 11, texturesPlane, SpriteKind.Friend)
-createSprite(8, 7, 0, 11, texturesDuck, SpriteKind.Friend)
-createSprite(6, 7, 0, 11, texturesDonut, SpriteKind.Friend)
-createSprite(4, 7, 0, 11, texturesBigCake, SpriteKind.Friend)
-let fish = createSprite(7, 7, 0, 11, texturesFish, SpriteKind.Friend)
+// 0<= dir <1, then may be added by 2 for avoid negative
+st.registerOnSpriteDirectionUpdate((spr, dir)=>{
+    character.setCharacterState(spr, character.rule(characterAniDirs[Math.floor(dir * 4 + .5) % 4]))
+})
+
+let sprPriness2 = createSprite(11, 8, 0, 11, texturesPrincess2, SpriteKind.Enemy)
+let sprSkelly = createSprite(11, 7, 0, 11, texturesSkelly, SpriteKind.Enemy)
+let sprHero = createSprite(10, 8, 0, 11, texturesHero, SpriteKind.Enemy)
+let sprPriness = createSprite(10, 7, 0, 11, texturesPrincess, SpriteKind.Enemy)
+createSprite(5, 7, 0, 11, texturesDog, SpriteKind.Enemy)
+createSprite(9, 7, 0, 11, texturesPlane, SpriteKind.Enemy)
+createSprite(8, 7, 0, 11, texturesDuck, SpriteKind.Enemy)
+createSprite(6, 7, 0, 11, texturesDonut, SpriteKind.Enemy)
+createSprite(4, 7, 0, 11, texturesBigCake, SpriteKind.Enemy)
+let fish = createSprite(7, 7, 0, 11, texturesFish, SpriteKind.Enemy)
 st.setOffsetZ(-.25, fish)
 
 for(let i=0;i<10;i++){
@@ -199,23 +200,23 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     st.setOffsetZ(-.25, s)
 })
 
-sprites.onOverlap(SpriteKind.Friend, SpriteKind.Projectile, function (sprite, otherSprite) {
+sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
     music.knock.play()
     info.changeScoreBy(1)
     sprite.destroy()
     otherSprite.destroy()
     st.sprSelf.setPosition(sprite.x,sprite.y)
 })
-sprites.onOverlap(SpriteKind.Friend, SpriteKind.Food, function (sprite, otherSprite) {
+sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Food, function (sprite, otherSprite) {
     music.pewPew.play()
     otherSprite.destroy()
 })
-sprites.onOverlap(SpriteKind.Friend, SpriteKind.Friend, function (sprite, otherSprite) {
+sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Enemy, function (sprite, otherSprite) {
     otherSprite.setVelocity(otherSprite.x - sprite.x, otherSprite.y - sprite.y)
     sprite.setVelocity(-(otherSprite.x - sprite.x), -(otherSprite.y - sprite.y))
 })
 
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Friend, function (sprite, otherSprite) {
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
     otherSprite.setVelocity(otherSprite.x-sprite.x, otherSprite.y-sprite.y)
     // otherSprite.setPosition(otherSprite.x + otherSprite.vx / Math.abs(otherSprite.vx) / 2, otherSprite.y + otherSprite.vy / Math.abs(otherSprite.vy) / 2)
 })

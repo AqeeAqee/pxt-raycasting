@@ -13,16 +13,6 @@ function tofpx(n: number) {
     return (n * fpx_scale) | 0
 }
 
-function setSpriteDefaultScale(kind: number, defaultSpirteScale: number = 0.5){
-    defaultSpirteScale = defaultSpirteScale || 0.5
-    game.currentScene().allSprites.forEach(spr => {
-        if (spr instanceof Sprite)
-            (spr as Sprite).setScale(defaultSpirteScale)
-    })
-    game.currentScene().createdHandlers.push(new scene.SpriteHandler(SpriteKind.Friend, spr => {
-        spr.setScale(defaultSpirteScale)
-    }))
-}
 class State {
     _viewMode:ViewMode
     dirXFpx: number
@@ -368,6 +358,11 @@ class State {
             })
     }
 
+    onSpriteDirectionUpdateHandler: (spr:Sprite, dir:number)=>void
+
+    registerOnSpriteDirectionUpdate(handler: (spr: Sprite, dir: number) => void){
+        this.onSpriteDirectionUpdateHandler=handler
+    }
     drawSprite(spr: Sprite, index: number) {
         // screen.print([spr.image.width].join(), 0, index*10)
         const spriteX = this.sprXFx8(spr) - this.xFpx
@@ -395,13 +390,15 @@ class State {
         const drawStart = (screen.height >> 1) + (lineHeight * (this.getOffsetZ(spr) + (fpx_scale >> 1) - (spr._height as any as number)/this.tilemapScaleSize) >> fpx)
         const myAngle = Math.atan2(spriteX, spriteY)
 
-        //for CharacterAnimation ext.
-        if (character.setCharacterState){
-            const iTexture = Math.floor(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25) * 4 + .5) % 4
-            const characterAniDirs = [Predicate.MovingLeft,Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
-            character.setCharacterState(spr, character.rule(characterAniDirs[iTexture]))
-        }
+        //for textures=image[][]
         // const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
+        //for deal in user code
+        if(this.onSpriteDirectionUpdateHandler)
+            this.onSpriteDirectionUpdateHandler(spr, ((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
+        //for CharacterAnimation ext.
+        //     const iTexture = Math.floor(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25) * 4 + .5) % 4
+        //     const characterAniDirs = [Predicate.MovingLeft,Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
+        //     character.setCharacterState(spr, character.rule(characterAniDirs[iTexture]))
         const texSpr = spr.image
         helpers.imageBlit(
             screen,
