@@ -10,9 +10,7 @@
         "README.md",
         "engine_raycasting.ts",
         "animations.ts",
-        "mimimap.ts",
-        "main.ts",
-        "sprites.ts"
+        "main.ts"
     ],
     "testFiles": [
         "test.ts"
