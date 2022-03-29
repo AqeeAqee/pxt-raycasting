@@ -27,8 +27,8 @@ class State {
     _viewMode:ViewMode
     spriteOffsetZ: number[]=[]
 
-    xFpx: number
-    yFpx: number
+    // xFpx: number
+    // yFpx: number
     map: tiles.TileMapData
     dirXFpx: number
     dirYFpx: number
@@ -36,24 +36,45 @@ class State {
     planeY: number
     angle: number
     fov: number
-    textures: Image[]
-    wallHeightInView: number
-    wallWidthInView: number
-    dist: number[] = []
-    sprSelf: RCSprite
+
+    //reference
     tilemapScaleSize = 1<<TileScale.Sixteen
     bg: Image
-    //for drawing sprites
-    invDet: number //required for correct matrix multiplication
+    textures: Image[]
+    sprSelf: RCSprite
+    sprites:Sprite[]=[]
     oldRender: scene.Renderable
     myRender: scene.Renderable
 
-    get x(): number {
-        return this.xFpx / fpx_scale
+    //render
+    wallHeightInView: number
+    wallWidthInView: number
+    dist: number[] = []
+    //for drawing sprites
+    invDet: number //required for correct matrix multiplication
+ 
+    // get x(): number {
+    //     return this.xFpx / fpx_scale
+    // }
+
+    // get y(): number {
+    //     return this.yFpx / fpx_scale
+    // }
+
+    get xFpx(): number {
+        return this.sprSelf._x as any as number / this.tilemapScaleSize
     }
 
-    get y(): number {
-        return this.yFpx / fpx_scale
+    set xFpx(v:number) {
+        this.sprSelf._x= v* this.tilemapScaleSize as any as Fx8
+    }
+
+    get yFpx(): number {
+        return this.sprSelf._y as any as number / this.tilemapScaleSize
+    }
+
+    set yFpx(v:number) {
+        this.sprSelf._y= v* this.tilemapScaleSize as any as Fx8
     }
 
     get dirX(): number {
@@ -69,17 +90,22 @@ class State {
     }
 
     set viewMode(v:ViewMode){
+        const sc = game.currentScene()
         this._viewMode=v
         if(v==ViewMode.tilemapView){
             // game.currentScene().allSprites.removeElement(this.myRender)
-            game.currentScene().allSprites.push(this.oldRender)
+            sc.allSprites.push(this.oldRender)
             this.bg = game.currentScene().background.image
             scene.setBackgroundImage(img`15`) //todo, add bgTilemap property for tilemap mode
+            this.sprites.forEach(spr=>{
+                sc.allSprites.push(spr)
+            })
         }
         else{
             game.currentScene().allSprites.removeElement(this.oldRender)
             // game.currentScene().allSprites.push(this.myRender)
             game.currentScene().background.image = this.bg
+            this.removeSceneSprites()
         }
 
     }
@@ -88,29 +114,64 @@ class State {
         this.spriteOffsetZ[spr.id]= tofpx(v)
     }
 
+    removeSceneSprites(){
+        const sc = game.currentScene()
+        sc.allSprites.forEach(spr => {
+            if (spr instanceof Sprite) {
+                if (this.sprites.indexOf(spr) < 0)
+                    this.sprites.push(spr as Sprite)
+                sc.allSprites.removeElement(spr)
+                spr.onDestroyed(()=>this.sprites.removeElement(spr))
+            }
+        })
+        // sc.allSprites = []
+    }
+
+    updatedTilemap(){
+        const sc = game.currentScene()
+        this.map = sc.tileMap.data
+        this.textures = sc.tileMap.data.getTileset()
+        this.tilemapScaleSize = 1 << sc.tileMap.scale
+        this.oldRender = sc.tileMap.renderable
+        sc.allSprites.removeElement(this.oldRender)
+        this.removeSceneSprites()
+
+        sc.eventContext.registerFrameHandler(scene.PRE_RENDER_UPDATE_PRIORITY, () => {
+            const dt = sc.eventContext.deltaTime;
+            // already did in scene
+            // sc.camera.update();
+
+            for (const s of this.sprites)
+                s.__update(sc.camera, dt);
+        })
+
+        sc.eventContext.registerFrameHandler(scene.RENDER_SPRITES_PRIORITY + 1, () => {
+            screen.drawImage(game.currentScene().background.image, 0, 0)
+            if (this._viewMode != ViewMode.tilemapView){
+                this.removeSceneSprites()
+                this.render()
+                //draw hud
+                game.currentScene().allSprites.forEach(spr => spr.__draw(game.currentScene().camera))
+            }
+        })
+        // this.myRender = scene.createRenderable(
+        //     scene.TILE_MAP_Z,
+        //     (t, c) => this.trace(t, c)
+        // )
+
+    }
+
     constructor(x: number, y: number, fov: number) {
         this.angle = 0
-        this.xFpx = tofpx(x)/this.tilemapScaleSize
-        this.yFpx = tofpx(y)/this.tilemapScaleSize
+        // this.xFpx = tofpx(x)/this.tilemapScaleSize
+        // this.yFpx = tofpx(y)/this.tilemapScaleSize
 
         this.setFov(fov)
-        this.map = game.currentScene().tileMap.data
-        this.textures = game.currentScene().tileMap.data.getTileset()
 
         if (game.currentScene().tileMap) {
-            this.tilemapScaleSize = 1 << game.currentScene().tileMap.scale
-            this.oldRender = game.currentScene().tileMap.renderable
-            game.currentScene().allSprites.removeElement(this.oldRender)
-
-            game.eventContext().registerFrameHandler(scene.RENDER_SPRITES_PRIORITY+1, ()=>{
-                screen.drawImage(game.currentScene().background.image,0,0)
-                if(this._viewMode!=ViewMode.tilemapView)
-                    this.trace()
-                })
-            // this.myRender = scene.createRenderable(
-            //     scene.TILE_MAP_Z,
-            //     (t, c) => this.trace(t, c)
-            // )
+            const sc = game.currentScene()
+            this.updatedTilemap()
+            game.currentScene().tileMap.addEventListener(tiles.TileMapEvent.Loaded, data=> this.updatedTilemap())
         }
 
         //self sprite
@@ -141,11 +202,11 @@ class State {
     }
 
     public canGo(x: number, y: number) {
-        const radiusRate = this.sprSelf._sx as any as number /2
-        return this.map.getTile((x + radiusRate) >> fpx, (y + radiusRate) >> fpx) == 0 &&
-            this.map.getTile((x + radiusRate) >> fpx, (y - radiusRate) >> fpx) == 0 &&
-            this.map.getTile((x - radiusRate) >> fpx, (y + radiusRate) >> fpx) == 0 &&
-            this.map.getTile((x - radiusRate) >> fpx, (y - radiusRate) >> fpx) == 0
+        const radius = this.sprSelf._sx as any as number /2
+        return this.map.getTile((x + radius) >> fpx, (y + radius) >> fpx) == 0 &&
+            this.map.getTile((x + radius) >> fpx, (y - radius) >> fpx) == 0 &&
+            this.map.getTile((x - radius) >> fpx, (y + radius) >> fpx) == 0 &&
+            this.map.getTile((x - radius) >> fpx, (y - radius) >> fpx) == 0
     }
 
     //todo, pre-drawn dirctional image
@@ -180,13 +241,13 @@ class State {
                 this.xFpx = nx
                 this.yFpx = ny
             }
-            this.sprSelf.setPosition((nx * this.tilemapScaleSize >> fpx) + this.tilemapScaleSize * 0, (ny * this.tilemapScaleSize >> fpx) + this.tilemapScaleSize * 0)
+            // this.sprSelf.setPosition((nx * this.tilemapScaleSize/fpx_scale) + this.tilemapScaleSize * 0, (ny * this.tilemapScaleSize /fpx_scale) + this.tilemapScaleSize * 0)
         }
         //if (dx || dy)
         //    console.log(`${this.xFpx},${this.yFpx},${this.angle}`)
     }
 
-    trace() {
+    render() {
         // based on https://lodev.org/cgtutor/raycasting.html
         const w = screen.width
         const h = screen.height
@@ -289,7 +350,8 @@ class State {
 
         // game.splash("begin")
 
-        game.currentScene().allSprites.map((spr) => (spr as Sprite))
+        // game.currentScene().allSprites.map((spr) => (spr as Sprite))
+        this.sprites
             //add selfSprite
             .filter((spr, i) => { // transformY>0
                 // game.splash(spr instanceof XYZAniSprite)
@@ -297,7 +359,10 @@ class State {
             }).sort((spr1, spr2) => {   // far to near
                 return ((this.getxFx8(spr2) - this.xFpx) ** 2 + (this.getyFx8(spr2) - this.yFpx) ** 2) - ((this.getxFx8(spr1) - this.xFpx) ** 2 + (this.getyFx8(spr1) - this.yFpx) ** 2)
             }).forEach((spr, index) => {
-                this.drawSprite(spr, index)
+                if (spr.flags & sprites.Flag.Destroyed)
+                    this.sprites.removeElement(spr)
+                else
+                    this.drawSprite(spr, index)
             })
     }
 
