@@ -1,13 +1,172 @@
 //based on mmoskal's "3d map", https://forum.makecode.com/t/3d-raycasting-in-arcade/474
 enum ViewMode {
+    //% block="TileMap Mode"
     tilemapView,
+    //% block="Raycasting Mode"
     raycastingView,
 }
 
+/**
+ * A 2.5D Screen Render, using Raycasting algorithm
+ **/
+//% color=#8854d0 weight=1 icon="\uf279" //cube f1b2
+//% groups='["Basic", "Advanced"]'
 namespace Render {
     const fpx = 8
     const fpx_scale = 2 ** fpx
     function tofpx(n: number) {return (n * fpx_scale) | 0}
+
+    export enum attribute{
+        dirX,
+        dirY,
+        fov,
+    }
+
+    /**
+     * Get the Render
+     * @param img the image
+     */
+    //% group="Create"
+    //% blockId=rcRender_getRCRenderInstance block="raycasting render"
+    //% expandableArgumentMode=toggle
+    //% weight=100 
+    //% hidden=1
+    export function getRCRenderInstance(): RayCastingRender {
+        return raycastingRender
+    }
+
+    /**
+     * Get the render Sprite
+     * @param img the image
+     */
+    //% group="Create"
+    //% blockId=rcRender_getRenderSpriteInstance block="render sprite"
+    //% expandableArgumentMode=toggle
+    //% weight=99
+    export function getRenderSpriteInstance(): Sprite {
+        return raycastingRender.sprSelf
+    }
+
+    /**
+     * Get default FOV (field of view) value
+     * @param viewMode
+     */
+    //% group="Basic"
+    //% block="defaultFov"
+    //% blockId=rcRender_getDefaultFov
+    export function getDefaultFov(): number {
+        return defaultFov
+    }
+
+    /**
+     * Get render arribute
+     * @param viewMode
+     */
+    //% group="Basic"
+    //% block="get %attribute" 
+    //% blockId=rcRender_getAttribute
+    export function getAttribute(attr: attribute): number {
+        switch (attr) {
+            case attribute.dirX:
+                return raycastingRender.dirX
+            case attribute.dirY:
+                return raycastingRender.dirY
+            case attribute.fov:
+                return raycastingRender.fov
+            default:
+                return 0
+        }
+    }
+
+    /**
+     * Set render arribute
+     * @param viewMode
+     */
+    //% group="Basic"
+    //% block="Set %attribute = %value" 
+    //% blockId=rcRender_SetAttribute
+    export function SetAttribute(attr: attribute, value:number) {
+        switch (attr) {
+            case attribute.dirX:
+                 raycastingRender.dirX=value
+            case attribute.dirY:
+                 raycastingRender.dirY=value
+            case attribute.fov:
+                 raycastingRender.fov=value
+            default:
+        }
+    }
+
+    /**
+     * View mode
+     * @param viewMode
+     */
+    //% blockId=rcRender_ViewMode block="$viewMode"
+    //% group="Basic"
+    //% weight=100
+    export function viewMode(viewMode:ViewMode): ViewMode {
+        return viewMode
+    }
+
+    /**
+     * Get view mode
+     * @param viewMode
+     */
+    //% blockId=rcRender_getViewMode block="get view mode"
+    //% group="Basic"
+    //% weight=100
+    export function getViewMode(): ViewMode {
+        return raycastingRender.viewMode
+    }
+
+    /**
+     * Set view mode
+     * @param viewMode
+     */
+    //% blockId=rcRender_setViewMode block="set view mode $viewMode"
+    //% group="Basic"
+    //% weight=100
+    export function setViewMode(viewMode: ViewMode) {
+        raycastingRender.viewMode = viewMode
+    }
+
+    /**
+     * Set floating rate for a sprite, offset at Z
+     * Negative floats up, affirmative goes down
+     * @param sprite
+     * @param offsetZ
+     */
+    //% blockId=rcRender_setOffsetZ block="set Sprite %spr=variables_get(mySprite) floating percentage %offsetZ"
+    //% offsetZ.min=-100 offsetZ.max=100 offsetZ.defl=-50
+    //% group="Basic"
+    //% weight=100
+    export function setOffsetZ(sprite: Sprite, offsetZ: number) {
+        raycastingRender.spriteOffsetZ[sprite.id] = tofpx(offsetZ)
+    }
+
+    /**
+     * Render takeover all sprites in current scene
+     * Render will call this automatically, but if you saw sprite draw with its tilemap position on screen, call this after create the sprite.
+     */
+    //% blockId=rcRender_takeoverSceneSprites 
+    //% block="takeover sprites in scene"
+    //% group="Advanced"
+    //% weight=100
+    export function takeoverSceneSprites() {
+        raycastingRender.takeoverSceneSprites()
+    }
+
+    /**
+     * Run on sprite dirction updated
+     */
+    //% blockId=rcRender_registerOnSpriteDirectionUpdateHandler
+    //% block="run code when sprite $spr dirction updated to $dir"
+    //% draggableParameters
+    //% group="Advanced"
+    //% weight=100
+    export function registerOnSpriteDirectionUpdateHandler(handler: (spr: Sprite, dir: number) => void) {
+        raycastingRender.registerOnSpriteDirectionUpdate(handler)
+    }
 
     export const defaultFov = screen.width / screen.height / 2  //Wall just fill screen height when standing 1 unit away
 
@@ -18,7 +177,7 @@ namespace Render {
         planeX: number
         planeY: number
         angle: number
-        fov: number
+        _fov: number
         spriteOffsetZ: number[] = []
 
         //reference
@@ -37,6 +196,8 @@ namespace Render {
         dist: number[] = []
         //for drawing sprites
         invDet: number //required for correct matrix multiplication
+
+        onSpriteDirectionUpdateHandler: (spr: Sprite, dir: number) => void
 
         get xFpx(): number {
             return Fx.add(this.sprSelf._x, Fx.div(this.sprSelf._width, Fx.twoFx8)) as any as number / this.tilemapScaleSize
@@ -62,6 +223,14 @@ namespace Render {
             return this.dirYFpx / fpx_scale
         }
 
+        set dirX(v:number) {
+            this.dirXFpx= v* fpx_scale
+        }
+
+        set dirY(v: number) {
+            this.dirYFpx=v* fpx_scale
+        }
+
         sprXFx8(spr: Sprite) {
             return Fx.add(spr._x, Fx.div(spr._width, Fx.twoFx8)) as any as number / this.tilemapScaleSize
         }
@@ -70,13 +239,25 @@ namespace Render {
             return Fx.add(spr._y, Fx.div(spr._height, Fx.twoFx8)) as any as number / this.tilemapScaleSize
         }
 
-        //todo: move to Sprite.Data ?
+        get fov():number{
+            return this.fov
+        }
+
+        set fov(fov: number) {
+            this._fov = fov
+            this.wallHeightInView = (screen.width << (fpx - 1)) / this._fov
+            this.wallWidthInView = this.wallHeightInView >> fpx // not fpx  // wallSize / this.fov * 4 / 3 * 2
+
+            this.setVectors()
+        }
+
+        
         getOffsetZ(spr: Sprite) {
             return this.spriteOffsetZ[spr.id] || 0
         }
 
-        setOffsetZ(v: number, spr: Sprite) {
-            this.spriteOffsetZ[spr.id] = tofpx(v)
+        setOffsetZ(spr: Sprite, offsetZ: number) {
+            this.spriteOffsetZ[spr.id] = tofpx(offsetZ)
         }
 
         get viewMode(): ViewMode {
@@ -155,7 +336,7 @@ namespace Render {
 
         constructor() {
             this.angle = 0
-            this.setFov(defaultFov)
+            this.fov=defaultFov
 
             const sc = game.currentScene()
             if (!sc.tileMap) {
@@ -177,21 +358,13 @@ namespace Render {
 
         }
 
-        setFov(fov: number) {
-            this.fov = fov
-            this.wallHeightInView = (screen.width << (fpx - 1)) / this.fov
-            this.wallWidthInView = this.wallHeightInView >> fpx // not fpx  // wallSize / this.fov * 4 / 3 * 2
-
-            this.setVectors()
-        }
-
         private setVectors() {
             const sin = Math.sin(this.angle)
             const cos = Math.cos(this.angle)
             this.dirXFpx = tofpx(cos)
             this.dirYFpx = tofpx(sin)
-            this.planeX = tofpx(sin * this.fov)
-            this.planeY = tofpx(cos * -this.fov)
+            this.planeX = tofpx(sin * this._fov)
+            this.planeY = tofpx(cos * -this._fov)
         }
 
         public canGo(x: number, y: number) {
@@ -350,8 +523,6 @@ namespace Render {
                 })
         }
 
-        onSpriteDirectionUpdateHandler: (spr: Sprite, dir: number) => void
-
         registerOnSpriteDirectionUpdate(handler: (spr: Sprite, dir: number) => void) {
             this.onSpriteDirectionUpdateHandler = handler
         }
@@ -406,6 +577,6 @@ namespace Render {
         }
     }
 
-    export const raycastingRender = new RayCastingRender()
-
+    //%fixedinstance
+    export const raycastingRender = new Render.RayCastingRender()
 }

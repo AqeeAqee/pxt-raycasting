@@ -185,12 +185,12 @@ createSprite(8, 7, 0, 11, texturesDuck, SpriteKind.Enemy)
 createSprite(6, 7, 0, 11, texturesDonut, SpriteKind.Enemy)
 createSprite(4, 7, 0, 11, texturesBigCake, SpriteKind.Enemy)
 let fish = createSprite(7, 7, 0, 11, texturesFish, SpriteKind.Enemy)
-rcRender.setOffsetZ(-.25, fish)
+rcRender.setOffsetZ(fish,-.25)
 
 for(let i=0;i<10;i++){
     let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
     tiles.placeOnRandomTile(spr, trans16)
-    rcRender.setOffsetZ(-.25, spr)
+    rcRender.setOffsetZ(spr,-.25)
 }
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
@@ -198,7 +198,7 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     music.baDing.play()
     let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
     s.setScale(0.25)
-    rcRender.setOffsetZ(-.25, s)
+    rcRender.setOffsetZ(s, -.25)
 })
 
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
@@ -234,13 +234,13 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
 
 controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
     for (let fov = Render.defaultFov; fov > Render.defaultFov - .6; fov -= .06) {
-        rcRender.setFov(fov)
+        rcRender.fov=fov
         pause(20)
     }
 })
 controller.B.onEvent(ControllerButtonEvent.Released, () => {
     for (let fov = Render.defaultFov - .6; fov <= Render.defaultFov; fov += .06) {
-        rcRender.setFov(fov)
+        rcRender.fov=fov
         pause(20)
     }
 })
