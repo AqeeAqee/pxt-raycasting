@@ -1,4 +1,5 @@
 game.stats = true
+const rcRender = Render.raycastingRender
 let trans16 = image.create(16, 16)
 let map = tiles.createTilemap(hex`1000100002020202020202020202020202020202020000000000000000000000000000020200000000000000000000000000000202000000000000000000000000000002020000000000000000000000000000020200000002020200000101010100000202000000020000000000000001000002020000000200000000000000010000020200000000000000000000000000000202000000000000000200000000000002020000000200000000000000010000020200000002000000000000000100000202000000020202020000010101000002020000000000000000000000000000020200000000000000000000000000000202020202020202020202020202020202`, img`
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
@@ -19,8 +20,6 @@ let map = tiles.createTilemap(hex`1000100002020202020202020202020202020202020000
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
 `, [trans16, sprites.castle.tileGrass2, sprites.builtin.forestTiles0], TileScale.Sixteen);
 tiles.setCurrentTilemap(map)
-const tilemapScale = 1 << game.currentScene().tileMap.scale
-const st = new State(8 * tilemapScale, 8 * tilemapScale)
 
 scene.setBackgroundImage(img`
     ................................................................................................................................................................
@@ -145,6 +144,8 @@ scene.setBackgroundImage(img`
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 `)
 
+const tilemapScale = 1 << game.currentScene().tileMap.scale
+rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
 // tiles.setCurrentTilemap(tiles.tilemap`level1`)
 
 const characterAniDirs = [Predicate.MovingLeft, Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
@@ -157,7 +158,7 @@ function setCharacterAnimationForSprite(spr: Sprite, textures: Image[][]) {
 let count = 0
 function createSprite(x: number, y: number, vx: number, vy: number, textures: Image[][], kind: number) {
     const spr = sprites.create(textures[0][0], kind)
-    st.takeoverSceneSprites()
+    rcRender.takeoverSceneSprites()
     const tilemapScale = 1 << game.currentScene().tileMap.scale
     spr.setPosition(x * tilemapScale, y * tilemapScale)
     spr.setVelocity(vx, vy)
@@ -170,7 +171,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
 }
 
 // 0<= dir <1, then may be added by 2 for avoid negative
-st.registerOnSpriteDirectionUpdate((spr, dir)=>{
+rcRender.registerOnSpriteDirectionUpdate((spr, dir)=>{
     character.setCharacterState(spr, character.rule(characterAniDirs[Math.floor(dir * 4 + .5) % 4]))
 })
 
@@ -184,20 +185,20 @@ createSprite(8, 7, 0, 11, texturesDuck, SpriteKind.Enemy)
 createSprite(6, 7, 0, 11, texturesDonut, SpriteKind.Enemy)
 createSprite(4, 7, 0, 11, texturesBigCake, SpriteKind.Enemy)
 let fish = createSprite(7, 7, 0, 11, texturesFish, SpriteKind.Enemy)
-st.setOffsetZ(-.25, fish)
+rcRender.setOffsetZ(-.25, fish)
 
 for(let i=0;i<10;i++){
     let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
     tiles.placeOnRandomTile(spr, trans16)
-    st.setOffsetZ(-.25, spr)
+    rcRender.setOffsetZ(-.25, spr)
 }
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     // game.splash(game.currentScene().allSprites.filter(spr => { return !(spr instanceof Sprite) }).map(spr => spr.z).join())
     music.baDing.play()
-    let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, st.sprSelf, st.dirX * 55, st.dirY * 55)
+    let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
     s.setScale(0.25)
-    st.setOffsetZ(-.25, s)
+    rcRender.setOffsetZ(-.25, s)
 })
 
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
@@ -205,7 +206,7 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
     info.changeScoreBy(1)
     sprite.destroy()
     otherSprite.destroy()
-    st.sprSelf.setPosition(sprite.x,sprite.y)
+    rcRender.sprSelf.setPosition(sprite.x,sprite.y)
 })
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Food, function (sprite, otherSprite) {
     music.pewPew.play()
@@ -228,18 +229,18 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSpr
 })
 
 controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
-    st.viewMode = st.viewMode==ViewMode.tilemapView? ViewMode.raycastingView: ViewMode.tilemapView
+    rcRender.viewMode = rcRender.viewMode==ViewMode.tilemapView? ViewMode.raycastingView: ViewMode.tilemapView
 })
 
 controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
-    for (let fov = defaultFov; fov > defaultFov - .6; fov -= .06) {
-        st.setFov(fov)
+    for (let fov = Render.defaultFov; fov > Render.defaultFov - .6; fov -= .06) {
+        rcRender.setFov(fov)
         pause(20)
     }
 })
 controller.B.onEvent(ControllerButtonEvent.Released, () => {
-    for (let fov = defaultFov - .6; fov <= defaultFov; fov += .06) {
-        st.setFov(fov)
+    for (let fov = Render.defaultFov - .6; fov <= Render.defaultFov; fov += .06) {
+        rcRender.setFov(fov)
         pause(20)
     }
 })
