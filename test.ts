@@ -148,12 +148,12 @@ const tilemapScale = 1 << game.currentScene().tileMap.scale
 rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
 // tiles.setCurrentTilemap(tiles.tilemap`level1`)
 
-const characterAniDirs = [Predicate.MovingLeft, Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
-function setCharacterAnimationForSprite(spr: Sprite, textures: Image[][]) {
-    characterAniDirs.forEach((dir, i) => {
-        character.loopFrames(spr, textures[Math.floor(i * textures.length / characterAniDirs.length)], 150, character.rule(dir))
-    })
-}
+// const characterAniDirs = [Predicate.MovingLeft, Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
+// function setCharacterAnimationForSprite(spr: Sprite, textures: Image[][]) {
+//     characterAniDirs.forEach((dir, i) => {
+//         character.loopFrames(spr, textures[Math.floor(i * textures.length / characterAniDirs.length)], 150, character.rule(dir))
+//     })
+// }
 
 let count = 0
 function createSprite(x: number, y: number, vx: number, vy: number, textures: Image[][], kind: number) {
@@ -164,7 +164,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     spr.setVelocity(vx, vy)
     spr.setBounceOnWall(true)
     spr.setScale(0.5)
-    setCharacterAnimationForSprite(spr, textures)
+    // setCharacterAnimationForSprite(spr, textures)
 
     // spr.lifespan=count++*1000
     return spr
@@ -172,7 +172,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
 
 // 0<= dir <1, then may be added by 2 for avoid negative
 rcRender.registerOnSpriteDirectionUpdate((spr, dir)=>{
-    character.setCharacterState(spr, character.rule(characterAniDirs[Math.floor(dir * 4 + .5) % 4]))
+    // character.setCharacterState(spr, character.rule(characterAniDirs[Math.floor(dir * 4 + .5) % 4]))
 })
 
 let sprPriness2 = createSprite(11, 8, 0, 11, texturesPrincess2, SpriteKind.Enemy)

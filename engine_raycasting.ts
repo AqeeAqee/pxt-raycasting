@@ -10,7 +10,7 @@ enum ViewMode {
  * A 2.5D Screen Render, using Raycasting algorithm
  **/
 //% color=#8854d0 weight=1 icon="\uf279" //cube f1b2
-//% groups='["Basic", "Advanced"]'
+//% groups='["Instance","Basic", "Advanced"]'
 namespace Render {
     const fpx = 8
     const fpx_scale = 2 ** fpx
@@ -22,14 +22,69 @@ namespace Render {
         fov,
     }
 
+    class Animations {
+        constructor(public frameInterval: number, public animations:Image[][]) {
+        }
+
+        msLast=0
+        index=0
+        iAnimation=0
+        getFrameByDir(dir:number):Image{
+            if(control.millis()-this.msLast>this.frameInterval){
+                this.index++
+                this.iAnimation = (dir * this.animations.length + .5) % this.animations.length
+                if(this.index>this.animations[this.iAnimation].length)
+                this.index=0
+            }
+            return this.animations[this.iAnimation][this.index]
+        }
+    }
+
+    /**
+ * Create and run an image animation on a sprite
+ * @param frames the frames to animate through
+ * @param sprite the sprite to animate on
+ * @param frameInterval the time between changes, eg: 500
+ */
+    //% blockId=set_animation
+    //% block="set $sprite=variables_get(mySprite) $animations"
+    //% animations.shadow=create_animation
+    //% group="Animate"
+    //% weight=100
+    //% help=animation/run-image-animation
+    export function setSpriteAnimations(sprite: Sprite, animations: Animations) {
+        raycastingRender.spriteAnimations[sprite.id]=animations
+    }
+
+    /**
+ * Create and run an image animation on a sprite
+ * @param frames the frames to animate through
+ * @param sprite the sprite to animate on
+ * @param frameInterval the time between changes, eg: 500
+ */
+    //% blockId=create_animation
+    //% block="interval$frameInterval=timePicker animates:$frames1=animation_editor|| $frames2=animation_editor $frames3=animation_editor $frames4=animation_editor"
+    //% inlineInputMode=inline
+    //% group="Animate"
+    //% weight=100
+    //% help=animation/run-image-animation
+    export function createAnimations(frameInterval: number, frames1: Image[], frames2?: Image[], frames3?: Image[], frames4?: Image[]):Animations {
+        const animationList = [frames1]
+        if (frames2) animationList.push(frames2)
+        if (frames3) animationList.push(frames3)
+        if (frames4) animationList.push(frames4)
+        return new Animations(frameInterval, animationList)
+    }
+
     /**
      * Get the Render
      * @param img the image
      */
-    //% group="Create"
+    //% group="Instance"
     //% blockId=rcRender_getRCRenderInstance block="raycasting render"
     //% expandableArgumentMode=toggle
     //% weight=100 
+    //% blockHidden=true
     //% hidden=1
     export function getRCRenderInstance(): RayCastingRender {
         return raycastingRender
@@ -39,7 +94,7 @@ namespace Render {
      * Get the render Sprite
      * @param img the image
      */
-    //% group="Create"
+    //% group="Instance"
     //% blockId=rcRender_getRenderSpriteInstance block="render sprite"
     //% expandableArgumentMode=toggle
     //% weight=99
@@ -179,6 +234,7 @@ namespace Render {
         angle: number
         _fov: number
         spriteOffsetZ: number[] = []
+        spriteAnimations: Animations[] = []
 
         //reference
         tilemapScaleSize = 1 << TileScale.Sixteen
@@ -475,10 +531,15 @@ namespace Render {
                         sideWallHit = true;
                     }
 
+                    if(this.map.isOutsideMap(mapX,mapY))
+                        break
                     color = this.map.getTile(mapX, mapY)
                     if (color)
                         break; // hit!
                 }
+                
+                if(this.map.isOutsideMap(mapX, mapY))
+                    continue
 
                 let perpWallDist = 0
                 let wallX = 0
@@ -515,7 +576,7 @@ namespace Render {
 
             this.sprites
                 .filter((spr, i) => { // transformY>0
-                    return (spr instanceof Sprite) && spr.kind() != SpriteKind.Player && (-this.planeY * (this.sprXFx8(spr) - this.xFpx) + this.planeX * (this.sprYFx8(spr) - this.yFpx)) > 0
+                    return (spr instanceof Sprite) && spr!= this.sprSelf && (-this.planeY * (this.sprXFx8(spr) - this.xFpx) + this.planeX * (this.sprYFx8(spr) - this.yFpx)) > 0
                 }).sort((spr1, spr2) => {   // far to near
                     return ((this.sprXFx8(spr2) - this.xFpx) ** 2 + (this.sprYFx8(spr2) - this.yFpx) ** 2) - ((this.sprXFx8(spr1) - this.xFpx) ** 2 + (this.sprYFx8(spr1) - this.yFpx) ** 2)
                 }).forEach((spr, index) => {
@@ -553,16 +614,17 @@ namespace Render {
             const drawStart = (screen.height >> 1) + (lineHeight * (this.getOffsetZ(spr) + (fpx_scale >> 1) - (spr._height as any as number) / this.tilemapScaleSize) >> fpx)
             const myAngle = Math.atan2(spriteX, spriteY)
 
+            //for this.spriteAnimations
+            const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(Math.floor(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2-.25) ))
             //for textures=image[][]
             // const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
             //for deal in user code
-            if (this.onSpriteDirectionUpdateHandler)
-                this.onSpriteDirectionUpdateHandler(spr, ((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
+            // if (this.onSpriteDirectionUpdateHandler)
+            //     this.onSpriteDirectionUpdateHandler(spr, ((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
             //for CharacterAnimation ext.
             //     const iTexture = Math.floor(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25) * 4 + .5) % 4
             //     const characterAniDirs = [Predicate.MovingLeft,Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
             //     character.setCharacterState(spr, character.rule(characterAniDirs[iTexture]))
-            const texSpr = spr.image
             helpers.imageBlit(
                 screen,
                 blitX,
