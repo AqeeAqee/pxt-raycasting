@@ -31,9 +31,10 @@ namespace Render {
         iAnimation=0
         getFrameByDir(dir:number):Image{
             if(control.millis()-this.msLast>this.frameInterval){
+                this.msLast = control.millis()
                 this.index++
-                this.iAnimation = (dir * this.animations.length + .5) % this.animations.length
-                if(this.index>this.animations[this.iAnimation].length)
+                this.iAnimation = Math.round((dir * this.animations.length )) % this.animations.length
+                if(this.index>=this.animations[this.iAnimation].length)
                 this.index=0
             }
             return this.animations[this.iAnimation][this.index]
@@ -615,7 +616,8 @@ namespace Render {
             const myAngle = Math.atan2(spriteX, spriteY)
 
             //for this.spriteAnimations
-            const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(Math.floor(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2-.25) ))
+            // screen.printCenter(spr.id.toString(), 10* index)
+            const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
             //for textures=image[][]
             // const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
             //for deal in user code

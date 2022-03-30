@@ -166,6 +166,9 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     spr.setScale(0.5)
     // setCharacterAnimationForSprite(spr, textures)
 
+
+    Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0],textures[1],textures[2],textures[3]))
+
     // spr.lifespan=count++*1000
     return spr
 }
