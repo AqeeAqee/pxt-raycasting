@@ -22,7 +22,7 @@ namespace Render {
         fov,
     }
 
-    class Animations {
+    export class Animations {
         constructor(public frameInterval: number, public animations:Image[][]) {
         }
 
@@ -99,7 +99,7 @@ namespace Render {
      * eg: position, speed, scale, collision, ...
      */
     //% group="Instance"
-    //% blockId=rcRender_getRenderSpriteInstance block="view point sprite"
+    //% blockId=rcRender_getRenderSpriteInstance block="myself sprite"
     //% expandableArgumentMode=toggle
     //% weight=99
     export function getRenderSpriteInstance(): Sprite {
