@@ -9,8 +9,8 @@ enum ViewMode {
 /**
  * A 2.5D Screen Render, using Raycasting algorithm
  **/
-//% color=#8854d0 weight=1 icon="\uf279" //cube f1b2
-//% groups='["Instance","Basic", "Advanced"]'
+//% color=#03AA74 weight=1 icon="\uf1b2" //cube f1b2 , fold f279
+//% groups='["Instance","Basic", "Animate", "Advanced"]'
 namespace Render {
     const fpx = 8
     const fpx_scale = 2 ** fpx
@@ -42,10 +42,9 @@ namespace Render {
     }
 
     /**
- * Create and run an image animation on a sprite
- * @param frames the frames to animate through
+ * Apply a directional image animations on a sprite
  * @param sprite the sprite to animate on
- * @param frameInterval the time between changes, eg: 500
+ * @param animations the directional animates
  */
     //% blockId=set_animation
     //% block="set $sprite=variables_get(mySprite) $animations"
@@ -58,10 +57,13 @@ namespace Render {
     }
 
     /**
- * Create and run an image animation on a sprite
- * @param frames the frames to animate through
- * @param sprite the sprite to animate on
- * @param frameInterval the time between changes, eg: 500
+ * Create a directional image animations, multi animations will applied to one round dirctions averagely, start from the left. 
+ * The reason that directions start from left, is almost all Arcade out-of-box 1 or 2-dirction images are facing left, so that would be convient for using.
+ * @param frameInterval the time between changes, eg: 150
+ * @param frames1 animation, if this is the first of multi animation it will be used as left, others will 
+ * @param frames2 optional, used for 2 or more dirctional
+ * @param frames3 optional, used for 3 or more dirctional
+ * @param frames4 optional, used for 4 or more dirctional
  */
     //% blockId=create_animation
     //% block="interval$frameInterval=timePicker animates:$frames1=animation_editor|| $frames2=animation_editor $frames3=animation_editor $frames4=animation_editor"
@@ -92,11 +94,12 @@ namespace Render {
     }
 
     /**
-     * Get the render Sprite
-     * @param img the image
+     * Get the render Sprite. This sprite create automatically, for physical features, holding the view point.(but get/set view direction with dirX/dirY, which not in the Sprite class) 
+     * You can consider it as "myself", and operate it like a usual sprite.
+     * eg: position, speed, scale, collision, ...
      */
     //% group="Instance"
-    //% blockId=rcRender_getRenderSpriteInstance block="render sprite"
+    //% blockId=rcRender_getRenderSpriteInstance block="view point sprite"
     //% expandableArgumentMode=toggle
     //% weight=99
     export function getRenderSpriteInstance(): Sprite {
@@ -104,14 +107,35 @@ namespace Render {
     }
 
     /**
-     * Get default FOV (field of view) value
+     * Get view mode
+     */
+    //% blockId=rcRender_getViewMode block="current view mode"
+    //% group="Basic"
+    //% weight=89
+    export function getViewMode(): ViewMode {
+        return raycastingRender.viewMode
+    }
+
+    /**
+     * View mode
      * @param viewMode
      */
+    //% blockId=rcRender_ViewMode block="$viewMode"
     //% group="Basic"
-    //% block="defaultFov"
-    //% blockId=rcRender_getDefaultFov
-    export function getDefaultFov(): number {
-        return defaultFov
+    //% weight=88
+    export function viewMode(viewMode:ViewMode): ViewMode {
+        return viewMode
+    }
+
+    /**
+     * Set view mode
+     * @param viewMode
+     */
+    //% blockId=rcRender_setViewMode block="set view mode $viewMode"
+    //% group="Basic"
+    //% weight=87
+    export function setViewMode(viewMode: ViewMode) {
+        raycastingRender.viewMode = viewMode
     }
 
     /**
@@ -121,6 +145,7 @@ namespace Render {
     //% group="Basic"
     //% block="get %attribute" 
     //% blockId=rcRender_getAttribute
+    //% weight=83
     export function getAttribute(attr: attribute): number {
         switch (attr) {
             case attribute.dirX:
@@ -141,85 +166,68 @@ namespace Render {
     //% group="Basic"
     //% block="Set %attribute = %value" 
     //% blockId=rcRender_SetAttribute
-    export function SetAttribute(attr: attribute, value:number) {
+    //% weight=82
+    export function SetAttribute(attr: attribute, value: number) {
         switch (attr) {
             case attribute.dirX:
-                 raycastingRender.dirX=value
+                raycastingRender.dirX = value
             case attribute.dirY:
-                 raycastingRender.dirY=value
+                raycastingRender.dirY = value
             case attribute.fov:
-                 raycastingRender.fov=value
+                raycastingRender.fov = value
             default:
         }
     }
 
     /**
-     * View mode
+     * Get default FOV (field of view) value
      * @param viewMode
      */
-    //% blockId=rcRender_ViewMode block="$viewMode"
     //% group="Basic"
-    //% weight=100
-    export function viewMode(viewMode:ViewMode): ViewMode {
-        return viewMode
-    }
-
-    /**
-     * Get view mode
-     * @param viewMode
-     */
-    //% blockId=rcRender_getViewMode block="get view mode"
-    //% group="Basic"
-    //% weight=100
-    export function getViewMode(): ViewMode {
-        return raycastingRender.viewMode
-    }
-
-    /**
-     * Set view mode
-     * @param viewMode
-     */
-    //% blockId=rcRender_setViewMode block="set view mode $viewMode"
-    //% group="Basic"
-    //% weight=100
-    export function setViewMode(viewMode: ViewMode) {
-        raycastingRender.viewMode = viewMode
+    //% block="defaultFov"
+    //% blockId=rcRender_getDefaultFov
+    //% weight=81
+    export function getDefaultFov(): number {
+        return defaultFov
     }
 
     /**
      * Set floating rate for a sprite, offset at Z
-     * Negative floats up, affirmative goes down
      * @param sprite
-     * @param offsetZ
+     * @param offsetZ Negative floats up, affirmative goes down
      */
     //% blockId=rcRender_setOffsetZ block="set Sprite %spr=variables_get(mySprite) floating percentage %offsetZ"
     //% offsetZ.min=-100 offsetZ.max=100 offsetZ.defl=-50
     //% group="Basic"
-    //% weight=100
+    //% weight=80
     export function setOffsetZ(sprite: Sprite, offsetZ: number) {
-        raycastingRender.spriteOffsetZ[sprite.id] = tofpx(offsetZ)
+        raycastingRender.spriteOffsetZ[sprite.id] = tofpx(offsetZ)/100
     }
 
     /**
      * Render takeover all sprites in current scene
-     * Render will call this automatically, but if you saw sprite draw with its tilemap position on screen, call this after create the sprite.
+     * Render will call this automatically, but maybe not in time enough.
+     * If you saw sprite draw at its tilemap position on screen, call this just after created the sprite.
      */
     //% blockId=rcRender_takeoverSceneSprites 
     //% block="takeover sprites in scene"
     //% group="Advanced"
-    //% weight=100
+    //% weight=49
     export function takeoverSceneSprites() {
         raycastingRender.takeoverSceneSprites()
     }
 
     /**
-     * Run on sprite dirction updated
+     * Run on sprite dirction updated, present view point to Sprite facing dirction, or which angle you see of the sprite.
+     * Just using with other animation extensions, to set proper Image for sprite.
+     * Not required, if you have used the set animations block provided.
+     * @param dir It is a float number, 0~1 corresponds to 0~360°, suggest use Math.round(dir*dirAniTotalCount)%dirAniTotalCount to get index of direction
      */
     //% blockId=rcRender_registerOnSpriteDirectionUpdateHandler
     //% block="run code when sprite $spr dirction updated to $dir"
     //% draggableParameters
     //% group="Advanced"
-    //% weight=100
+    //% weight=48
     export function registerOnSpriteDirectionUpdateHandler(handler: (spr: Sprite, dir: number) => void) {
         raycastingRender.registerOnSpriteDirectionUpdate(handler)
     }
@@ -615,18 +623,17 @@ namespace Render {
             const drawStart = (screen.height >> 1) + (lineHeight * (this.getOffsetZ(spr) + (fpx_scale >> 1) - (spr._height as any as number) / this.tilemapScaleSize) >> fpx)
             const myAngle = Math.atan2(spriteX, spriteY)
 
-            //for this.spriteAnimations
-            // screen.printCenter(spr.id.toString(), 10* index)
-            const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
-            //for textures=image[][]
-            // const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
+            //for textures=image[][], abandoned
+            //    const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
             //for deal in user code
-            // if (this.onSpriteDirectionUpdateHandler)
-            //     this.onSpriteDirectionUpdateHandler(spr, ((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
+            if (this.onSpriteDirectionUpdateHandler)
+                this.onSpriteDirectionUpdateHandler(spr, ((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
             //for CharacterAnimation ext.
             //     const iTexture = Math.floor(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25) * 4 + .5) % 4
             //     const characterAniDirs = [Predicate.MovingLeft,Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
             //     character.setCharacterState(spr, character.rule(characterAniDirs[iTexture]))
+            //for this.spriteAnimations
+            const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
             helpers.imageBlit(
                 screen,
                 blitX,
