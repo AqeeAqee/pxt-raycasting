@@ -1,6 +1,7 @@
 {
-    "name": "pxt-RaycastingAni",
-    "version": "0.2.0",
+
+    "name": "pxt-Raycasting",
+    "version": "0.2.9",
     "description": "",
     "dependencies": {
         "device": "*"
