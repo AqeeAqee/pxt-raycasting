@@ -393,14 +393,14 @@ namespace Render {
             sc.allSprites.removeElement(this.oldRender)
             this.takeoverSceneSprites()
 
-            sc.eventContext.registerFrameHandler(scene.PRE_RENDER_UPDATE_PRIORITY + 1, () => {
+            let frameCallback_update= sc.eventContext.registerFrameHandler(scene.PRE_RENDER_UPDATE_PRIORITY + 1, () => {
                 const dt = sc.eventContext.deltaTime;
                 // sc.camera.update();  // already did in scene
                 for (const s of this.sprites)
                     s.__update(sc.camera, dt);
             })
 
-            sc.eventContext.registerFrameHandler(scene.RENDER_SPRITES_PRIORITY + 1, () => {
+            let frameCallback_draw =sc.eventContext.registerFrameHandler(scene.RENDER_SPRITES_PRIORITY + 1, () => {
                 screen.drawImage(game.currentScene().background.image, 0, 0)
                 if (this._viewMode == ViewMode.tilemapView) {
                     this.oldRender.__drawCore(game.currentScene().camera)
@@ -414,6 +414,12 @@ namespace Render {
                     game.currentScene().allSprites.forEach(spr => spr.__draw(game.currentScene().camera))
                 }
             })
+
+            game.currentScene().tileMap.addEventListener(tiles.TileMapEvent.Unloaded, data => { 
+                sc.eventContext.unregisterFrameHandler(frameCallback_update)
+                sc.eventContext.unregisterFrameHandler(frameCallback_draw)
+                })
+
             // this.myRender = scene.createRenderable(
             //     scene.TILE_MAP_Z,
             //     (t, c) => this.trace(t, c)
