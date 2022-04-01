@@ -108,24 +108,24 @@ namespace Render {
     }
 
     /**
-     * Get view mode
+     * Toggle current view mode
      */
-    //% blockId=rcRender_getViewMode block="current view mode"
+    //% blockId=rcRender_toggleViewMode block="toggle current view mode"
     //% group="Basic"
     //% weight=89
-    export function getViewMode(): ViewMode {
-        return raycastingRender.viewMode
+    export function toggleViewMode() {
+        raycastingRender.viewMode = raycastingRender.viewMode==ViewMode.tilemapView? ViewMode.raycastingView: ViewMode.tilemapView
     }
 
     /**
-     * View mode
+     * Current view mode is the specific one?
      * @param viewMode
      */
-    //% blockId=rcRender_ViewMode block="$viewMode"
+    //% blockId=rcRender_isViewMode block="current is $viewMode"
     //% group="Basic"
     //% weight=88
-    export function viewMode(viewMode:ViewMode): ViewMode {
-        return viewMode
+    export function isViewMode(viewMode:ViewMode): boolean {
+        return viewMode==raycastingRender.viewMode
     }
 
     /**
