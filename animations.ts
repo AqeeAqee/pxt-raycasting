@@ -24,6 +24,7 @@ const texturesBigCake = [[sprites.food.bigCake]]
 const texturesCoin = [[sprites.builtin.coin0, sprites.builtin.coin1, sprites.builtin.coin2, sprites.builtin.coin3, sprites.builtin.coin4, sprites.builtin.coin5]]
 
 const texturesDog = [[sprites.builtin.dog0, sprites.builtin.dog1, sprites.builtin.dog2]]
+const texturesDuck = [[sprites.duck.duck1, sprites.duck.duck2, sprites.duck.duck3, sprites.duck.duck4, sprites.duck.duck5, sprites.duck.duck6]]
 
 //2-direction, with ani, looks difference from left or right side
 const texturesPlane = [[sprites.vehicle.plane0, sprites.vehicle.plane1, sprites.vehicle.plane2, sprites.vehicle.plane3, sprites.vehicle.plane4, sprites.vehicle.plane5],

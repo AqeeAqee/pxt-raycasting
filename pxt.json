@@ -1,6 +1,7 @@
 {
+
     "name": "pxt-Raycasting",
-    "version": "0.2.0",
+    "version": "0.2.9",
     "description": "",
     "dependencies": {
         "device": "*"
@@ -9,7 +10,7 @@
         "README.md",
         "engine_raycasting.ts",
         "animations.ts",
-        "mimimap.ts"
+        "main.ts"
     ],
     "testFiles": [
         "test.ts"
