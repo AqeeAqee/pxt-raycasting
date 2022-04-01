@@ -318,7 +318,7 @@ namespace Render {
         }
 
         get fov(): number {
-            return this.fov
+            return this._fov
         }
 
         set fov(fov: number) {
