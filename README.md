@@ -1,13 +1,22 @@
 (Discuss on Makecode Arcade forum at: 
 [Raycasting 3D render with directional animation sprites](https://forum.makecode.com/t/raycasting-3d-render-with-directional-animation-sprites/12802) )
 
-## Mainly:
+## Brief:
 An extension for Makecode Arcade, render a tilemap into 2.5D view, a kind of less calculation consuming 3D perspective view, with directional animations of sprites, 
 based on mmoskal's [3d map](https://forum.makecode.com/t/3d-raycasting-in-arcade/474)
 
+## Quick Start
+* Basically, this render just draw a traditional tilemap game into "3D view"
+* setTilemap(), walk around with arrow keys
+* Do your game as usual
+    * sprites, suggest sprite.setScale(0.5) for each, set directional animations with provided animation block.
+    * work together with most of Arcade blocks and extensions, sprite, projectile, overlap,...
+    * except these drawing screen directly, sprite effects/saytext ...
+* Operate view pos and collision size with provided "myself sprite", and view direction with "setViewAngle" block
+* Switch view mode with block "setViewMode to tilemap(2D)/raycasting(3D)"
+* Zoom in/out by set fov
+
 ## Features:
-* Basically, this render just draw a traditional tilemap game into "3D view", walk around with arrow keys
-* Simple interface, only one block needed(setTilemap) for minimal demo
 * Switch Tilemap(original 2D)/Raycasting(3D by default) view mode with provided "set mode" block
     * The Tilemap mode, basically rendered all stuff via original Arcade functions, so should works as usual
 * Work together with most exsiting Arcade blocks:
