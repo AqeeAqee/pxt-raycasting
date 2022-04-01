@@ -1,5 +1,4 @@
 {
-
     "name": "pxt-Raycasting",
     "version": "0.2.9",
     "description": "",
@@ -9,7 +8,6 @@
     "files": [
         "README.md",
         "engine_raycasting.ts",
-        "animations.ts",
         "main.ts"
     ],
     "testFiles": [

@@ -11,6 +11,7 @@ enum ViewMode {
  **/
 //% color=#03AA74 weight=1 icon="\uf1b2" //cube f1b2 , fold f279
 //% groups='["Instance","Basic", "Animate", "Advanced"]'
+//% block="3D Render"
 namespace Render {
     const fpx = 8
     const fpx_scale = 2 ** fpx
@@ -94,7 +95,7 @@ namespace Render {
     }
 
     /**
-     * Get the render Sprite. This sprite create automatically, for physical features, holding the view point.(but get/set view direction with dirX/dirY, which not in the Sprite class) 
+     * Get the render Sprite, which create automatically, for physical collisions, and holding the view point.(but get/set view direction with dirX/dirY, which not in the Sprite class) 
      * You can consider it as "myself", and operate it like a usual sprite.
      * eg: position, speed, scale, collision, ...
      */
