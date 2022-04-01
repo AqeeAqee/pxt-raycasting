@@ -352,13 +352,13 @@ namespace Render {
         }
 
         set viewMode(v: ViewMode) {
-            const sc = game.currentScene()
             this._viewMode = v
+            // const sc = game.currentScene()
             if (v == ViewMode.tilemapView) {
                 // game.currentScene().allSprites.removeElement(this.myRender)
                 // sc.allSprites.push(this.oldRender)
-                this.bg = game.currentScene().background.image
-                scene.setBackgroundImage(img`15`) //todo, add bgTilemap property for tilemap mode
+                // this.bg = game.currentScene().background.image
+                // scene.setBackgroundImage(img`15`) //todo, add bgTilemap property for tilemap mode
                 // this.sprites.forEach(spr => {
                 //     sc.allSprites.push(spr)
                 // })
@@ -366,7 +366,7 @@ namespace Render {
             else {
                 // game.currentScene().allSprites.removeElement(this.oldRender)
                 // game.currentScene().allSprites.push(this.myRender)
-                game.currentScene().background.image = this.bg
+                // game.currentScene().background.image = this.bg
                 // this.takeoverSceneSprites()
             }
 
@@ -384,7 +384,7 @@ namespace Render {
             })
         }
 
-        updatedTilemap() {
+        tilemapLoaded() {
             const sc = game.currentScene()
             this.map = sc.tileMap.data
             this.textures = sc.tileMap.data.getTileset()
@@ -429,9 +429,9 @@ namespace Render {
             if (!sc.tileMap) {
                 sc.tileMap = new tiles.TileMap();
             }else{
-                this.updatedTilemap()
+                this.tilemapLoaded()
             }
-            game.currentScene().tileMap.addEventListener(tiles.TileMapEvent.Loaded, data => this.updatedTilemap())
+            game.currentScene().tileMap.addEventListener(tiles.TileMapEvent.Loaded, data => this.tilemapLoaded())
 
             //self sprite
             this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)

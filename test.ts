@@ -1,4 +1,4 @@
-//////////////////////// animation.ts contents of previous version /////////////////////
+//////////////////////// animation.ts contents of previous version, just for test.ts here for convenience /////////////////////
     // file contents:
 	// directional animations defines for enging_raycasting.ts
 	// for convenience, constructed animations as below, which images are builtin in Arcade, 
