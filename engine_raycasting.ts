@@ -193,6 +193,19 @@ namespace Render {
     }
 
     /**
+     * Set view angle by dirX and dirY
+     * @param sprite
+     * @param offsetZ Negative floats up, affirmative goes down
+     */
+    //% blockId=rcRender_setViewAngle block="set view angle by dirX%dirX and dirY%dirY"
+    //% offsetZ.min=-100 offsetZ.max=100 offsetZ.defl=-50
+    //% group="Basic"
+    //% weight=80
+    export function setViewAngle(dirX:number, dirY: number) {
+        raycastingRender.viewAngle=Math.atan2(dirY, dirX)
+    }
+
+    /**
      * Set floating rate for a sprite, offset at Z
      * @param sprite
      * @param offsetZ Negative floats up, affirmative goes down
@@ -202,7 +215,7 @@ namespace Render {
     //% group="Basic"
     //% weight=80
     export function setOffsetZ(sprite: Sprite, offsetZ: number) {
-        raycastingRender.spriteOffsetZ[sprite.id] = tofpx(offsetZ)/100
+        raycastingRender.spriteOffsetZ[sprite.id] = tofpx(offsetZ) / 100
     }
 
     /**
@@ -241,7 +254,7 @@ namespace Render {
         dirYFpx: number
         planeX: number
         planeY: number
-        angle: number
+        _angle: number
         _fov: number
         spriteOffsetZ: number[] = []
         spriteAnimations: Animations[] = []
@@ -317,7 +330,15 @@ namespace Render {
             this.setVectors()
         }
 
-        
+        get viewAngle(): number {
+            return this._angle
+        }
+        set viewAngle(angle: number) {
+            this._angle=angle
+            this.setVectors()
+            this.updateSelfImage()
+        }
+
         getOffsetZ(spr: Sprite) {
             return this.spriteOffsetZ[spr.id] || 0
         }
@@ -401,7 +422,7 @@ namespace Render {
         }
 
         constructor() {
-            this.angle = 0
+            this._angle = 0
             this.fov=defaultFov
 
             const sc = game.currentScene()
@@ -425,8 +446,8 @@ namespace Render {
         }
 
         private setVectors() {
-            const sin = Math.sin(this.angle)
-            const cos = Math.cos(this.angle)
+            const sin = Math.sin(this._angle)
+            const cos = Math.cos(this._angle)
             this.dirXFpx = tofpx(cos)
             this.dirYFpx = tofpx(sin)
             this.planeX = tofpx(sin * this._fov)
@@ -453,9 +474,7 @@ namespace Render {
         updateControls() {
             const dx = controller.dx(2)
             if (dx) {
-                this.angle += dx
-                this.setVectors()
-                this.updateSelfImage()
+                this.viewAngle += dx
             }
             const dy = controller.dy(3)
             if (dy) {
