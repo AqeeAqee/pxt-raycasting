@@ -614,13 +614,89 @@ namespace Render {
                 }).sort((spr1, spr2) => {   // far to near
                     return ((this.sprXFx8(spr2) - this.xFpx) ** 2 + (this.sprYFx8(spr2) - this.yFpx) ** 2) - ((this.sprXFx8(spr1) - this.xFpx) ** 2 + (this.sprYFx8(spr1) - this.yFpx) ** 2)
                 }).forEach((spr, index) => {
-                    this.drawSprite(spr, index)
+                    this.test_drawSprite(spr, index)
+                    //this.drawSprite(spr, index)
                 })
         }
 
         registerOnSpriteDirectionUpdate(handler: (spr: Sprite, dir: number) => void) {
             this.onSpriteDirectionUpdateHandler = handler
         }
+
+        camera=new scene.Camera()
+        test_drawSprite(spr: Sprite, index: number) {
+            // screen.print([spr.image.width].join(), 0, index*10)
+            const spriteX = this.sprXFx8(spr) - this.xFpx
+            const spriteY = this.sprYFx8(spr) - this.yFpx
+            const transformX = this.invDet * (this.dirYFpx * spriteX - this.dirXFpx * spriteY) >> fpx;
+            const transformY = this.invDet * (-this.planeY * spriteX + this.planeX * spriteY) >> fpx; //this is actually the depth inside the screen, that what Z is in 3D
+            const spriteScreenX = Math.ceil((screen.width / 2) * (1 - transformX / transformY));
+            const spriteScreenHalfWidth = Math.idiv((spr._width as any as number) / this.tilemapScaleSize / 2 * this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
+
+            // //calculate drawing range in X direction
+            // //assume there is one range only
+            // let blitX = 0, blitWidth = 0
+            // for (let sprX = Math.max(0, spriteScreenX - spriteScreenHalfWidth); sprX < Math.min(screen.width, spriteScreenX + spriteScreenHalfWidth); sprX++) {
+            //     if (this.dist[sprX] > transformY) {
+            //         if (blitWidth == 0)
+            //             blitX = sprX
+            //         blitWidth++
+            //     } else if (blitWidth > 0)
+            //         break
+            // }
+            // // screen.print([this.getxFx8(spr), this.getyFx8(spr)].join(), 0,index*10+10)
+            // if (blitWidth == 0)
+            //     return
+            if(this.dist[spriteScreenX] <= (transformY))
+                return
+            const lineHeight = Math.idiv(this.wallHeightInView, transformY) | 1
+            const drawStart = (screen.height >> 1) + (lineHeight * (this.getOffsetZ(spr) + (fpx_scale >> 1) - (spr._height as any as number) / this.tilemapScaleSize) >> fpx)
+            
+            const myAngle = Math.atan2(spriteX, spriteY)
+            //for textures=image[][], abandoned
+            //    const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
+            //for deal in user code
+            if (this.onSpriteDirectionUpdateHandler)
+                this.onSpriteDirectionUpdateHandler(spr, ((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
+            //for CharacterAnimation ext.
+            //     const iTexture = Math.floor(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25) * 4 + .5) % 4
+            //     const characterAniDirs = [Predicate.MovingLeft,Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
+            //     character.setCharacterState(spr, character.rule(characterAniDirs[iTexture]))
+            //for this.spriteAnimations
+            const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
+            
+            const oldy=spr.y
+            const oldx=spr.x
+            const oldScale=spr.scale
+            
+            spr.setImage(texSpr)
+            spr.setFlag(SpriteFlag.StayInScreen, false)
+            spr.setFlag(SpriteFlag.Ghost, true)
+            spr.x = spriteScreenX
+            spr.top = drawStart
+            spr.scale = spriteScreenHalfWidth * 2 / spr.image.width
+            spr.__update(this.camera, 111)
+            spr.__draw(this.camera)
+
+            spr.setFlag(SpriteFlag.Ghost,false)
+            spr.scale=oldScale
+            spr.y= oldy
+            spr.x= oldx
+
+
+            // helpers.imageBlit(
+            //     screen,
+            //     blitX,
+            //     drawStart,
+            //     blitWidth,
+            //     lineHeight * spr.height / this.tilemapScaleSize,
+            //     texSpr,
+            //     (blitX - (spriteScreenX - spriteScreenHalfWidth)) * texSpr.width / spriteScreenHalfWidth / 2
+            //     ,
+            //     0,
+            //     blitWidth * texSpr.width / spriteScreenHalfWidth / 2, texSpr.height, true, false)
+        }
+
         drawSprite(spr: Sprite, index: number) {
             // screen.print([spr.image.width].join(), 0, index*10)
             const spriteX = this.sprXFx8(spr) - this.xFpx

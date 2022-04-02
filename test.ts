@@ -274,6 +274,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     spr.setVelocity(vx, vy)
     spr.setBounceOnWall(true)
     spr.setScale(0.5)
+    spr.sayText("testhjkhl hjk hjk", 30000, true)
     // setCharacterAnimationForSprite(spr, textures)
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0],textures[1],textures[2],textures[3]))
 
@@ -314,9 +315,9 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
     music.knock.play()
     info.changeScoreBy(1)
-    sprite.destroy()
+    sprite.destroy(effects.fountain, 1000)
     otherSprite.destroy()
-    rcRender.sprSelf.setPosition(sprite.x,sprite.y)
+    // rcRender.sprSelf.setPosition(sprite.x,sprite.y)
 })
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Food, function (sprite, otherSprite) {
     music.pewPew.play()
@@ -328,7 +329,7 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Enemy, function (sprite, otherSpr
 })
 
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
-    otherSprite.setVelocity(otherSprite.x-sprite.x, otherSprite.y-sprite.y)
+    // otherSprite.setVelocity(otherSprite.x-sprite.x, otherSprite.y-sprite.y)
     // otherSprite.setPosition(otherSprite.x + otherSprite.vx / Math.abs(otherSprite.vx) / 2, otherSprite.y + otherSprite.vy / Math.abs(otherSprite.vy) / 2)
 })
 
