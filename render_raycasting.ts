@@ -375,10 +375,11 @@ namespace Render {
             const sc = game.currentScene()
             sc.allSprites.forEach(spr => {
                 if (spr instanceof Sprite) {
-                    if (this.sprites.indexOf(spr) < 0)
+                    if (this.sprites.indexOf(spr) < 0){
                         this.sprites.push(spr as Sprite)
-                    sc.allSprites.removeElement(spr)
-                    spr.onDestroyed(() => { this.sprites.removeElement(spr) })
+                        sc.allSprites.removeElement(spr)
+                        spr.onDestroyed(() => { this.sprites.removeElement(spr) })
+                    }
                 }
             })
         }
@@ -410,6 +411,10 @@ namespace Render {
                     this.takeoverSceneSprites() // in case some one new
                     this.render()
                     //draw hud, or other SpriteLike
+                    this.sprites.forEach(spr=>{
+                        if((spr.flags & sprites.Flag.RelativeToCamera))
+                            spr.__draw(game.currentScene().camera)
+                    })
                     game.currentScene().allSprites.forEach(spr => spr.__draw(game.currentScene().camera))
                 }
             })
@@ -607,10 +612,13 @@ namespace Render {
             }
 
             /////////////////// sprites ///////////////////
+            // // if(spr.id>)
+            //     console.log(spr.id.toString()+" "+spr.flags.toString())
+            
 
             this.sprites
                 .filter((spr, i) => { // transformY>0
-                    return (spr instanceof Sprite) && spr != this.sprSelf && (-this.planeY * (this.sprXFx8(spr) - this.xFpx) + this.planeX * (this.sprYFx8(spr) - this.yFpx)) > 0
+                    return (spr instanceof Sprite) && spr != this.sprSelf && !(spr.flags & sprites.Flag.RelativeToCamera) &&(-this.planeY * (this.sprXFx8(spr) - this.xFpx) + this.planeX * (this.sprYFx8(spr) - this.yFpx)) > 0
                 }).sort((spr1, spr2) => {   // far to near
                     return ((this.sprXFx8(spr2) - this.xFpx) ** 2 + (this.sprYFx8(spr2) - this.yFpx) ** 2) - ((this.sprXFx8(spr1) - this.xFpx) ** 2 + (this.sprYFx8(spr1) - this.yFpx) ** 2)
                 }).forEach((spr, index) => {
