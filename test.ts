@@ -277,6 +277,8 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     // setCharacterAnimationForSprite(spr, textures)
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0],textures[1],textures[2],textures[3]))
 
+    if(spr.id>8)
+    Render.raycastingRender.sayText(spr, "哈喽，baby!", 88888, true)
     return spr
 }
 

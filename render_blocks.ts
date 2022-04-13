@@ -201,9 +201,28 @@ namespace Render {
     //% blockId=rcRender_setOffsetZ block="set Sprite %spr=variables_get(mySprite) floating percentage %offsetZ"
     //% offsetZ.min=-100 offsetZ.max=100 offsetZ.defl=-50
     //% group="Basic"
-    //% weight=80
+    //% weight=79
     export function setOffsetZ(sprite: Sprite, offsetZ: number) {
         raycastingRender.setOffsetZ(sprite, offsetZ / 100)
+    }
+
+    /**
+     * Display a speech bubble with the text, for the given time
+     * @param text the text to say, eg: ":)"
+     * @param time time to keep text on
+     * @param animated whether to print the text character by character or not
+     */
+    //% group="Basic"
+    //% weight=70
+    //% blockId=rcRender_spritesaytext block="$spr say $text||for $timeOnScreen ms with animation $animated"
+    //% timeOnScreen.shadow=timePicker
+    //% text.shadow=text
+    //% spr.shadow=variables_get
+    //% spr.defl=mySprite
+    //% inlineInputMode=inline
+    //% expandableArgumentMode=toggle
+    export function sayText(spr: Sprite, text: any, timeOnScreen?: number, animated = false, textColor = 15, textBoxColor = 1) {
+        raycastingRender.sayText(spr, text, timeOnScreen, animated, textColor, textBoxColor)
     }
 
     /**

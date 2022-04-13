@@ -5,6 +5,10 @@ enum ViewMode {
     raycastingView,
 }
 
+namespace SpriteKind{
+    export const anchorSprite=SpriteKind.create()
+}
+
 namespace Render{
     const fpx = 8
     const fpx_scale = 2 ** fpx
@@ -21,6 +25,7 @@ namespace Render{
         _angle: number
         _fov: number
         spriteOffsetZ: number[] = []
+        sayAnchorSprites: Sprite[]=[]
         spriteAnimations: Animations[] = []
 
         //reference
@@ -109,6 +114,13 @@ namespace Render{
 
         setOffsetZ(spr: Sprite, offsetZ: number) {
             this.spriteOffsetZ[spr.id] = tofpx(offsetZ)
+        }
+
+        sayText(spr:Sprite, text: any, timeOnScreen?: number, animated = false, textColor = 15, textBoxColor = 1) {
+            const anchor=new Sprite(img`0`)
+            anchor.setKind(SpriteKind.anchorSprite)
+            this.sayAnchorSprites[spr.id]=anchor
+            anchor.sayText(text, timeOnScreen, animated, textColor, textBoxColor)
         }
 
         get viewMode(): ViewMode {
@@ -394,6 +406,7 @@ namespace Render{
         registerOnSpriteDirectionUpdate(handler: (spr: Sprite, dir: number) => void) {
             this.onSpriteDirectionUpdateHandler = handler
         }
+        camera=new scene.Camera()
         drawSprite(spr: Sprite, index: number) {
             // screen.print([spr.image.width].join(), 0, index*10)
             const spriteX = this.sprXFx8(spr) - this.xFpx
@@ -443,6 +456,14 @@ namespace Render{
                 ,
                 0,
                 blitWidth * texSpr.width / spriteScreenHalfWidth / 2, texSpr.height, true, false)
+
+            //sayText
+            const anchor=this.sayAnchorSprites[spr.id]
+            // game.splash(anchor)
+            if(anchor){
+                anchor.setPosition(spriteScreenX, drawStart)
+                anchor.__drawCore(this.camera)
+            }
         }
     }
 
