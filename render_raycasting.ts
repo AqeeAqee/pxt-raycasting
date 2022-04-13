@@ -614,7 +614,7 @@ namespace Render {
                 }).sort((spr1, spr2) => {   // far to near
                     return ((this.sprXFx8(spr2) - this.xFpx) ** 2 + (this.sprYFx8(spr2) - this.yFpx) ** 2) - ((this.sprXFx8(spr1) - this.xFpx) ** 2 + (this.sprYFx8(spr1) - this.yFpx) ** 2)
                 }).forEach((spr, index) => {
-                    this.test_drawSprite(spr, index)
+                    this.drawSpriteWithOriginSprite(spr, index)
                     //this.drawSprite(spr, index)
                 })
         }
@@ -624,7 +624,8 @@ namespace Render {
         }
 
         camera=new scene.Camera()
-        test_drawSprite(spr: Sprite, index: number) {
+        //issue: sprite seems stucked by screen boundary
+        drawSpriteWithOriginSprite(spr: Sprite, index: number) {
             // screen.print([spr.image.width].join(), 0, index*10)
             const spriteX = this.sprXFx8(spr) - this.xFpx
             const spriteY = this.sprYFx8(spr) - this.yFpx
@@ -668,20 +669,28 @@ namespace Render {
             const oldy=spr.y
             const oldx=spr.x
             const oldScale=spr.scale
+            const oldFlag=spr.flags
             
             spr.setImage(texSpr)
             spr.setFlag(SpriteFlag.StayInScreen, false)
+            spr.setFlag(SpriteFlag.BounceOnWall, false)
             spr.setFlag(SpriteFlag.Ghost, true)
+            spr.setFlag(SpriteFlag.GhostThroughSprites, true)
+            spr.setFlag(SpriteFlag.GhostThroughTiles, true)
+            spr.setFlag(SpriteFlag.GhostThroughWalls, true)
+            // spr.setFlag(SpriteFlag.Ghost, true)
+            // game.splash(spr.flags)
             spr.x = spriteScreenX
             spr.top = drawStart
             spr.scale = spriteScreenHalfWidth * 2 / spr.image.width
-            spr.__update(this.camera, 111)
+            // spr.__update(this.camera, game.currentScene().eventContext.deltaTime)
             spr.__draw(this.camera)
 
-            spr.setFlag(SpriteFlag.Ghost,false)
-            spr.scale=oldScale
+            spr.scale = oldScale
             spr.y= oldy
             spr.x= oldx
+            spr.setFlag(SpriteFlag.Ghost,false)
+            spr.setFlag(SpriteFlag.BounceOnWall, true)
 
 
             // helpers.imageBlit(
