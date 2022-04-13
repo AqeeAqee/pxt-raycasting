@@ -1,5 +1,5 @@
 {
-    "name": "say_pxt-raycasting",
+    "name": "sayWithOriginSprite_pxt-raycasting",
     "version": "0.3.2",
     "description": "",
     "dependencies": {
