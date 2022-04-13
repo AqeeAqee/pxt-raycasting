@@ -8,7 +8,8 @@
     "files": [
         "README.md",
         "main.ts",
-        "render_raycasting.ts"
+        "render_raycasting.ts",
+        "render_blocks.ts"
     ],
     "testFiles": [
         "test.ts"
