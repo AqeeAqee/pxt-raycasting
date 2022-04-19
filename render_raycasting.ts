@@ -108,6 +108,9 @@ namespace Render{
         }
 
         setOffsetZ(spr: Sprite, offsetZ: number) {
+            if(spr===this.sprSelf){
+                offsetZ= Math.clamp(-1,1,offsetZ)
+            }
             this.spriteOffsetZ[spr.id] = tofpx(offsetZ)
         }
 
@@ -365,7 +368,7 @@ namespace Render{
 
                 // textures look much better when lineHeight is odd
                 let lineHeight = Math.idiv(this.wallHeightInView, perpWallDist) | 1
-                let drawStart = (-lineHeight + h) >> 1;
+                let drawStart = ((-lineHeight + h) >> 1) +(lineHeight/2)*this.getOffsetZ(this.sprSelf) / fpx_scale;
                 let texX = (wallX * tex.width) >> fpx;
                 // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
                 //     texX = tex.width - texX - 1;
@@ -435,7 +438,7 @@ namespace Render{
             helpers.imageBlit(
                 screen,
                 blitX,
-                drawStart,
+                drawStart + (lineHeight / 2) * this.getOffsetZ(this.sprSelf) / fpx_scale,
                 blitWidth,
                 lineHeight * spr.height / this.tilemapScaleSize,
                 texSpr,
