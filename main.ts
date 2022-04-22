@@ -1,26 +1,6 @@
 game.stats = true
 const rcRender = Render.raycastingRender
 let trans16 = image.create(16, 16)
-let map = tiles.createTilemap(hex`1000100002020202020202020202020202020202020000000000000000000000000000020200000000000000000000000000000202000000000000000000000000000002020000000000000000000000000000020200000002020200000101010100000202000000020000000000000001000002020000000200000000000000010000020200000000000000000000000000000202000000000000000200000000000002020000000200000000000000010000020200000002000000000000000100000202000000020202020000010101000002020000000000000000000000000000020200000000000000000000000000000202020202020202020202020202020202`, img`
-2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
-2 . . . . . . . . . . . . . . 2 
-2 . . . . . . . . . . . . . . 2 
-2 . . . . . . . . . . . . . . 2 
-2 . . . . . . . . . . . . . . 2 
-2 . . . 2 2 2 . . 2 2 2 2 . . 2 
-2 . . . 2 . . . . . . . 2 . . 2 
-2 . . . 2 . . . . . . . 2 . . 2 
-2 . . . . . . . . . . . . . . 2 
-2 . . . . . . . 2 . . . . . . 2 
-2 . . . 2 . . . . . . . 2 . . 2 
-2 . . . 2 . . . . . . . 2 . . 2 
-2 . . . 2 2 2 2 . . 2 2 2 . . 2 
-2 . . . . . . . . . . . . . . 2 
-2 . . . . . . . . . . . . . . 2 
-2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
-`, [trans16, sprites.castle.tileGrass2, sprites.builtin.forestTiles0], TileScale.Sixteen);
-tiles.setCurrentTilemap(map)
-
 scene.setBackgroundImage(img`
     ................................................................................................................................................................
     ................................................................................................................................................................
@@ -143,6 +123,26 @@ scene.setBackgroundImage(img`
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 `)
+let map = tiles.createTilemap(hex`1000100002020202020202020202020202020202020000000000000000000000000000020200000000000000000000000000000202000000000000000000000000000002020000000000000000000000000000020200000002020200000101010100000202000000020000000000000001000002020000000200000000000000010000020200000000000000000000000000000202000000000000000200000000000002020000000200000000000000010000020200000002000000000000000100000202000000020202020000010101000002020000000000000000000000000000020200000000000000000000000000000202020202020202020202020202020202`, img`
+2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+2 . . . . . . . . . . . . . . 2 
+2 . . . . . . . . . . . . . . 2 
+2 . . . . . . . . . . . . . . 2 
+2 . . . . . . . . . . . . . . 2 
+2 . . . 2 2 2 . . 2 2 2 2 . . 2 
+2 . . . 2 . . . . . . . 2 . . 2 
+2 . . . 2 . . . . . . . 2 . . 2 
+2 . . . . . . . . . . . . . . 2 
+2 . . . . . . . 2 . . . . . . 2 
+2 . . . 2 . . . . . . . 2 . . 2 
+2 . . . 2 . . . . . . . 2 . . 2 
+2 . . . 2 2 2 2 . . 2 2 2 . . 2 
+2 . . . . . . . . . . . . . . 2 
+2 . . . . . . . . . . . . . . 2 
+2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+`, [trans16, sprites.castle.tileGrass2, sprites.builtin.forestTiles0], TileScale.Sixteen);
+tiles.setCurrentTilemap(map)
+// tiles.setCurrentTilemap(tilemap`level1`)
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
 rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
@@ -201,7 +201,7 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     // music.playTone(1555, 77)
     let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
     s.setScale(0.25)
-    rcRender.setOffsetZ(s, -.25)
+    rcRender.setOffsetZ(s, -oZ / 2 - .5)
 })
 scene.onHitWall(SpriteKind.Food, function (sprite: Sprite, location: tiles.Location) {
     game.splash(sprite)
@@ -267,18 +267,20 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
 // })
 
 
-let oZ = 0, vZ = 0, aZ = -15
+const defautViewZ=-.5
+let oZ = defautViewZ, vZ = 0, aZ = -15
 controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
-    if(oZ==0&&vZ==0) //on the ground
-        vZ = 5.6  // positive number = upward
+    if (oZ == defautViewZ&&vZ==0) //on the ground
+        vZ = 6.2  // positive number = upward
 })
 
 //can work when low FPS
 game.onUpdate( () => {
-    if (vZ != 0 || oZ != 0){
+    if (vZ != 0 || oZ != defautViewZ){
         const dt=game.eventContext().deltaTime
         vZ += aZ *dt, oZ += vZ *dt
+        if (oZ < defautViewZ) { oZ = defautViewZ,vZ = 0}  //landing
+        rcRender.setOffsetZ(rcRender.sprSelf, oZ)
     }
-    if (oZ < 0) {oZ = 0,vZ = 0}  //landing
-    rcRender.setOffsetZ(rcRender.sprSelf, oZ)
 })
+rcRender.setOffsetZ(rcRender.sprSelf, defautViewZ)

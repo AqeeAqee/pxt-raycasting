@@ -12,7 +12,9 @@
         "animation.ts"
     ],
     "testFiles": [
-        "main.ts"
+        "main.ts",
+        "tilemap.g.jres",
+        "tilemap.g.ts"
     ],
     "targetVersions": {
         "branch": "v0.14.3",

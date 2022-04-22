@@ -108,9 +108,6 @@ namespace Render{
         }
 
         setOffsetZ(spr: Sprite, offsetZ: number) {
-            if(spr===this.sprSelf){
-                offsetZ= Math.clamp(-1,1,offsetZ)
-            }
             this.spriteOffsetZ[spr.id] = tofpx(offsetZ)
         }
 
@@ -367,7 +364,7 @@ namespace Render{
                     continue
 
                 // textures look much better when lineHeight is odd
-                let lineHeight = Math.idiv(this.wallHeightInView, perpWallDist) | 1
+                let lineHeight = Math.idiv(this.wallHeightInView, perpWallDist)*2 | 1
                 let drawStart = ((-lineHeight + h) >> 1) +(lineHeight/2)*this.getOffsetZ(this.sprSelf) / fpx_scale;
                 let texX = (wallX * tex.width) >> fpx;
                 // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
@@ -420,8 +417,8 @@ namespace Render{
             // screen.print([this.getxFx8(spr), this.getyFx8(spr)].join(), 0,index*10+10)
             if (blitWidth == 0)
                 return
-            const lineHeight = Math.idiv(this.wallHeightInView, transformY) | 1
-            const drawStart = (screen.height >> 1) + (lineHeight * (this.getOffsetZ(spr) + (fpx_scale >> 1) - (spr._height as any as number) / this.tilemapScaleSize) >> fpx)
+            const lineHeight = Math.idiv(this.wallHeightInView, transformY)*2 | 1
+            const drawStart = (screen.height >> 1) + (lineHeight * (this.getOffsetZ(spr) + (fpx_scale *3/4) - (spr._height as any as number) / this.tilemapScaleSize) >> fpx)
             const myAngle = Math.atan2(spriteX, spriteY)
 
             //for textures=image[][], abandoned
@@ -440,7 +437,7 @@ namespace Render{
                 blitX,
                 drawStart + (lineHeight / 2) * this.getOffsetZ(this.sprSelf) / fpx_scale,
                 blitWidth,
-                lineHeight * spr.height / this.tilemapScaleSize,
+                lineHeight/2 * spr.height / this.tilemapScaleSize,
                 texSpr,
                 (blitX - (spriteScreenX - spriteScreenHalfWidth)) * texSpr.width / spriteScreenHalfWidth / 2
                 ,
