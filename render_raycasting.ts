@@ -13,32 +13,33 @@ namespace Render{
     export const defaultFov = screen.width / screen.height / 2  //Wall just fill screen height when standing 1 unit away
 
     export class RayCastingRender {
-        _viewMode: ViewMode
-        dirXFpx: number
-        dirYFpx: number
-        planeX: number
-        planeY: number
-        _angle: number
-        _fov: number
-        spriteOffsetZ: number[] = []
+        protected _viewMode: ViewMode
+        protected dirXFpx: number
+        protected dirYFpx: number
+        protected planeX: number
+        protected planeY: number
+        protected _angle: number
+        protected _fov: number
+        protected _wallZScale:number=1
+        protected spriteOffsetZ: number[] = []
         spriteAnimations: Animations[] = []
 
         //reference
-        tilemapScaleSize = 1 << TileScale.Sixteen
+        protected tilemapScaleSize = 1 << TileScale.Sixteen
         map: tiles.TileMapData
         bg: Image
         textures: Image[]
         sprSelf: Sprite
         sprites: Sprite[] = []
-        oldRender: scene.Renderable
-        myRender: scene.Renderable
+        protected oldRender: scene.Renderable
+        protected myRender: scene.Renderable
 
         //render
-        wallHeightInView: number
-        wallWidthInView: number
-        dist: number[] = []
+        protected wallHeightInView: number
+        protected wallWidthInView: number
+        protected dist: number[] = []
         //for drawing sprites
-        invDet: number //required for correct matrix multiplication
+        protected invDet: number //required for correct matrix multiplication
 
         onSpriteDirectionUpdateHandler: (spr: Sprite, dir: number) => void
 
@@ -101,6 +102,13 @@ namespace Render{
             this._angle = angle
             this.setVectors()
             this.updateSelfImage()
+        }
+
+        get wallZScale():number{
+            return this._wallZScale
+        }
+        set wallZScale(v:number){
+            this._wallZScale=v
         }
 
         getOffsetZ(spr: Sprite) {
@@ -363,17 +371,15 @@ namespace Render{
                 if (!tex)
                     continue
 
-                // textures look much better when lineHeight is odd
-                let lineHeight = Math.idiv(this.wallHeightInView, perpWallDist)*2 | 1
-                let drawStart = ((-lineHeight + h) >> 1) +(lineHeight/2)*this.getOffsetZ(this.sprSelf) / fpx_scale;
+                let lineHeight = Math.idiv(this.wallHeightInView, perpWallDist) 
+                let drawStart = ((h) >> 1) + (lineHeight) * (this.getOffsetZ(this.sprSelf) -( this._wallZScale<<fpx)) / fpx_scale;
                 let texX = (wallX * tex.width) >> fpx;
                 // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
                 //     texX = tex.width - texX - 1;
 
-                screen.blitRow(x, drawStart, tex, texX, lineHeight)
+                screen.blitRow(x, drawStart, tex, texX, (lineHeight * this._wallZScale) | 1)// textures look much better when lineHeight is odd
 
                 this.dist[x] = perpWallDist
-
             }
 
             /////////////////// sprites ///////////////////
@@ -417,8 +423,8 @@ namespace Render{
             // screen.print([this.getxFx8(spr), this.getyFx8(spr)].join(), 0,index*10+10)
             if (blitWidth == 0)
                 return
-            const lineHeight = Math.idiv(this.wallHeightInView, transformY)*2 | 1
-            const drawStart = (screen.height >> 1) + (lineHeight * (this.getOffsetZ(spr) + (fpx_scale *3/4) - (spr._height as any as number) / this.tilemapScaleSize) >> fpx)
+            const lineHeight = Math.idiv(this.wallHeightInView, transformY)  | 1
+            const drawStart = (screen.height >> 1) + (lineHeight * (this.getOffsetZ(this.sprSelf) - this.getOffsetZ(spr) - (spr._height as any as number) / this.tilemapScaleSize ) >> fpx)
             const myAngle = Math.atan2(spriteX, spriteY)
 
             //for textures=image[][], abandoned
@@ -431,13 +437,14 @@ namespace Render{
             //     const characterAniDirs = [Predicate.MovingLeft,Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
             //     character.setCharacterState(spr, character.rule(characterAniDirs[iTexture]))
             //for this.spriteAnimations
+
             const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
             helpers.imageBlit(
                 screen,
                 blitX,
-                drawStart + (lineHeight / 2) * this.getOffsetZ(this.sprSelf) / fpx_scale,
+                drawStart ,
                 blitWidth,
-                lineHeight/2 * spr.height / this.tilemapScaleSize,
+                lineHeight  * spr.height / this.tilemapScaleSize,
                 texSpr,
                 (blitX - (spriteScreenX - spriteScreenHalfWidth)) * texSpr.width / spriteScreenHalfWidth / 2
                 ,

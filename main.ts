@@ -1,5 +1,8 @@
 game.stats = true
 const rcRender = Render.raycastingRender
+rcRender.wallZScale = 1
+const defautViewZ = .5
+
 let trans16 = image.create(16, 16)
 scene.setBackgroundImage(img`
     ................................................................................................................................................................
@@ -142,7 +145,7 @@ let map = tiles.createTilemap(hex`1000100002020202020202020202020202020202020000
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
 `, [trans16, sprites.castle.tileGrass2, sprites.builtin.forestTiles0], TileScale.Sixteen);
 tiles.setCurrentTilemap(map)
-// tiles.setCurrentTilemap(tilemap`level1`)
+tiles.setCurrentTilemap(tilemap`level1`)
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
 rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
@@ -166,8 +169,8 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     spr.setScale(0.5)
     // setCharacterAnimationForSprite(spr, textures)
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0], textures[1], textures[2], textures[3]))
-    if (kind == SpriteKind.Enemy)
-        tiles.placeOnRandomTile(spr, trans16)
+    // if (kind == SpriteKind.Enemy)
+    //     tiles.placeOnRandomTile(spr, trans16)
     return spr
 }
 
@@ -184,15 +187,16 @@ createSprite(5, 7, 6, 10, texturesDog, SpriteKind.Enemy)
 createSprite(9, 7, 6, 10, texturesPlane, SpriteKind.Enemy)
 createSprite(8, 7, 6, 10, texturesDuck, SpriteKind.Enemy)
 createSprite(6, 7, 6, 10, texturesDonut, SpriteKind.Enemy)
-let cake = createSprite(1, 1, 0, 0, texturesBigCake, SpriteKind.Enemy)
+let cake = createSprite(7, 8, 0, 0, texturesBigCake, SpriteKind.Enemy)
+rcRender.setOffsetZ(cake, .25)
 // cake.setFlag(SpriteFlag.RelativeToCamera, true)
-let fish = createSprite(7, 7, 6, 10, texturesFish, SpriteKind.Enemy)
-rcRender.setOffsetZ(fish, -.25)
+let fish = createSprite(7, 9, 0, 0, texturesFish, SpriteKind.Enemy)
+rcRender.setOffsetZ(fish, .5)
 
 // for(let i=0;i<10;i++){
 //     let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
 //     tiles.placeOnRandomTile(spr, trans16)
-//     rcRender.setOffsetZ(spr,-.25)
+//     rcRender.setOffsetZ(spr,.25)
 // }
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
@@ -201,7 +205,7 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     // music.playTone(1555, 77)
     let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
     s.setScale(0.25)
-    rcRender.setOffsetZ(s, -oZ / 2 - .5)
+    rcRender.setOffsetZ(s, oZ-.25)
 })
 scene.onHitWall(SpriteKind.Food, function (sprite: Sprite, location: tiles.Location) {
     game.splash(sprite)
@@ -210,18 +214,18 @@ scene.onHitWall(SpriteKind.Food, function (sprite: Sprite, location: tiles.Locat
     // sprite.destroy()
 })
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
+    sprite.setKind(SpriteKind.Food)
     music.baDing.play()
     info.changeScoreBy(1)
     otherSprite.destroy()
-    sprite.setVelocity(otherSprite.vx * .5, otherSprite.vy * .5)
+    sprite.setVelocity(otherSprite.vx * .1, otherSprite.vy * .1)
     control.runInBackground(() => {
-        for (let oz = -0.01, ozs = -4, oza = 15; oz < 0; ozs += oza / 50, oz += ozs / 50) {
+        for (let oz = 0.01, ozs = 2.5, oza = -5; oz > 0; ozs += oza / 50, oz += ozs / 50) {
             rcRender.setOffsetZ(sprite, oz)
-            sprite.setScale(sprite.scale - (sprite.width - 4) / 300)
+            sprite.setScale(sprite.scale - (sprite.width - 4) / 1000)
             pause(20)
         }
         Render.setSpriteAnimations(sprite, new Render.Animations(120, texturesCoin))
-        sprite.setKind(SpriteKind.Food)
         sprite.setImage(sprites.builtin.coin0)
         sprite.setScale(.5)
         // sprite.setBounceOnWall(false)
@@ -266,12 +270,11 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
 //     }
 // })
 
-
-const defautViewZ=-.5
-let oZ = defautViewZ, vZ = 0, aZ = -15
+rcRender.setOffsetZ(rcRender.sprSelf, defautViewZ)
+let oZ = defautViewZ, vZ = 0, aZ = -(1-defautViewZ)*2
 controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
     if (oZ == defautViewZ&&vZ==0) //on the ground
-        vZ = 6.2  // positive number = upward
+        vZ = -aZ+.1  // positive number = upward
 })
 
 //can work when low FPS
@@ -283,4 +286,3 @@ game.onUpdate( () => {
         rcRender.setOffsetZ(rcRender.sprSelf, oZ)
     }
 })
-rcRender.setOffsetZ(rcRender.sprSelf, defautViewZ)
