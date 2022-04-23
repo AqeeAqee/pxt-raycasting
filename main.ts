@@ -199,14 +199,14 @@ rcRender.setOffsetZ(fish, .5)
 //     rcRender.setOffsetZ(spr,.25)
 // }
 
-// controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
-//     // game.splash(game.currentScene().allSprites.filter(spr => { return !(spr instanceof Sprite) }).map(spr => spr.z).join())
-//     music.pewPew.play()
-//     // music.playTone(1555, 77)
-//     let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
-//     s.setScale(0.25)
-//     rcRender.setOffsetZ(s, oZ-.25)
-// })
+controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
+    // game.splash(game.currentScene().allSprites.filter(spr => { return !(spr instanceof Sprite) }).map(spr => spr.z).join())
+    music.pewPew.play()
+    // music.playTone(1555, 77)
+    let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
+    s.setScale(0.25)
+    rcRender.setOffsetZ(s, oZ-.25)
+})
 
 scene.onHitWall(SpriteKind.Food, function (sprite: Sprite, location: tiles.Location) {
     game.splash(sprite)
