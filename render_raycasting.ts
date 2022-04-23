@@ -372,7 +372,7 @@ namespace Render{
                     continue
 
                 let lineHeight = Math.idiv(this.wallHeightInView, perpWallDist) 
-                let drawStart = ((h) >> 1) + (lineHeight) * (this.getOffsetZ(this.sprSelf) -( this._wallZScale<<fpx)) / fpx_scale;
+                let drawStart = ((h) >> 1) + (lineHeight) * (this.getOffsetZ(this.sprSelf) -( this._wallZScale*fpx_scale)) / fpx_scale;
                 let texX = (wallX * tex.width) >> fpx;
                 // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
                 //     texX = tex.width - texX - 1;

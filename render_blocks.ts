@@ -9,6 +9,7 @@ namespace Render {
         dirX,
         dirY,
         fov,
+        wallZScale,
     }
 
     export class Animations {
@@ -143,6 +144,8 @@ namespace Render {
                 return raycastingRender.dirY
             case attribute.fov:
                 return raycastingRender.fov
+            case attribute.wallZScale:
+                return raycastingRender.wallZScale
             default:
                 return 0
         }
@@ -163,7 +166,11 @@ namespace Render {
             case attribute.dirY:
                 raycastingRender.dirY = value
             case attribute.fov:
+                if (value < 0) value = 0
                 raycastingRender.fov = value
+            case attribute.wallZScale:
+                if(value<0)value=0
+                raycastingRender.wallZScale = value
             default:
         }
     }

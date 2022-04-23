@@ -1,7 +1,7 @@
 game.stats = true
 const rcRender = Render.raycastingRender
-rcRender.wallZScale = 1
-const defautViewZ = .5
+rcRender.wallZScale = 2
+const defautViewZ = 1
 
 let trans16 = image.create(16, 16)
 scene.setBackgroundImage(img`
@@ -271,10 +271,12 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
 // })
 
 rcRender.setOffsetZ(rcRender.sprSelf, defautViewZ)
-let oZ = defautViewZ, vZ = 0, aZ = -(1-defautViewZ)*2
-controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
+let oZ = defautViewZ, vZ = 0, aZ = -(1-Math.min(0.5,defautViewZ))*32
+
+controller.B.repeatDelay=0
+controller.B.onEvent(ControllerButtonEvent.Repeated, () => {
     if (oZ == defautViewZ&&vZ==0) //on the ground
-        vZ = -aZ+.1  // positive number = upward
+        vZ = -aZ/3+.1  // positive number = upward
 })
 
 //can work when low FPS
@@ -282,7 +284,8 @@ game.onUpdate( () => {
     if (vZ != 0 || oZ != defautViewZ){
         const dt=game.eventContext().deltaTime
         vZ += aZ *dt, oZ += vZ *dt
-        if (oZ < defautViewZ) { oZ = defautViewZ,vZ = 0}  //landing
+        //landing
+        if (oZ < defautViewZ) { oZ = defautViewZ,vZ = 0}
         rcRender.setOffsetZ(rcRender.sprSelf, oZ)
     }
 })
