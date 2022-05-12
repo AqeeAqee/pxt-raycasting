@@ -133,11 +133,19 @@ namespace Render{
             return this.spriteMotionZ[spr.id].p / fpx_scale
         }
 
-        jump(spr: Sprite, v:number, a:number){
-            if(this.spriteMotionZ[spr.id].p==this.spriteOffsetZ[spr.id]){
+        jump(spr: Sprite, v: number, a: number) {
+            if (this.spriteMotionZ[spr.id].p == this.spriteOffsetZ[spr.id]) {
                 this.spriteMotionZ[spr.id].v = tofpx(v)
                 this.spriteMotionZ[spr.id].a = tofpx(a)
             }
+        }
+
+        jumpWithHeightAndDuration(spr: Sprite, height: number, duration: number) {
+            // height= -v*v/a/2
+            // duration = -v/a*2 *1000
+            let v= height*4000/duration
+            let a= -v*2000/duration
+            this.jump(spr,v,a)
         }
 
         get viewMode(): ViewMode {
@@ -423,7 +431,7 @@ namespace Render{
         }
         drawSprite(spr: Sprite, index: number) {
             //debug
-            screen.print(this.spriteMotionZ[spr.id].p.toString(), 0, index*10+10)
+            // screen.print(this.spriteMotionZ[spr.id].p.toString(), 0, index*10+10)
 
             const spriteX = this.sprXFx8(spr) - this.xFpx
             const spriteY = this.sprYFx8(spr) - this.yFpx

@@ -282,5 +282,7 @@ controller.B.onEvent(ControllerButtonEvent.Repeated, () => {
     //     vZ = -aZ/3+.1  // positive number = upward
     
     // if(rcRender.getMotionZPos(rcRender.sprSelf)==rcRender.getOffsetZ(rcRender.sprSelf))
-    rcRender.jump(rcRender.sprSelf, -aZ / 3 + .1, -(1 - Math.min(0.5, defautViewZ)) * 32)
+    // game.splash(-aZ / 3 + .1, -(1 - Math.min(0.5, defautViewZ)) * 32)
+    // rcRender.jump(rcRender.sprSelf, -aZ / 3 + .1, -(1 - Math.min(0.5, defautViewZ)) * 32)
+    rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, 0.5, 500)
 })

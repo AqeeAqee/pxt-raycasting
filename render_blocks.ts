@@ -203,7 +203,7 @@ namespace Render {
     /**
      * Set floating rate for a sprite, offset at Z
      * @param sprite
-     * @param offsetZ Negative floats up, affirmative goes down
+     * @param offsetZ Negative floats down, affirmative goes up
      */
     //% blockId=rcRender_setOffsetZ block="set Sprite %spr=variables_get(mySprite) floating percentage %offsetZ"
     //% offsetZ.min=-100 offsetZ.max=300 offsetZ.defl=50
@@ -214,6 +214,35 @@ namespace Render {
     }
 
     /**
+     * Make sprite jump, with specific speed and acceleration
+     * @param sprite
+     * @param v vetical speed, unit: wallheight/s, have nothing to do with wall scale.
+     * @param a vetical acceleration, unit: wallheight/s*s
+     */
+    //% blockId=rcRender_jump block="Sprite %spr=variables_get(mySprite) jump||, with speed $v acceleration $a "
+    //% v.defl=4 a.defl=-16
+    //% group="Movement"
+    //% weight=60
+    export function jump(sprite: Sprite, v?: number, a?: number) {
+        raycastingRender.jump(sprite, v, a)
+    }
+
+    /**
+     * Make sprite jump, with specific height and duration
+     * @param sprite 
+     * @param height height, a percentage of wall height, eg. 0.5, have nothing to do with wall scale.
+     * @param duration hover time, unit: ms
+     */
+    //% blockId=rcRender_jumpWithHeightAndDuration block="Sprite %spr=variables_get(mySprite) jump with height $height duration $duration=timePicker|ms "
+    //% height.min=0 height.max=300 offsetZ.defl=50
+    //% duration.defl=500
+    //% group="Movement"
+    //% weight=59
+    export function jumpWithHeightAndDuration(sprite: Sprite, height: number, duration: number) {
+        raycastingRender.jumpWithHeightAndDuration(sprite, height/100, duration)
+    }
+
+    /**
      * Control the self sprite using the direction buttons from the controller. 
      * To stop controlling self sprite, pass 0 for v and va.
      *
@@ -221,7 +250,7 @@ namespace Render {
      * @param va The velocity used for turn view angle when left/right is pressed
      */
     //% blockId="rcRender_moveWithController" block="move with buttons velocity $v|| turn speed $va"
-    //% weight=60
+    //% weight=50
     //% expandableArgumentMode="toggle"
     //% v.defl=2 va.defl=3
     //% group="Movement"
@@ -231,7 +260,6 @@ namespace Render {
         raycastingRender.velocity=v
         raycastingRender.velocityAngle=va
     }
-
 
     /**
      * Render takeover all sprites in current scene
