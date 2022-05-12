@@ -119,20 +119,18 @@ namespace Render{
         }
 
         getOffsetZ(spr: Sprite) {
-            return this.spriteOffsetZ[spr.id] || 0
+            return this.spriteOffsetZ[spr.id]/fpx_scale || 0
         }
 
         setOffsetZ(spr: Sprite, offsetZ: number) {
             this.spriteOffsetZ[spr.id] = tofpx(offsetZ)
             if (!this.spriteMotionZ[spr.id])
                 this.spriteMotionZ[spr.id] = new MotionSet1D(this.spriteOffsetZ[spr.id], 0,0)
+            this.spriteMotionZ[spr.id].p = this.spriteOffsetZ[spr.id]
         }
 
         getMotionZPos(spr: Sprite) {
-                return this.spriteMotionZ[spr.id].p
-            // if (this.spriteMotionZ[spr.id])
-            // else
-            //     return this.spriteOffsetZ[spr.id]
+            return this.spriteMotionZ[spr.id].p / fpx_scale
         }
 
         jump(spr: Sprite, v:number, a:number){
@@ -149,7 +147,7 @@ namespace Render{
         set viewMode(v: ViewMode) {
             this._viewMode = v
             // const sc = game.currentScene()
-            if (v == ViewMode.tilemapView) {
+            // if (v == ViewMode.tilemapView) {
                 // game.currentScene().allSprites.removeElement(this.myRender)
                 // sc.allSprites.push(this.oldRender)
                 // this.bg = game.currentScene().background.image
@@ -157,13 +155,12 @@ namespace Render{
                 // this.sprites.forEach(spr => {
                 //     sc.allSprites.push(spr)
                 // })
-            }
-            else {
+            // } else {
                 // game.currentScene().allSprites.removeElement(this.oldRender)
                 // game.currentScene().allSprites.push(this.myRender)
                 // game.currentScene().background.image = this.bg
                 // this.takeoverSceneSprites()
-            }
+            // }
 
         }
 
@@ -173,7 +170,8 @@ namespace Render{
                 if (spr instanceof Sprite) {
                     if (this.sprites.indexOf(spr) < 0){
                         this.sprites.push(spr as Sprite)
-                        this.setOffsetZ(spr,0)
+                        if(!this.spriteOffsetZ[spr.id])
+                            this.setOffsetZ(spr,0)
                         sc.allSprites.removeElement(spr)
                         spr.onDestroyed(() => { this.sprites.removeElement(spr) })
                     }
@@ -293,12 +291,12 @@ namespace Render{
                 }
             }
 
+            const dt = game.eventContext().deltaTime
             for(const spr of this.sprites){
                 const motionZ=this.spriteMotionZ[spr.id]
                 if(!motionZ) continue
 
                 if (motionZ.v != 0 || motionZ.p != this.spriteOffsetZ[spr.id]) {
-                    const dt = game.eventContext().deltaTime
                     motionZ.v += motionZ.a * dt, motionZ.p += motionZ.v * dt
                     //landing
                     if (motionZ.p < this.spriteOffsetZ[spr.id]) { motionZ.p = this.spriteOffsetZ[spr.id], motionZ.v = 0 }
@@ -398,7 +396,7 @@ namespace Render{
                     continue
 
                 let lineHeight = Math.idiv(this.wallHeightInView, perpWallDist) 
-                let drawStart = ((h) >> 1) + (lineHeight) * (this.getMotionZPos(this.sprSelf) -( this._wallZScale*fpx_scale)) / fpx_scale;
+                let drawStart = ((h) >> 1) + (lineHeight) * (this.spriteMotionZ[this.sprSelf.id].p -( this._wallZScale*fpx_scale)) / fpx_scale;
                 let texX = (wallX * tex.width) >> fpx;
                 // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
                 //     texX = tex.width - texX - 1;
@@ -410,10 +408,6 @@ namespace Render{
             // screen.print(this.getMotionZPos(this.sprSelf).toString(), 0,0 )
 
             /////////////////// sprites ///////////////////
-            // // if(spr.id>)
-            //     console.log(spr.id.toString()+" "+spr.flags.toString())
-            
-
             this.sprites
                 .filter((spr, i) => { // transformY>0
                     return (spr instanceof Sprite) && spr != this.sprSelf && !(spr.flags & sprites.Flag.RelativeToCamera) &&(-this.planeY * (this.sprXFx8(spr) - this.xFpx) + this.planeX * (this.sprYFx8(spr) - this.yFpx)) > 0
@@ -428,7 +422,9 @@ namespace Render{
             this.onSpriteDirectionUpdateHandler = handler
         }
         drawSprite(spr: Sprite, index: number) {
-            // screen.print(this.getMotionZPos(spr).toString(), 0, index*10)
+            //debug
+            screen.print(this.spriteMotionZ[spr.id].p.toString(), 0, index*10+10)
+
             const spriteX = this.sprXFx8(spr) - this.xFpx
             const spriteY = this.sprYFx8(spr) - this.yFpx
             const transformX = this.invDet * (this.dirYFpx * spriteX - this.dirXFpx * spriteY) >> fpx;
@@ -451,7 +447,7 @@ namespace Render{
             if (blitWidth == 0)
                 return
             const lineHeight = Math.idiv(this.wallHeightInView, transformY)  | 1
-            const drawStart = (screen.height >> 1) + (lineHeight * (this.getMotionZPos(this.sprSelf) - this.getMotionZPos(spr) - (spr._height as any as number) / this.tilemapScaleSize ) >> fpx)
+            const drawStart = (screen.height >> 1) + (lineHeight * (this.spriteMotionZ[this.sprSelf.id].p - this.spriteMotionZ[spr.id].p - (spr._height as any as number) / this.tilemapScaleSize ) >> fpx)
             const myAngle = Math.atan2(spriteX, spriteY)
 
             //for textures=image[][], abandoned

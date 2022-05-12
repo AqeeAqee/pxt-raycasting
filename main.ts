@@ -205,7 +205,7 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     // music.playTone(1555, 77)
     let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
     s.setScale(0.25)
-    rcRender.setOffsetZ(s, rcRender.getMotionZPos(rcRender.sprSelf)/256-.25)
+    rcRender.setOffsetZ(s, rcRender.getMotionZPos(rcRender.sprSelf)-.25)
 })
 
 scene.onHitWall(SpriteKind.Food, function (sprite: Sprite, location: tiles.Location) {
@@ -284,14 +284,3 @@ controller.B.onEvent(ControllerButtonEvent.Repeated, () => {
     // if(rcRender.getMotionZPos(rcRender.sprSelf)==rcRender.getOffsetZ(rcRender.sprSelf))
     rcRender.jump(rcRender.sprSelf, -aZ / 3 + .1, -(1 - Math.min(0.5, defautViewZ)) * 32)
 })
-
-// //can work when low FPS
-// game.onUpdate( () => {
-//     if (vZ != 0 || oZ != defautViewZ){
-//         const dt=game.eventContext().deltaTime
-//         vZ += aZ *dt, oZ += vZ *dt
-//         //landing
-//         if (oZ < defautViewZ) { oZ = defautViewZ,vZ = 0}
-//         rcRender.setOffsetZ(rcRender.sprSelf, oZ)
-//     }
-// })

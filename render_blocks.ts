@@ -206,7 +206,7 @@ namespace Render {
      * @param offsetZ Negative floats up, affirmative goes down
      */
     //% blockId=rcRender_setOffsetZ block="set Sprite %spr=variables_get(mySprite) floating percentage %offsetZ"
-    //% offsetZ.min=-100 offsetZ.max=100 offsetZ.defl=-50
+    //% offsetZ.min=-100 offsetZ.max=300 offsetZ.defl=50
     //% group="Basic"
     //% weight=80
     export function setOffsetZ(sprite: Sprite, offsetZ: number) {
