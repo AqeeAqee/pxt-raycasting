@@ -2,7 +2,7 @@
  * A 2.5D Screen Render, using Raycasting algorithm
  **/
 //% color=#03AA74 weight=1 icon="\uf1b2" //cube f1b2 , fold f279
-//% groups='["Instance","Basic", "Animate", "Advanced"]'
+//% groups='["Instance","Basic", "Movement", "Animate", "Advanced"]'
 //% block="3D Render"
 namespace Render {
     export enum attribute {
@@ -212,6 +212,26 @@ namespace Render {
     export function setOffsetZ(sprite: Sprite, offsetZ: number) {
         raycastingRender.setOffsetZ(sprite, offsetZ / 100)
     }
+
+    /**
+     * Control the self sprite using the direction buttons from the controller. 
+     * To stop controlling self sprite, pass 0 for v and va.
+     *
+     * @param v The velocity used for forward/backword movement when up/down is pressed
+     * @param va The velocity used for turn view angle when left/right is pressed
+     */
+    //% blockId="rcRender_moveWithController" block="move with buttons velocity $v|| turn speed $va"
+    //% weight=60
+    //% expandableArgumentMode="toggle"
+    //% v.defl=2 va.defl=3
+    //% group="Movement"
+    //% v.shadow="spriteSpeedPicker"
+    //% va.shadow="spriteSpeedPicker"
+    export function moveWithController(v: number = 2, va: number = 3) {
+        raycastingRender.velocity=v
+        raycastingRender.velocityAngle=va
+    }
+
 
     /**
      * Render takeover all sprites in current scene

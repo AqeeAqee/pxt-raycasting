@@ -1,7 +1,7 @@
 game.stats = true
 const rcRender = Render.raycastingRender
 rcRender.wallZScale = 2
-const defautViewZ = 1
+const defautViewZ = .5
 
 let trans16 = image.create(16, 16)
 scene.setBackgroundImage(img`
@@ -205,7 +205,7 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     // music.playTone(1555, 77)
     let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
     s.setScale(0.25)
-    rcRender.setOffsetZ(s, oZ-.25)
+    rcRender.setOffsetZ(s, rcRender.getMotionZPos(rcRender.sprSelf)/256-.25)
 })
 
 scene.onHitWall(SpriteKind.Food, function (sprite: Sprite, location: tiles.Location) {
@@ -221,14 +221,16 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
     otherSprite.destroy()
     sprite.setVelocity(otherSprite.vx * .1, otherSprite.vy * .1)
     control.runInBackground(() => {
-        for (let oz = 0.01, ozs = 2.5, oza = -5; oz > 0; ozs += oza / 50, oz += ozs / 50) {
-            rcRender.setOffsetZ(sprite, oz)
-            sprite.setScale(sprite.scale - (sprite.width - 4) / 1000)
-            pause(20)
-        }
+        rcRender.jump(sprite, 2.5, -5)
+        // for (let oz = 0.01, ozs = 2.5, oza = -5; oz > 0; ozs += oza / 50, oz += ozs / 50) {
+        //     rcRender.setOffsetZ(sprite, oz)
+        //     sprite.setScale(sprite.scale - (sprite.width - 4) / 1000)
+        //     pause(20)
+        // }
         Render.setSpriteAnimations(sprite, new Render.Animations(120, texturesCoin))
         sprite.setImage(sprites.builtin.coin0)
         sprite.setScale(.5)
+        rcRender.setOffsetZ(sprite,0)
         // sprite.setBounceOnWall(false)
         sprite.fx = 5000
         sprite.fy = 5000
@@ -276,17 +278,20 @@ let oZ = defautViewZ, vZ = 0, aZ = -(1-Math.min(0.5,defautViewZ))*32
 
 controller.B.repeatDelay=0
 controller.B.onEvent(ControllerButtonEvent.Repeated, () => {
-    if (oZ == defautViewZ&&vZ==0) //on the ground
-        vZ = -aZ/3+.1  // positive number = upward
+    // if (oZ == defautViewZ&&vZ==0) //on the ground
+    //     vZ = -aZ/3+.1  // positive number = upward
+    
+    // if(rcRender.getMotionZPos(rcRender.sprSelf)==rcRender.getOffsetZ(rcRender.sprSelf))
+    rcRender.jump(rcRender.sprSelf, -aZ / 3 + .1, -(1 - Math.min(0.5, defautViewZ)) * 32)
 })
 
-//can work when low FPS
-game.onUpdate( () => {
-    if (vZ != 0 || oZ != defautViewZ){
-        const dt=game.eventContext().deltaTime
-        vZ += aZ *dt, oZ += vZ *dt
-        //landing
-        if (oZ < defautViewZ) { oZ = defautViewZ,vZ = 0}
-        rcRender.setOffsetZ(rcRender.sprSelf, oZ)
-    }
-})
+// //can work when low FPS
+// game.onUpdate( () => {
+//     if (vZ != 0 || oZ != defautViewZ){
+//         const dt=game.eventContext().deltaTime
+//         vZ += aZ *dt, oZ += vZ *dt
+//         //landing
+//         if (oZ < defautViewZ) { oZ = defautViewZ,vZ = 0}
+//         rcRender.setOffsetZ(rcRender.sprSelf, oZ)
+//     }
+// })

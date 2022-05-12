@@ -10,9 +10,15 @@ namespace Render{
     const fpx_scale = 2 ** fpx
     function tofpx(n: number) { return (n * fpx_scale) | 0 }
 
-    export const defaultFov = screen.width / screen.height / 2  //Wall just fill screen height when standing 1 unit away
+    class MotionSet1D{
+        constructor (public p:number, public v:number, public a:number){}
+    }
+
+    export const defaultFov = screen.width / screen.height / 2  //Wall just fill screen height when standing 1 tile away
 
     export class RayCastingRender {
+        velocityAngle:number=2
+        velocity:number=3
         protected _viewMode: ViewMode
         protected dirXFpx: number
         protected dirYFpx: number
@@ -22,6 +28,7 @@ namespace Render{
         protected _fov: number
         protected _wallZScale:number=1
         protected spriteOffsetZ: number[] = []
+        protected spriteMotionZ: MotionSet1D[] = []
         spriteAnimations: Animations[] = []
 
         //reference
@@ -117,6 +124,22 @@ namespace Render{
 
         setOffsetZ(spr: Sprite, offsetZ: number) {
             this.spriteOffsetZ[spr.id] = tofpx(offsetZ)
+            if (!this.spriteMotionZ[spr.id])
+                this.spriteMotionZ[spr.id] = new MotionSet1D(this.spriteOffsetZ[spr.id], 0,0)
+        }
+
+        getMotionZPos(spr: Sprite) {
+                return this.spriteMotionZ[spr.id].p
+            // if (this.spriteMotionZ[spr.id])
+            // else
+            //     return this.spriteOffsetZ[spr.id]
+        }
+
+        jump(spr: Sprite, v:number, a:number){
+            if(this.spriteMotionZ[spr.id].p==this.spriteOffsetZ[spr.id]){
+                this.spriteMotionZ[spr.id].v = tofpx(v)
+                this.spriteMotionZ[spr.id].a = tofpx(a)
+            }
         }
 
         get viewMode(): ViewMode {
@@ -150,6 +173,7 @@ namespace Render{
                 if (spr instanceof Sprite) {
                     if (this.sprites.indexOf(spr) < 0){
                         this.sprites.push(spr as Sprite)
+                        this.setOffsetZ(spr,0)
                         sc.allSprites.removeElement(spr)
                         spr.onDestroyed(() => { this.sprites.removeElement(spr) })
                     }
@@ -218,14 +242,13 @@ namespace Render{
 
             //self sprite
             this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)
-            // this.sprSelf.setPosition(x, y)
             scene.cameraFollowSprite(this.sprSelf)
+            this.setOffsetZ(this.sprSelf, 0.5)
             this.updateSelfImage()
 
             game.onUpdate(function () {
                 this.updateControls()
             })
-
         }
 
         private setVectors() {
@@ -255,29 +278,32 @@ namespace Render{
         }
 
         updateControls() {
-            const dx = controller.dx(2)
-            if (dx) {
-                this.viewAngle += dx
+            if (this.velocityAngle!==0){
+                const dx = controller.dx(this.velocityAngle)
+                if (dx) {
+                    this.viewAngle += dx
+                }
             }
-            const dy = controller.dy(3)
-            if (dy) {
-                const nx = this.xFpx - Math.round(this.dirXFpx * dy)
-                const ny = this.yFpx - Math.round(this.dirYFpx * dy)
-                //use physical engine instead
-                // if (!this.canGo(nx, ny) && this.canGo(this.xFpx, this.yFpx)) {
-                //     if (this.canGo(this.xFpx, ny)) {
-                //         this.yFpx = ny
-                //     } else if (this.canGo(nx, this.yFpx)) {
-                //         this.xFpx = nx
-                //     }
-                // } else {
-                //     this.xFpx = nx
-                //     this.yFpx = ny
-                // }
-                this.sprSelf.setPosition((nx * this.tilemapScaleSize / fpx_scale), (ny * this.tilemapScaleSize / fpx_scale))
+            if(this.velocity!==0){
+                const dy = controller.dy(this.velocity)
+                if (dy) {
+                    const nx = this.xFpx - Math.round(this.dirXFpx * dy)
+                    const ny = this.yFpx - Math.round(this.dirYFpx * dy)
+                    this.sprSelf.setPosition((nx * this.tilemapScaleSize / fpx_scale), (ny * this.tilemapScaleSize / fpx_scale))
+                }
             }
-            //if (dx || dy)
-            //    console.log(`${this.xFpx},${this.yFpx},${this.angle}`)
+
+            for(const spr of this.sprites){
+                const motionZ=this.spriteMotionZ[spr.id]
+                if(!motionZ) continue
+
+                if (motionZ.v != 0 || motionZ.p != this.spriteOffsetZ[spr.id]) {
+                    const dt = game.eventContext().deltaTime
+                    motionZ.v += motionZ.a * dt, motionZ.p += motionZ.v * dt
+                    //landing
+                    if (motionZ.p < this.spriteOffsetZ[spr.id]) { motionZ.p = this.spriteOffsetZ[spr.id], motionZ.v = 0 }
+                }
+            }
         }
 
         render() {
@@ -372,7 +398,7 @@ namespace Render{
                     continue
 
                 let lineHeight = Math.idiv(this.wallHeightInView, perpWallDist) 
-                let drawStart = ((h) >> 1) + (lineHeight) * (this.getOffsetZ(this.sprSelf) -( this._wallZScale*fpx_scale)) / fpx_scale;
+                let drawStart = ((h) >> 1) + (lineHeight) * (this.getMotionZPos(this.sprSelf) -( this._wallZScale*fpx_scale)) / fpx_scale;
                 let texX = (wallX * tex.width) >> fpx;
                 // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
                 //     texX = tex.width - texX - 1;
@@ -381,6 +407,7 @@ namespace Render{
 
                 this.dist[x] = perpWallDist
             }
+            // screen.print(this.getMotionZPos(this.sprSelf).toString(), 0,0 )
 
             /////////////////// sprites ///////////////////
             // // if(spr.id>)
@@ -401,7 +428,7 @@ namespace Render{
             this.onSpriteDirectionUpdateHandler = handler
         }
         drawSprite(spr: Sprite, index: number) {
-            // screen.print([spr.image.width].join(), 0, index*10)
+            // screen.print(this.getMotionZPos(spr).toString(), 0, index*10)
             const spriteX = this.sprXFx8(spr) - this.xFpx
             const spriteY = this.sprYFx8(spr) - this.yFpx
             const transformX = this.invDet * (this.dirYFpx * spriteX - this.dirXFpx * spriteY) >> fpx;
@@ -424,7 +451,7 @@ namespace Render{
             if (blitWidth == 0)
                 return
             const lineHeight = Math.idiv(this.wallHeightInView, transformY)  | 1
-            const drawStart = (screen.height >> 1) + (lineHeight * (this.getOffsetZ(this.sprSelf) - this.getOffsetZ(spr) - (spr._height as any as number) / this.tilemapScaleSize ) >> fpx)
+            const drawStart = (screen.height >> 1) + (lineHeight * (this.getMotionZPos(this.sprSelf) - this.getMotionZPos(spr) - (spr._height as any as number) / this.tilemapScaleSize ) >> fpx)
             const myAngle = Math.atan2(spriteX, spriteY)
 
             //for textures=image[][], abandoned
