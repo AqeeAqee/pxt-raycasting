@@ -1,7 +1,6 @@
 game.stats = true
 const rcRender = Render.raycastingRender
 rcRender.wallZScale = 2
-const defautViewZ = .5
 
 let trans16 = image.create(16, 16)
 scene.setBackgroundImage(img`
@@ -144,19 +143,15 @@ let map = tiles.createTilemap(hex`1000100002020202020202020202020202020202020000
 2 . . . . . . . . . . . . . . 2 
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
 `, [trans16, sprites.castle.tileGrass2, sprites.builtin.forestTiles0], TileScale.Sixteen);
-tiles.setCurrentTilemap(map)
-tiles.setCurrentTilemap(tilemap`level1`)
+// tiles.setCurrentTilemap(map)
+const tm= tilemap`level1`
+// tm.scale = TileScale.ThirtyTwo
+tiles.setCurrentTilemap(tm)
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
-rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
-// tiles.setCurrentTilemap(tiles.tilemap`level1`)
+rcRender.setOffsetZ(rcRender.sprSelf, tilemapScale / 2)
 
-// const characterAniDirs = [Predicate.MovingLeft, Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
-// function setCharacterAnimationForSprite(spr: Sprite, textures: Image[][]) {
-//     characterAniDirs.forEach((dir, i) => {
-//         character.loopFrames(spr, textures[Math.floor(i * textures.length / characterAniDirs.length)], 150, character.rule(dir))
-//     })
-// }
+rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
 
 let count = 0
 function createSprite(x: number, y: number, vx: number, vy: number, textures: Image[][], kind: number) {
@@ -205,37 +200,24 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     // music.playTone(1555, 77)
     let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
     s.setScale(0.25)
-    rcRender.setOffsetZ(s, rcRender.getMotionZPos(rcRender.sprSelf)-.25)
+    rcRender.setOffsetZ(s, rcRender.getMotionZPos(rcRender.sprSelf)-tilemapScale/4)
 })
 
-scene.onHitWall(SpriteKind.Food, function (sprite: Sprite, location: tiles.Location) {
-    game.splash(sprite)
-    music.playTone(1555, 77)
-    sprite.setVelocity(sprite.vx * .3, sprite.vy * .3)
-    // sprite.destroy()
-})
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
     sprite.setKind(SpriteKind.Food)
     music.baDing.play()
     info.changeScoreBy(1)
     otherSprite.destroy()
-    sprite.setVelocity(otherSprite.vx * .1, otherSprite.vy * .1)
+    sprite.setVelocity(0, 0)
+    Render.setSpriteAnimations(sprite, new Render.Animations(120, texturesCoin))
+    sprite.setImage(sprites.builtin.coin0)
+    sprite.setScale(.5)
+    rcRender.setOffsetZ(sprite,0)
+    rcRender.jumpWithHeightAndDuration(sprite, tilemapScale/2, 500)
     control.runInBackground(() => {
-        rcRender.jump(sprite, 2.5, -5)
-        // for (let oz = 0.01, ozs = 2.5, oza = -5; oz > 0; ozs += oza / 50, oz += ozs / 50) {
-        //     rcRender.setOffsetZ(sprite, oz)
-        //     sprite.setScale(sprite.scale - (sprite.width - 4) / 1000)
-        //     pause(20)
-        // }
-        Render.setSpriteAnimations(sprite, new Render.Animations(120, texturesCoin))
-        sprite.setImage(sprites.builtin.coin0)
-        sprite.setScale(.5)
-        rcRender.setOffsetZ(sprite,0)
-        // sprite.setBounceOnWall(false)
-        sprite.fx = 5000
-        sprite.fy = 5000
     })
 })
+
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Food, function (sprite, otherSprite) {
     // music.pewPew.play()
     // otherSprite.destroy()
@@ -260,6 +242,13 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
     rcRender.viewMode = rcRender.viewMode == ViewMode.tilemapView ? ViewMode.raycastingView : ViewMode.tilemapView
 })
 
+controller.B.repeatDelay=0
+controller.B.onEvent(ControllerButtonEvent.Repeated, () => {
+    rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale/2, 500)
+})
+
+
+
 // controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
 //     for (let fov = Render.defaultFov; fov > Render.defaultFov - .6; fov -= .06) {
 //         rcRender.fov=fov
@@ -273,16 +262,11 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
 //     }
 // })
 
-rcRender.setOffsetZ(rcRender.sprSelf, defautViewZ)
-let oZ = defautViewZ, vZ = 0, aZ = -(1-Math.min(0.5,defautViewZ))*32
 
-controller.B.repeatDelay=0
-controller.B.onEvent(ControllerButtonEvent.Repeated, () => {
-    // if (oZ == defautViewZ&&vZ==0) //on the ground
-    //     vZ = -aZ/3+.1  // positive number = upward
-    
-    // if(rcRender.getMotionZPos(rcRender.sprSelf)==rcRender.getOffsetZ(rcRender.sprSelf))
-    // game.splash(-aZ / 3 + .1, -(1 - Math.min(0.5, defautViewZ)) * 32)
-    // rcRender.jump(rcRender.sprSelf, -aZ / 3 + .1, -(1 - Math.min(0.5, defautViewZ)) * 32)
-    rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, 0.5, 500)
-})
+// const characterAniDirs = [Predicate.MovingLeft, Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
+// function setCharacterAnimationForSprite(spr: Sprite, textures: Image[][]) {
+//     characterAniDirs.forEach((dir, i) => {
+//         character.loopFrames(spr, textures[Math.floor(i * textures.length / characterAniDirs.length)], 150, character.rule(dir))
+//     })
+// }
+
