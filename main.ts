@@ -149,7 +149,7 @@ const tm= tilemap`level1`
 tiles.setCurrentTilemap(tm)
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
-rcRender.setOffsetZ(rcRender.sprSelf, tilemapScale / 2)
+rcRender.setZOffset(rcRender.sprSelf, tilemapScale / 2)
 
 rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
 
@@ -183,15 +183,15 @@ createSprite(9, 7, 6, 10, texturesPlane, SpriteKind.Enemy)
 createSprite(8, 7, 6, 10, texturesDuck, SpriteKind.Enemy)
 createSprite(6, 7, 6, 10, texturesDonut, SpriteKind.Enemy)
 let cake = createSprite(7, 8, 0, 0, texturesBigCake, SpriteKind.Enemy)
-rcRender.setOffsetZ(cake, .25)
+rcRender.setZOffset(cake, .25)
 // cake.setFlag(SpriteFlag.RelativeToCamera, true)
 let fish = createSprite(7, 9, 0, 0, texturesFish, SpriteKind.Enemy)
-rcRender.setOffsetZ(fish, .5)
+rcRender.setZOffset(fish, .5)
 
 // for(let i=0;i<10;i++){
 //     let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
 //     tiles.placeOnRandomTile(spr, trans16)
-//     rcRender.setOffsetZ(spr,.25)
+//     rcRender.setZOffset(spr,.25)
 // }
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
@@ -200,7 +200,7 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     // music.playTone(1555, 77)
     let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
     s.setScale(0.25)
-    rcRender.setOffsetZ(s, rcRender.getMotionZPos(rcRender.sprSelf)-tilemapScale/4)
+    rcRender.setZOffset(s, rcRender.getMotionZPosition(rcRender.sprSelf)-tilemapScale/4)
 })
 
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
@@ -212,7 +212,7 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
     Render.setSpriteAnimations(sprite, new Render.Animations(120, texturesCoin))
     sprite.setImage(sprites.builtin.coin0)
     sprite.setScale(.5)
-    rcRender.setOffsetZ(sprite,0)
+    rcRender.setZOffset(sprite,0)
     rcRender.jumpWithHeightAndDuration(sprite, tilemapScale/2, 500)
     control.runInBackground(() => {
     })
@@ -244,7 +244,7 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
 
 controller.B.repeatDelay=0
 controller.B.onEvent(ControllerButtonEvent.Repeated, () => {
-    rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale/2, 500)
+    rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale, 500)
 })
 
 

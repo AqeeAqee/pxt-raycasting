@@ -122,49 +122,61 @@ namespace Render{
             this._wallZScale=v
         }
 
-        getOffsetZ(spr: Sprite) {
-            return this.spriteMotionZ[spr.id].offset/fpx_scale || 0
-        }
-
-        setOffsetZ(spr: Sprite, offsetZ: number) {
+        getMotionZ(spr: Sprite, offsetZ:number=0){
             let motionZ = this.spriteMotionZ[spr.id]
-            if (motionZ)
-                motionZ.offset = tofpx(offsetZ)
-            else{
-                this.spriteMotionZ[spr.id] = new MotionSet1D(tofpx(offsetZ))
-                motionZ = this.spriteMotionZ[spr.id]
+            if (!motionZ){
+                motionZ = new MotionSet1D(tofpx(offsetZ))
+                this.spriteMotionZ[spr.id] = motionZ
             }
+            return motionZ
+        }
 
+        getZOffset(spr: Sprite) {
+            return this.getMotionZ(spr).offset/fpx_scale
+        }
+
+        setZOffset(spr: Sprite, offsetZ: number, duration:number=500) {
+            const motionZ=this.getMotionZ(spr, offsetZ)
+            
             if (motionZ.p != motionZ.offset){
-                this.moveByDistAndDuration(spr, (motionZ.offset-motionZ.p)>>fpx, 1000)
+                if(duration===0)
+                    motionZ.p=motionZ.offset
+                else
+                    this.move(spr, (motionZ.offset - motionZ.p)/fpx_scale*1000/ duration,0)
             }
         }
 
-        getMotionZPos(spr: Sprite) {
-            return this.spriteMotionZ[spr.id].p / fpx_scale
+        getMotionZPosition(spr: Sprite) {
+            return this.getMotionZ(spr).p / fpx_scale
         }
 
         move(spr: Sprite, v: number, a: number) {
-            this.spriteMotionZ[spr.id].v = tofpx(v)
-            this.spriteMotionZ[spr.id].a = tofpx(a)
-        }
+            const motionZ = this.getMotionZ(spr)
 
-        moveByDistAndDuration(spr: Sprite, dist: number, duration: number) {
-            // dist= -v*v/a/2
-            // duration = -v/a*2 *1000
-            const v = dist * 4000 / duration
-            const a = -v * 2000 / duration
-            this.move(spr, v, a)
+            motionZ.v = tofpx(v)
+            motionZ.a = tofpx(a)
         }
 
         jump(spr: Sprite, v: number, a: number) {
-            if (this.spriteMotionZ[spr.id].p == this.spriteMotionZ[spr.id].offset)
-                this.move(spr,v,a)
+            const motionZ = this.getMotionZ(spr)
+            if (motionZ.p != motionZ.offset)
+                return
+
+            motionZ.v = tofpx(v)
+            motionZ.a = tofpx(a)
         }
 
         jumpWithHeightAndDuration(spr: Sprite, height: number, duration: number) {
-            if (this.spriteMotionZ[spr.id].p == this.spriteMotionZ[spr.id].offset) 
-                this.moveByDistAndDuration(spr, height, duration)
+            const motionZ = this.getMotionZ(spr)
+            if (motionZ.p != motionZ.offset)
+                return
+
+            // height= -v*v/a/2
+            // duration = -v/a*2 *1000
+            const v = height * 4000 / duration
+            const a = -v * 2000 / duration
+            motionZ.v = tofpx(v)
+            motionZ.a = tofpx(a)
         }
 
         get viewMode(): ViewMode {
@@ -197,8 +209,8 @@ namespace Render{
                 if (spr instanceof Sprite) {
                     if (this.sprites.indexOf(spr) < 0){
                         this.sprites.push(spr as Sprite)
-                        if(!this.spriteMotionZ[spr.id])
-                            this.setOffsetZ(spr,0)
+                        if (!this.spriteMotionZ[spr.id])
+                            this.setZOffset(spr,0)
                         sc.allSprites.removeElement(spr)
                         spr.onDestroyed(() => { this.sprites.removeElement(spr) })
                     }
@@ -268,7 +280,7 @@ namespace Render{
             //self sprite
             this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)
             scene.cameraFollowSprite(this.sprSelf)
-            this.setOffsetZ(this.sprSelf, this.tilemapScaleSize/2)
+            this.setZOffset(this.sprSelf, this.tilemapScaleSize/2)
             this.updateSelfImage()
 
             game.onUpdate(function () {
@@ -312,14 +324,14 @@ namespace Render{
 
             const dt = game.eventContext().deltaTime
             for(const spr of this.sprites){
-                const motionZ=this.spriteMotionZ[spr.id]
+                const motionZ = this.spriteMotionZ[spr.id]
                 if(!motionZ) continue
 
                 if (motionZ.v != 0 || motionZ.p != motionZ.offset) {
                     motionZ.v += motionZ.a * dt, motionZ.p += motionZ.v * dt
                     //landing
-                    if ((motionZ.a > 0 && motionZ.v > 0 && motionZ.p > motionZ.offset) ||
-                        (motionZ.a < 0 && motionZ.v < 0 && motionZ.p < motionZ.offset))
+                    if ((motionZ.a >= 0 && motionZ.v > 0 && motionZ.p > motionZ.offset) ||
+                        (motionZ.a <= 0 && motionZ.v < 0 && motionZ.p < motionZ.offset))
                         { motionZ.p = motionZ.offset, motionZ.v = 0 }
                 }
             }
@@ -444,7 +456,7 @@ namespace Render{
         }
         drawSprite(spr: Sprite, index: number) {
             //debug
-            // screen.print(this.spriteMotionZ[spr.id].p.toString(), 0, index*10+10)
+            // screen.print(motionZ.p.toString(), 0, index*10+10)
 
             const spriteX = this.sprXFx8(spr) - this.xFpx
             const spriteY = this.sprYFx8(spr) - this.yFpx
@@ -456,7 +468,11 @@ namespace Render{
             //calculate drawing range in X direction
             //assume there is one range only
             let blitX = 0, blitWidth = 0
-            for (let sprX = Math.max(0, spriteScreenX - spriteScreenHalfWidth); sprX < Math.min(screen.width, spriteScreenX + spriteScreenHalfWidth); sprX++) {
+            const sprXLeft = Math.max(0, spriteScreenX - spriteScreenHalfWidth)
+            const sprXRight = Math.min(screen.width, spriteScreenX + spriteScreenHalfWidth)
+            // if (this.dist[sprXLeft] < transformY && this.dist[sprXRight] < transformY)
+            //     return
+            for (let sprX = sprXLeft; sprX < sprXRight; sprX++) {
                 if (this.dist[sprX] > transformY) {
                     if (blitWidth == 0)
                         blitX = sprX
@@ -490,8 +506,7 @@ namespace Render{
                 blitWidth,
                 lineHeight  * spr.height / this.tilemapScaleSize,
                 texSpr,
-                (blitX - (spriteScreenX - spriteScreenHalfWidth)) * texSpr.width / spriteScreenHalfWidth / 2
-                ,
+                (blitX - (spriteScreenX - spriteScreenHalfWidth)) * texSpr.width / spriteScreenHalfWidth / 2,
                 0,
                 blitWidth * texSpr.width / spriteScreenHalfWidth / 2, texSpr.height, true, false)
         }
