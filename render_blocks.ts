@@ -2,13 +2,14 @@
  * A 2.5D Screen Render, using Raycasting algorithm
  **/
 //% color=#03AA74 weight=1 icon="\uf1b2" //cube f1b2 , fold f279
-//% groups='["Instance","Basic", "Animate", "Advanced"]'
+//% groups='["Instance","Basic", "Dimension Z", "Animate", "Advanced"]'
 //% block="3D Render"
 namespace Render {
     export enum attribute {
         dirX,
         dirY,
         fov,
+        wallZScale,
     }
 
     export class Animations {
@@ -143,6 +144,8 @@ namespace Render {
                 return raycastingRender.dirY
             case attribute.fov:
                 return raycastingRender.fov
+            case attribute.wallZScale:
+                return raycastingRender.wallZScale
             default:
                 return 0
         }
@@ -163,7 +166,11 @@ namespace Render {
             case attribute.dirY:
                 raycastingRender.dirY = value
             case attribute.fov:
+                if (value < 0) value = 0
                 raycastingRender.fov = value
+            case attribute.wallZScale:
+                if(value<0)value=0
+                raycastingRender.wallZScale = value
             default:
         }
     }
@@ -181,29 +188,108 @@ namespace Render {
     }
 
     /**
-     * Set view angle by dirX and dirY
-     * @param sprite
-     * @param offsetZ Negative floats up, affirmative goes down
+     * Set view angle
+     * @param angle, unit: degree 0~360
      */
-    //% blockId=rcRender_setViewAngle block="set view angle by dirX%dirX and dirY%dirY"
-    //% offsetZ.min=-100 offsetZ.max=100 offsetZ.defl=-50
+    //% blockId=rcRender_setViewAngleInDegree block="set view angle$angle"
+    //% angle.min=0 angle.max=360 angle.defl=90
     //% group="Basic"
     //% weight=80
+    export function setViewAngleInDegree(angle: number) {
+        raycastingRender.viewAngle = angle * Math.PI / 180
+    }
+
+    /**
+     * Set view angle by dirX and dirY
+     * @param dirX
+     * @param dirY
+     */
+    //% blockId=rcRender_setViewAngle block="set view angle by dirX%dirX and dirY%dirY"
+    //% group="Basic"
+    //% weight=79
     export function setViewAngle(dirX: number, dirY: number) {
         raycastingRender.viewAngle = Math.atan2(dirY, dirX)
     }
 
     /**
-     * Set floating rate for a sprite, offset at Z
+     * Set floating offset height for a sprite at Z direction
      * @param sprite
-     * @param offsetZ Negative floats up, affirmative goes down
+     * @param Zoffset Negative floats down, affirmative goes up
+     * @param duration moving time, 0 for immediately, unit: ms
      */
-    //% blockId=rcRender_setOffsetZ block="set Sprite %spr=variables_get(mySprite) floating percentage %offsetZ"
-    //% offsetZ.min=-100 offsetZ.max=100 offsetZ.defl=-50
-    //% group="Basic"
+    //% blockId=rcRender_setZOffset block="set Sprite %spr=variables_get(mySprite) floating %offset pixels|| duration $duration=timePicker|ms "
+    //% offset.min=-100 offset.max=100 offset.defl=8
+    //% duration.min=0 duration.max=5000 duration.defl=0
+    //% group="Dimension Z"
     //% weight=80
-    export function setOffsetZ(sprite: Sprite, offsetZ: number) {
-        raycastingRender.setOffsetZ(sprite, offsetZ / 100)
+    export function setZOffset(sprite: Sprite, offset: number, duration?:number) {
+        raycastingRender.setZOffset(sprite, offset, duration)
+    }
+
+    /**
+     * Make sprite jump, with specific height and duration
+     * Jump can only happened when sprite is standing, current height = its offset .
+     * @param sprite
+     * @param height jump height in pixel
+     * @param duration hover time span, unit: ms
+     */
+    //% blockId=rcRender_jumpWithHeightAndDuration block="Sprite %spr=variables_get(mySprite) jump, with height $height duration $duration=timePicker|ms "
+    //% height.min=0 height.max=100 height.defl=16
+    //% duration.min=50 duration.max=5000 duration.defl=500
+    //% group="Dimension Z"
+    //% weight=70
+    export function jumpWithHeightAndDuration(sprite: Sprite, height: number, duration: number) {
+        raycastingRender.jumpWithHeightAndDuration(sprite, height, duration)
+    }
+
+    /**
+     * Make sprite jump, with specific speed and acceleration
+     * Simular with Move block, but jump can only happened when sprite is standing, current height = its offset.
+     * @param sprite
+     * @param v vetical speed, unit: pixel/s
+     * @param a vetical acceleration, unit: pixel/s*s
+     */
+    //% blockId=rcRender_jump block="Sprite %spr=variables_get(mySprite) jump||, with speed $v acceleration $a "
+    //% v.min=-100 v.max=100 v.defl=60
+    //% a.min=-1000 a.max=1000 a.defl=-250
+    //% group="Dimension Z"
+    //% weight=68
+    export function jump(sprite: Sprite, v?: number, a?: number) {
+        raycastingRender.jump(sprite, v, a)
+    }
+
+    /**
+     * Make sprite jump, with specific speed and acceleration
+     * @param sprite
+     * @param v vetical speed, unit: pixel/s
+     * @param a vetical acceleration, unit: pixel/s*s
+     */
+    //% blockId=rcRender_move block="Sprite %spr=variables_get(mySprite) move, with speed $v|| acceleration $a "
+    //% v.min=-200 v.max=200 v.defl=60
+    //% a.min=-1000 a.max=1000 a.defl=-250
+    //% group="Dimension Z"
+    //% weight=66
+    export function move(sprite: Sprite, v?: number, a?: number) {
+        raycastingRender.move(sprite, v, a)
+    }
+
+    /**
+     * Control the self sprite using the direction buttons from the controller. 
+     * To stop controlling self sprite, pass 0 for v and va.
+     *
+     * @param v The velocity used for forward/backword movement when up/down is pressed, in pixel/s
+     * @param va The angle velocity used for turn view direction when left/right is pressed, in radian/s.
+     */
+    //% blockId="rcRender_moveWithController" block="move with buttons velocity $v|| turn speed $va"
+    //% weight=60
+    //% expandableArgumentMode="toggle"
+    //% v.defl=2 va.defl=3
+    //% group="Advanced"
+    //% v.shadow="spriteSpeedPicker"
+    //% va.shadow="spriteSpeedPicker"
+    export function moveWithController(v: number = 2, va: number = 3) {
+        raycastingRender.velocity=v
+        raycastingRender.velocityAngle=va
     }
 
     /**
