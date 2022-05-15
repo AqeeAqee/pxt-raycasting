@@ -247,9 +247,9 @@ namespace Render {
      * Simular with Move block, but jump can only happened when sprite is standing, current height = its offset.
      * @param sprite
      * @param v vetical speed, unit: pixel/s
-     * @param a vetical acceleration, unit: pixel/s*s
+     * @param a vetical acceleration, unit: pixel/s²
      */
-    //% blockId=rcRender_jump block="Sprite %spr=variables_get(mySprite) jump||, with speed $v acceleration $a "
+    //% blockId=rcRender_jump block="Sprite %spr=variables_get(mySprite) jump||, with speed $v=spriteSpeedPicker acceleration $a"
     //% v.min=-100 v.max=100 v.defl=60
     //% a.min=-1000 a.max=1000 a.defl=-250
     //% group="Dimension Z"
@@ -262,9 +262,9 @@ namespace Render {
      * Make sprite jump, with specific speed and acceleration
      * @param sprite
      * @param v vetical speed, unit: pixel/s
-     * @param a vetical acceleration, unit: pixel/s*s
+     * @param a vetical acceleration, unit: pixel/s²
      */
-    //% blockId=rcRender_move block="Sprite %spr=variables_get(mySprite) move, with speed $v|| acceleration $a "
+    //% blockId=rcRender_move block="Sprite %spr=variables_get(mySprite) move, with speed $v=spriteSpeedPicker|| acceleration $a"
     //% v.min=-200 v.max=200 v.defl=60
     //% a.min=-1000 a.max=1000 a.defl=-250
     //% group="Dimension Z"
