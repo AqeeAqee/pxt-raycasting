@@ -428,7 +428,7 @@ namespace Render{
                 if (!tex)
                     continue
 
-                let lineHeight = Math.idiv(this.wallHeightInView, perpWallDist) 
+                let lineHeight = Math.idiv(this.wallHeightInView, perpWallDist) |1
                 let drawStart = ((h) >> 1) + (lineHeight) * (this.spriteMotionZ[this.sprSelf.id].p/this.tilemapScaleSize -( this._wallZScale*fpx_scale)) / fpx_scale;
                 let texX = (wallX * tex.width) >> fpx;
                 // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
@@ -483,7 +483,7 @@ namespace Render{
             // screen.print([this.getxFx8(spr), this.getyFx8(spr)].join(), 0,index*10+10)
             if (blitWidth == 0)
                 return
-            const lineHeight = Math.idiv(this.wallHeightInView, transformY)  | 1
+            const lineHeight = Math.idiv(this.wallHeightInView, transformY)
             const drawStart = (screen.height >> 1) + (lineHeight * ((this.spriteMotionZ[this.sprSelf.id].p - this.spriteMotionZ[spr.id].p - (spr._height as any as number)) / this.tilemapScaleSize ) >> fpx)
             const myAngle = Math.atan2(spriteX, spriteY)
 

@@ -1,6 +1,6 @@
 game.stats = true
 const rcRender = Render.raycastingRender
-rcRender.wallZScale = 2
+rcRender.wallZScale = 1
 
 let trans16 = image.create(16, 16)
 scene.setBackgroundImage(img`
