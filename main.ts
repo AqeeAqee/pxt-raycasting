@@ -1,6 +1,5 @@
 game.stats = true
 const rcRender = Render.raycastingRender
-rcRender.wallZScale = 1
 
 let trans16 = image.create(16, 16)
 scene.setBackgroundImage(img`
@@ -170,9 +169,9 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
 }
 
 // 0<= dir <1, then may be added by 2 for avoid negative
-rcRender.registerOnSpriteDirectionUpdate((spr, dir) => {
-    // character.setCharacterState(spr, character.rule(characterAniDirs[Math.floor(dir * 4 + .5) % 4]))
-})
+// rcRender.registerOnSpriteDirectionUpdate((spr, dir) => {
+//     // character.setCharacterState(spr, character.rule(characterAniDirs[Math.floor(dir * 4 + .5) % 4]))
+// })
 
 let sprPriness2 = createSprite(11, 8, 6, 10, texturesPrincess2, SpriteKind.Enemy)
 let sprSkelly = createSprite(11, 7, 6, 10, texturesSkelly, SpriteKind.Enemy)
@@ -244,9 +243,29 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
 
 controller.B.repeatDelay=0
 controller.B.onEvent(ControllerButtonEvent.Repeated, () => {
-    rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale, 500)
+    if(!controller.A.isPressed())
+        rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale, 500)
 })
 
+controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
+        Render.moveWithController(0, 0)
+})
+
+controller.B.onEvent(ControllerButtonEvent.Released, () => {
+        Render.moveWithController(3, 2)
+})
+
+let scale = 2
+rcRender.wallZScale = scale
+game.onUpdate(() => {
+    if (controller.B.isPressed()) {
+        if (controller.up.isPressed() || controller.down.isPressed()) {
+            scale-= controller.dy(1)
+        }
+    Render.SetAttribute(Render.attribute.wallZScale, scale)
+    info.setScore(scale * 100)
+    }
+})
 
 
 // controller.B.onEvent(ControllerButtonEvent.Pressed, () => {

@@ -138,6 +138,7 @@ namespace Render{
         setZOffset(spr: Sprite, offsetZ: number, duration:number=500) {
             const motionZ=this.getMotionZ(spr, offsetZ)
             
+            motionZ.offset = tofpx(offsetZ)
             if (motionZ.p != motionZ.offset){
                 if(duration===0)
                     motionZ.p=motionZ.offset
@@ -347,6 +348,10 @@ namespace Render{
             //for sprite
             this.invDet = one2 / (this.planeX * this.dirYFpx - this.dirXFpx * this.planeY); //required for correct matrix multiplication
 
+            let drawStart = 0
+            let drawEnd = 0
+            let lastTexX=0
+            let lastPerpWallDist = 0
             for (let x = 0; x < w; x++) {
                 const cameraX: number = one - Math.idiv((x << fpx) << 1, w)
                 let rayDirX = this.dirXFpx + (this.planeX * cameraX >> fpx)
@@ -428,17 +433,24 @@ namespace Render{
                 if (!tex)
                     continue
 
-                let lineHeight = Math.idiv(this.wallHeightInView, perpWallDist) |1
-                let drawStart = ((h) >> 1) + (lineHeight) * (this.spriteMotionZ[this.sprSelf.id].p/this.tilemapScaleSize -( this._wallZScale*fpx_scale)) / fpx_scale;
                 let texX = (wallX * tex.width) >> fpx;
                 // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
                 //     texX = tex.width - texX - 1;
 
-                screen.blitRow(x, drawStart, tex, texX, (lineHeight * this._wallZScale) | 1)// textures look much better when lineHeight is odd
+                if(perpWallDist!=lastPerpWallDist&&texX!=lastTexX){//neighbor line of tex share same parameters
+                    lastPerpWallDist = perpWallDist
+                    const lineHeight = (this.wallHeightInView / perpWallDist) 
+                    drawEnd = lineHeight * this.spriteMotionZ[this.sprSelf.id].p / this.tilemapScaleSize / fpx_scale;
+                    drawStart = drawEnd - lineHeight * (this._wallZScale) + 1;
+                }
+                //fix start&end points to avoid regmatic between lines
+                screen.blitRow(x, (h >> 1) + drawStart, tex, texX, (Math.ceil(drawEnd) - Math.ceil(drawStart)+1) ) 
 
+                lastTexX=texX
                 this.dist[x] = perpWallDist
             }
-            // screen.print(this.getMotionZPos(this.sprSelf).toString(), 0,0 )
+        
+            // screen.print(lastPerpWallDist.toString(), 0,0,7 )
 
             /////////////////// sprites ///////////////////
             this.sprites

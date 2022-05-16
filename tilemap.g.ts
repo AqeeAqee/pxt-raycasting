@@ -2,11 +2,15 @@
 namespace myTiles {
     //% fixedInstance jres blockIdentity=images._tile
     export const transparency16 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile1 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile2 = image.ofBuffer(hex``);
 
     helpers._registerFactory("tilemap", function(name: string) {
         switch(helpers.stringTrim(name)) {
             case "level1":
-            case "level1":return tiles.createTilemap(hex`1000100001010101010101010101010101010101010000000000000000000000000000010100000000000000000000000000000101000000000000000000000000000001010000000303030000020202000000010100000003000000000000020000000101000000030000000000000200000001010000000000000000000000000000010100000000000000000000000000000101000000020000000000000100000001010000000200000000000001000000010100000002020200000101010000000101000000000000000000000000000001010000000000000000000000000000010100000000000000000000000000000101010101010101010101010101010101`, img`
+            case "level1":return tiles.createTilemap(hex`1000100001010101010101010101010101010101010000000000000000000000000000010100000000000000000000000000000101000000000000000000000000000001010000000202020000050505000000010100000002000000000000050000000101000000020000000000000500000001010000000000000000000000000000010100000000000000000000000000000101000000030000000000000400000001010000000300000000000004000000010100000003030300000404040000000101000000000000000000000000000001010000000000000000000000000000010100000000000000000000000000000101010101010101010101010101010101`, img`
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
 2 . . . . . . . . . . . . . . 2 
 2 . . . . . . . . . . . . . . 2 
@@ -23,7 +27,7 @@ namespace myTiles {
 2 . . . . . . . . . . . . . . 2 
 2 . . . . . . . . . . . . . . 2 
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
-`, [myTiles.transparency16,sprites.builtin.forestTiles0,sprites.dungeon.greenOuterNorth0,sprites.builtin.brick], TileScale.Sixteen);
+`, [myTiles.transparency16,myTiles.tile1,sprites.castle.tileGrass2,sprites.builtin.brick,sprites.dungeon.hazardLava0,myTiles.tile2], TileScale.Sixteen);
         }
         return null;
     })
@@ -31,6 +35,10 @@ namespace myTiles {
     helpers._registerFactory("tile", function(name: string) {
         switch(helpers.stringTrim(name)) {
             case "transparency16":return transparency16;
+            case "myTile":
+            case "tile1":return tile1;
+            case "myTile0":
+            case "tile2":return tile2;
         }
         return null;
     })
