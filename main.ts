@@ -148,8 +148,6 @@ const tm= tilemap`level1`
 tiles.setCurrentTilemap(tm)
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
-rcRender.setZOffset(rcRender.sprSelf, tilemapScale / 2)
-
 rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
 
 let count = 0
@@ -173,19 +171,20 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
 //     // character.setCharacterState(spr, character.rule(characterAniDirs[Math.floor(dir * 4 + .5) % 4]))
 // })
 
-let sprPriness2 = createSprite(11, 8, 6, 10, texturesPrincess2, SpriteKind.Enemy)
-let sprSkelly = createSprite(11, 7, 6, 10, texturesSkelly, SpriteKind.Enemy)
-let sprHero = createSprite(10, 8, 6, 10, texturesHero, SpriteKind.Enemy)
-let sprPriness = createSprite(10, 7, 6, 10, texturesPrincess, SpriteKind.Enemy)
-createSprite(5, 7, 6, 10, texturesDog, SpriteKind.Enemy)
-createSprite(9, 7, 6, 10, texturesPlane, SpriteKind.Enemy)
 createSprite(8, 7, 6, 10, texturesDuck, SpriteKind.Enemy)
 createSprite(6, 7, 6, 10, texturesDonut, SpriteKind.Enemy)
+createSprite(5, 7, 6, 10, texturesDog, SpriteKind.Enemy)
+let sprPriness2 = createSprite(11, 8, 6, 10, texturesPrincess2, SpriteKind.Enemy)
+let sprHero = createSprite(10, 8, 6, 10, texturesHero, SpriteKind.Enemy)
+let sprSkelly = createSprite(11, 7, 6, 10, texturesSkelly, SpriteKind.Enemy)
+let sprPriness = createSprite(10, 7, 6, 10, texturesPrincess, SpriteKind.Enemy)
+let sprPlane=createSprite(9, 7, 6, 10, texturesPlane, SpriteKind.Enemy)
 let cake = createSprite(7, 8, 0, 0, texturesBigCake, SpriteKind.Enemy)
-rcRender.setZOffset(cake, .25)
-// cake.setFlag(SpriteFlag.RelativeToCamera, true)
 let fish = createSprite(7, 9, 0, 0, texturesFish, SpriteKind.Enemy)
-rcRender.setZOffset(fish, .5)
+rcRender.setZOffset(sprSkelly, 4)
+rcRender.setZOffset(sprPlane, 16)
+rcRender.setZOffset(cake, 4)
+rcRender.setZOffset(fish, 8)
 
 // for(let i=0;i<10;i++){
 //     let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
@@ -199,10 +198,12 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     // music.playTone(1555, 77)
     let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
     s.setScale(0.25)
-    rcRender.setZOffset(s, rcRender.getMotionZPosition(rcRender.sprSelf)-tilemapScale/4)
+    rcRender.setZOffset(s, rcRender.getMotionZPosition(rcRender.sprSelf)+2)  //todo, use VP height
 })
 
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
+    if(!rcRender.isOverlapZ(sprite, otherSprite)) return
+
     sprite.setKind(SpriteKind.Food)
     music.baDing.play()
     info.changeScoreBy(1)
@@ -212,7 +213,7 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
     sprite.setImage(sprites.builtin.coin0)
     sprite.setScale(.5)
     rcRender.setZOffset(sprite,0)
-    rcRender.jumpWithHeightAndDuration(sprite, tilemapScale/2, 500)
+    rcRender.move(sprite,60,-160)
     control.runInBackground(() => {
     })
 })
@@ -222,16 +223,20 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Food, function (sprite, otherSpri
     // otherSprite.destroy()
 })
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Enemy, function (sprite, otherSprite) {
+    if (!rcRender.isOverlapZ(sprite, otherSprite)) return
+
     otherSprite.setVelocity(otherSprite.x - sprite.x, otherSprite.y - sprite.y)
     sprite.setVelocity(-(otherSprite.x - sprite.x), -(otherSprite.y - sprite.y))
 })
 
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
-    otherSprite.setVelocity(otherSprite.x - sprite.x, otherSprite.y - sprite.y)
-    // otherSprite.setPosition(otherSprite.x + otherSprite.vx / Math.abs(otherSprite.vx) / 2, otherSprite.y + otherSprite.vy / Math.abs(otherSprite.vy) / 2)
+    if (!rcRender.isOverlapZ(sprite, otherSprite)) return
+
 })
 
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSprite) {
+    if (!rcRender.isOverlapZ(sprite, otherSprite)) return
+
     music.baDing.play()
     info.changeLifeBy(1)
     otherSprite.destroy()
@@ -242,28 +247,38 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
 })
 
 controller.B.repeatDelay=0
-controller.B.onEvent(ControllerButtonEvent.Repeated, () => {
-    if(!controller.A.isPressed())
-        rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale, 500)
-})
 
-controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
-        Render.moveWithController(0, 0)
-})
-
-controller.B.onEvent(ControllerButtonEvent.Released, () => {
-        Render.moveWithController(3, 2)
-})
-
-let scale = 2
-rcRender.wallZScale = scale
-game.onUpdate(() => {
+let isAdjusting=false
+controller.anyButton.onEvent(ControllerButtonEvent.Pressed,() => {
     if (controller.B.isPressed()) {
-        if (controller.up.isPressed() || controller.down.isPressed()) {
-            scale-= controller.dy(1)
+        if (controller.A.isPressed()){
+            Render.moveWithController(0, 0)
+            isAdjusting=true
+        }else{
+            rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale, 500)
         }
-    Render.SetAttribute(Render.attribute.wallZScale, scale)
-    info.setScore(scale * 100)
+    }
+})
+controller.B.onEvent(ControllerButtonEvent.Released, () => {
+    isAdjusting = false
+    Render.moveWithController(3, 2)
+})
+controller.A.onEvent(ControllerButtonEvent.Released, () => {
+    isAdjusting = false
+    Render.moveWithController(3, 2)
+})
+
+rcRender.wallZScale = 2
+
+let zOffset = 0// tilemapScale / 2
+rcRender.setZOffset(rcRender.sprSelf, zOffset)
+game.onUpdate(() => {
+    if (isAdjusting){
+        if (controller.up.isPressed() || controller.down.isPressed()) {
+            zOffset -= controller.dy(10)
+            rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
+            info.setScore(zOffset * 100)
+        }
     }
 })
 

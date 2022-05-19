@@ -32,16 +32,18 @@ namespace Render{
         protected _angle: number
         protected _fov: number
         protected _wallZScale:number=1
-        protected spriteMotionZ: MotionSet1D[] = []
+
+        //sprites & accessories
+        sprSelf: Sprite
+        sprites: Sprite[] = []
         spriteAnimations: Animations[] = []
+        protected spriteMotionZ: MotionSet1D[] = []
 
         //reference
         protected tilemapScaleSize = 1 << TileScale.Sixteen
         map: tiles.TileMapData
         bg: Image
         textures: Image[]
-        sprSelf: Sprite
-        sprites: Sprite[] = []
         protected oldRender: scene.Renderable
         protected myRender: scene.Renderable
 
@@ -149,6 +151,18 @@ namespace Render{
 
         getMotionZPosition(spr: Sprite) {
             return this.getMotionZ(spr).p / fpx_scale
+        }
+
+        //todo, use ZHeight(set from sprite.Height when takeover, then sprite.Height will be replace with width)
+        isOverlapZ(sprite1:Sprite, sprite2:Sprite):boolean{
+            const p1 = this.getMotionZPosition(sprite1)
+            const p2 = this.getMotionZPosition(sprite2)
+            if(p1<p2){
+                if (p1 + sprite1.height > p2) return true
+            }else{
+                if (p2 + sprite2.height > p1) return true
+            }
+            return false
         }
 
         move(spr: Sprite, v: number, a: number) {
@@ -281,7 +295,7 @@ namespace Render{
             //self sprite
             this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)
             scene.cameraFollowSprite(this.sprSelf)
-            this.setZOffset(this.sprSelf, this.tilemapScaleSize/2)
+            // this.setZOffset(this.sprSelf, this.tilemapScaleSize/2)
             this.updateSelfImage()
 
             game.onUpdate(function () {
@@ -352,6 +366,7 @@ namespace Render{
             let drawEnd = 0
             let lastTexX=0
             let lastPerpWallDist = 0
+            const ViewZPos= this.spriteMotionZ[this.sprSelf.id].p+ (this.sprSelf._height as any as number) - (2<<fpx )
             for (let x = 0; x < w; x++) {
                 const cameraX: number = one - Math.idiv((x << fpx) << 1, w)
                 let rayDirX = this.dirXFpx + (this.planeX * cameraX >> fpx)
@@ -440,7 +455,7 @@ namespace Render{
                 if(perpWallDist!=lastPerpWallDist&&texX!=lastTexX){//neighbor line of tex share same parameters
                     lastPerpWallDist = perpWallDist
                     const lineHeight = (this.wallHeightInView / perpWallDist) 
-                    drawEnd = lineHeight * this.spriteMotionZ[this.sprSelf.id].p / this.tilemapScaleSize / fpx_scale;
+                    drawEnd = lineHeight * ViewZPos / this.tilemapScaleSize / fpx_scale;
                     drawStart = drawEnd - lineHeight * (this._wallZScale) + 1;
                 }
                 //fix start&end points to avoid regmatic between lines
@@ -459,14 +474,14 @@ namespace Render{
                 }).sort((spr1, spr2) => {   // far to near
                     return ((this.sprXFx8(spr2) - this.xFpx) ** 2 + (this.sprYFx8(spr2) - this.yFpx) ** 2) - ((this.sprXFx8(spr1) - this.xFpx) ** 2 + (this.sprYFx8(spr1) - this.yFpx) ** 2)
                 }).forEach((spr, index) => {
-                    this.drawSprite(spr, index)
+                    this.drawSprite(spr, index, ViewZPos)
                 })
         }
 
         registerOnSpriteDirectionUpdate(handler: (spr: Sprite, dir: number) => void) {
             this.onSpriteDirectionUpdateHandler = handler
         }
-        drawSprite(spr: Sprite, index: number) {
+        drawSprite(spr: Sprite, index: number, ViewZPos:number) {
             //debug
             // screen.print(motionZ.p.toString(), 0, index*10+10)
 
@@ -496,7 +511,7 @@ namespace Render{
             if (blitWidth == 0)
                 return
             const lineHeight = Math.idiv(this.wallHeightInView, transformY)
-            const drawStart = (screen.height >> 1) + (lineHeight * ((this.spriteMotionZ[this.sprSelf.id].p - this.spriteMotionZ[spr.id].p - (spr._height as any as number)) / this.tilemapScaleSize ) >> fpx)
+            const drawStart = (screen.height >> 1) + (lineHeight * ((ViewZPos - this.spriteMotionZ[spr.id].p - (spr._height as any as number)) / this.tilemapScaleSize ) >> fpx)
             const myAngle = Math.atan2(spriteX, spriteY)
 
             //for textures=image[][], abandoned

@@ -222,8 +222,21 @@ namespace Render {
     //% duration.min=0 duration.max=5000 duration.defl=0
     //% group="Dimension Z"
     //% weight=80
-    export function setZOffset(sprite: Sprite, offset: number, duration?:number) {
+    export function setZOffset(sprite: Sprite, offset: number, duration?: number) {
         raycastingRender.setZOffset(sprite, offset, duration)
+    }
+
+    /**
+     * Check if 2 sprites overlaps each another
+     * @param sprite1
+     * @param sprite2
+     */
+    //% blockId=rcRender_isSpritesOverlapZ
+    //% block="Sprite1 $sprite1=variables_get(mySprite) overlaps with $sprite2=variables_get(mySprite2)"
+    //% group="Dimension Z"
+    //% weight=78
+    export function isSpritesOverlapZ(sprite1: Sprite, sprite2: Sprite):boolean {
+        return raycastingRender.isOverlapZ(sprite1, sprite2)
     }
 
     /**
