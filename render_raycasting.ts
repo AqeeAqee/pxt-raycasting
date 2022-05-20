@@ -10,6 +10,8 @@ namespace SpriteKind{
 }
 
 namespace Render{
+    const SH = screen.height, SHHalf = SH / 2
+    const SW = screen.width, SWHalf = SW / 2
     const fpx = 8
     const fpx_scale = 2 ** fpx
     function tofpx(n: number) { return (n * fpx_scale) | 0 }
@@ -25,7 +27,8 @@ namespace Render{
         _angle: number
         _fov: number
         spriteOffsetZ: number[] = []
-        sayAnchorSprites: Sprite[]=[]
+        sayRederers: sprites.BaseSpriteSayRenderer[]=[]
+        sayEndTimes: number[]=[]
         spriteAnimations: Animations[] = []
 
         //reference
@@ -44,6 +47,9 @@ namespace Render{
         dist: number[] = []
         //for drawing sprites
         invDet: number //required for correct matrix multiplication
+        camera: scene.Camera
+        tempScreen:Image=image.create(screen.width, screen.height)
+        tempSprite:Sprite=sprites.create(img`0`)
 
         onSpriteDirectionUpdateHandler: (spr: Sprite, dir: number) => void
 
@@ -116,13 +122,6 @@ namespace Render{
             this.spriteOffsetZ[spr.id] = tofpx(offsetZ)
         }
 
-        sayText(spr:Sprite, text: any, timeOnScreen?: number, animated = false, textColor = 15, textBoxColor = 1) {
-            const anchor=new Sprite(img`0`)
-            anchor.setKind(SpriteKind.anchorSprite)
-            this.sayAnchorSprites[spr.id]=anchor
-            anchor.sayText(text, timeOnScreen, animated, textColor, textBoxColor)
-        }
-
         get viewMode(): ViewMode {
             return this._viewMode
         }
@@ -148,16 +147,77 @@ namespace Render{
 
         }
 
+        constructor() {
+            this._angle = 0
+            this.fov = defaultFov
+            this.camera = new scene.Camera()
+
+            const sc = game.currentScene()
+            if (!sc.tileMap) {
+                sc.tileMap = new tiles.TileMap();
+            } else {
+                this.tilemapLoaded()
+            }
+            game.currentScene().tileMap.addEventListener(tiles.TileMapEvent.Loaded, data => this.tilemapLoaded())
+
+            //self sprite
+            this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)
+            // this.sprSelf.setPosition(x, y)
+            scene.cameraFollowSprite(this.sprSelf)
+            this.updateSelfImage()
+
+            game.onUpdate(function () {
+                this.updateControls()
+            })
+
+        }
+
         takeoverSceneSprites() {
             const sc = game.currentScene()
             sc.allSprites.forEach(spr => {
                 if (spr instanceof Sprite) {
                     if (this.sprites.indexOf(spr) < 0){
+                        // game.splash("takeoverSceneSprites",spr.id)
+                        if(spr.id>21){
+                            let a=1
+                        }
                         this.sprites.push(spr as Sprite)
                         sc.allSprites.removeElement(spr)
-                        spr.onDestroyed(() => { this.sprites.removeElement(spr) })
+                        spr.onDestroyed(() => { 
+                            this.sprites.removeElement(spr) 
+                            // game.splash("onDestroyed", this.sayAnchorSprites[spr.id])
+                            const sayRenderer=this.sayRederers[spr.id]
+                            if(sayRenderer){
+                                this.sayRederers.removeElement(sayRenderer)
+                                sayRenderer.destroy()
+                            }
+                        })
                     }
                 }
+                else if (spr instanceof particles.ParticleSource) {
+                    sc.allSprites.removeElement(spr)
+                }
+            })
+            this.sprites.forEach((spr)=>{
+                if(spr)
+                    this.takeoverSayRenderOfSprite(spr)
+            })
+        }
+
+        takeoverSayRenderOfSprite(sprite:Sprite){
+            const sayRenderer = (sprite as any).sayRenderer
+            if (sayRenderer){
+                this.sayRederers[sprite.id]=sayRenderer
+                this.sayEndTimes[sprite.id] = (sprite as any).sayEndTime;
+                (sprite as any).sayRenderer=undefined
+            }
+        }
+
+        takeoverParticleSources() {
+            game.currentScene().particleSources.forEach(ps => {
+            // if (spr instanceof particles.ParticleSource) {
+                game.currentScene().allSprites.removeElement(ps)
+            // }
             })
         }
 
@@ -180,19 +240,20 @@ namespace Render{
             let frameCallback_draw = sc.eventContext.registerFrameHandler(scene.RENDER_SPRITES_PRIORITY + 1, () => {
                 screen.drawImage(game.currentScene().background.image, 0, 0)
                 if (this._viewMode == ViewMode.tilemapView) {
-                    this.oldRender.__drawCore(game.currentScene().camera)
-                    this.sprites.forEach(spr => spr.__draw(game.currentScene().camera))
+                    this.oldRender.__drawCore(sc.camera)
+                    this.sprites.forEach(spr => spr.__draw(sc.camera))
                     //draw hud, todo, walk around for being covered by tilemap
-                    game.currentScene().allSprites.forEach(spr => spr.__draw(game.currentScene().camera))
+                    game.currentScene().allSprites.forEach(spr => spr.__draw(sc.camera))
                 } else {
                     this.takeoverSceneSprites() // in case some one new
                     this.render()
                     //draw hud, or other SpriteLike
                     this.sprites.forEach(spr=>{
                         if((spr.flags & sprites.Flag.RelativeToCamera))
-                            spr.__draw(game.currentScene().camera)
+                            spr.__draw(sc.camera)
                     })
-                    game.currentScene().allSprites.forEach(spr => spr.__draw(game.currentScene().camera))
+                    //todo, delete ?
+                    game.currentScene().allSprites.forEach(spr => spr.__draw(sc.camera))
                 }
             })
 
@@ -205,30 +266,6 @@ namespace Render{
             //     scene.TILE_MAP_Z,
             //     (t, c) => this.trace(t, c)
             // )
-
-        }
-
-        constructor() {
-            this._angle = 0
-            this.fov = defaultFov
-
-            const sc = game.currentScene()
-            if (!sc.tileMap) {
-                sc.tileMap = new tiles.TileMap();
-            } else {
-                this.tilemapLoaded()
-            }
-            game.currentScene().tileMap.addEventListener(tiles.TileMapEvent.Loaded, data => this.tilemapLoaded())
-
-            //self sprite
-            this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)
-            // this.sprSelf.setPosition(x, y)
-            scene.cameraFollowSprite(this.sprSelf)
-            this.updateSelfImage()
-
-            game.onUpdate(function () {
-                this.updateControls()
-            })
 
         }
 
@@ -262,6 +299,7 @@ namespace Render{
             const dx = controller.dx(2)
             if (dx) {
                 this.viewAngle += dx
+                // this.camera.drawOffsetX = controller.dx(1111)
             }
             const dy = controller.dy(3)
             if (dy) {
@@ -286,16 +324,14 @@ namespace Render{
 
         render() {
             // based on https://lodev.org/cgtutor/raycasting.html
-            const w = screen.width
-            const h = screen.height
             const one = 1 << fpx
             const one2 = 1 << (fpx + fpx)
 
             //for sprite
             this.invDet = one2 / (this.planeX * this.dirYFpx - this.dirXFpx * this.planeY); //required for correct matrix multiplication
 
-            for (let x = 0; x < w; x++) {
-                const cameraX: number = one - Math.idiv((x << fpx) << 1, w)
+            for (let x = 0; x < SW; x++) {
+                const cameraX: number = one - Math.idiv((x << fpx) << 1, SW)
                 let rayDirX = this.dirXFpx + (this.planeX * cameraX >> fpx)
                 let rayDirY = this.dirYFpx + (this.planeY * cameraX >> fpx)
 
@@ -377,7 +413,7 @@ namespace Render{
 
                 // textures look much better when lineHeight is odd
                 let lineHeight = Math.idiv(this.wallHeightInView, perpWallDist) | 1
-                let drawStart = (-lineHeight + h) >> 1;
+                let drawStart = (-lineHeight + SH) >> 1;
                 let texX = (wallX * tex.width) >> fpx;
                 // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
                 //     texX = tex.width - texX - 1;
@@ -388,10 +424,10 @@ namespace Render{
 
             }
 
+            this.printcount = 2
             /////////////////// sprites ///////////////////
             // // if(spr.id>)
             //     console.log(spr.id.toString()+" "+spr.flags.toString())
-            
 
             this.sprites
                 .filter((spr, i) => { // transformY>0
@@ -401,35 +437,44 @@ namespace Render{
                 }).forEach((spr, index) => {
                     this.drawSprite(spr, index)
                 })
+
         }
 
         registerOnSpriteDirectionUpdate(handler: (spr: Sprite, dir: number) => void) {
             this.onSpriteDirectionUpdateHandler = handler
         }
-        camera=new scene.Camera()
+
+        printcount=2 //for debug
         drawSprite(spr: Sprite, index: number) {
             // screen.print([spr.image.width].join(), 0, index*10)
             const spriteX = this.sprXFx8(spr) - this.xFpx
             const spriteY = this.sprYFx8(spr) - this.yFpx
             const transformX = this.invDet * (this.dirYFpx * spriteX - this.dirXFpx * spriteY) >> fpx;
-            const transformY = this.invDet * (-this.planeY * spriteX + this.planeX * spriteY) >> fpx; //this is actually the depth inside the screen, that what Z is in 3D
+            const transformY = this.invDet * (-this.planeY * spriteX + this.planeX * spriteY) >> fpx; //this is actually the depth inside the screen, Z on screen
             const spriteScreenX = Math.ceil((screen.width / 2) * (1 - transformX / transformY));
             const spriteScreenHalfWidth = Math.idiv((spr._width as any as number) / this.tilemapScaleSize / 2 * this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
 
             //calculate drawing range in X direction
             //assume there is one range only
             let blitX = 0, blitWidth = 0
-            for (let sprX = Math.max(0, spriteScreenX - spriteScreenHalfWidth); sprX < Math.min(screen.width, spriteScreenX + spriteScreenHalfWidth); sprX++) {
+            for (let sprX = 0; sprX < screen.width; sprX++) {
                 if (this.dist[sprX] > transformY) {
                     if (blitWidth == 0)
                         blitX = sprX
                     blitWidth++
-                } else if (blitWidth > 0)
-                    break
+                } else if (blitWidth > 0){
+                    if (blitX <= spriteScreenX + spriteScreenHalfWidth && blitX + blitWidth >= spriteScreenX - spriteScreenHalfWidth)
+                        break
+                    else
+                        blitX = 0, blitWidth = 0;
+                }
             }
             // screen.print([this.getxFx8(spr), this.getyFx8(spr)].join(), 0,index*10+10)
-            if (blitWidth == 0)
+            const blitXSpr= Math.max(blitX, spriteScreenX - spriteScreenHalfWidth)
+            const blitWidthSpr = Math.min(blitX + blitWidth, spriteScreenX + spriteScreenHalfWidth) - blitXSpr
+            if (blitWidthSpr<= 0)
                 return
+
             const lineHeight = Math.idiv(this.wallHeightInView, transformY) | 1
             const drawStart = (screen.height >> 1) + (lineHeight * (this.getOffsetZ(spr) + (fpx_scale >> 1) - (spr._height as any as number) / this.tilemapScaleSize) >> fpx)
             const myAngle = Math.atan2(spriteX, spriteY)
@@ -447,22 +492,45 @@ namespace Render{
             const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
             helpers.imageBlit(
                 screen,
-                blitX,
+                blitXSpr,
                 drawStart,
-                blitWidth,
+                blitWidthSpr,
                 lineHeight * spr.height / this.tilemapScaleSize,
                 texSpr,
-                (blitX - (spriteScreenX - spriteScreenHalfWidth)) * texSpr.width / spriteScreenHalfWidth / 2
+                (blitXSpr - (spriteScreenX - spriteScreenHalfWidth)) * texSpr.width / spriteScreenHalfWidth / 2
                 ,
                 0,
-                blitWidth * texSpr.width / spriteScreenHalfWidth / 2, texSpr.height, true, false)
+                blitWidthSpr * texSpr.width / spriteScreenHalfWidth / 2, texSpr.height, true, false)
 
             //sayText
-            const anchor=this.sayAnchorSprites[spr.id]
-            // game.splash(anchor)
+            let anchor=this.sayRederers[spr.id]
             if(anchor){
-                anchor.setPosition(spriteScreenX, drawStart)
-                anchor.__drawCore(this.camera)
+                if(control.millis()< this.sayEndTimes[spr.id]){
+                    this.tempSprite.x = SWHalf
+                    this.tempSprite.y =SH
+                    this.camera.drawOffsetX = 0
+                    this.camera.drawOffsetY = 0
+                    this.tempScreen.fill(0)
+                    anchor.draw(this.tempScreen, this.camera, this.tempSprite)
+
+                    const height = SH * fpx_scale / transformY
+                    const blitXSaySrc = (blitX - spriteScreenX) * transformY/fpx_scale + SWHalf
+                    const blitWidthSaySrc= blitWidth *transformY/fpx_scale
+                    if (blitXSaySrc < 0) { //imageBlit considers negative value as 0
+                        helpers.imageBlit(
+                            screen,
+                            spriteScreenX - SWHalf * fpx_scale / transformY, drawStart - height, (blitWidthSaySrc + blitXSaySrc)*fpx_scale/transformY, height,
+                            this.tempScreen,
+                            0, 0, blitWidthSaySrc + blitXSaySrc, SH, true, false)
+                    }else
+                        helpers.imageBlit(
+                            screen,
+                            blitX, drawStart - height, blitWidth, height,
+                            this.tempScreen, 
+                            blitXSaySrc, 0, blitWidthSaySrc, SH, true, false)
+                }else{
+                    this.sayRederers[spr.id]=undefined
+                }
             }
         }
     }
