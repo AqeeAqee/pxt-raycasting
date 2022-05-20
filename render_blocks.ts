@@ -227,12 +227,13 @@ namespace Render {
     }
 
     /**
-     * Check if 2 sprites overlaps each another
+     * Check if 2 sprites overlaps each another in Z dimension
+     * Best work together with sprites.onOverlap(kind1, kind2)
      * @param sprite1
      * @param sprite2
      */
     //% blockId=rcRender_isSpritesOverlapZ
-    //% block="Sprite1 $sprite1=variables_get(mySprite) overlaps with $sprite2=variables_get(mySprite2)"
+    //% block="is sprites $sprite1=variables_get(mySprite) and $sprite2=variables_get(mySprite2) overlaps in Z dimension"
     //% group="Dimension Z"
     //% weight=78
     export function isSpritesOverlapZ(sprite1: Sprite, sprite2: Sprite):boolean {
