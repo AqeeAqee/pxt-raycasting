@@ -163,6 +163,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0], textures[1], textures[2], textures[3]))
     // if (kind == SpriteKind.Enemy)
     //     tiles.placeOnRandomTile(spr, trans16)
+    spr.sayText(spr.id+" tesing !", 99999)
     return spr
 }
 
