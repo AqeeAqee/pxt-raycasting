@@ -163,7 +163,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0], textures[1], textures[2], textures[3]))
     // if (kind == SpriteKind.Enemy)
     //     tiles.placeOnRandomTile(spr, trans16)
-    spr.sayText(spr.id+" tesing !", 99999)
+    spr.sayText(spr.id+" tesing !", 2999)
     return spr
 }
 
@@ -215,6 +215,7 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
     sprite.setScale(.5)
     rcRender.setZOffset(sprite,0)
     rcRender.move(sprite,60,-160)
+    sprite.sayText("No!", 2000)
     control.runInBackground(() => {
     })
 })
@@ -273,11 +274,15 @@ rcRender.wallZScale = 2
 
 let zOffset = 0// tilemapScale / 2
 rcRender.setZOffset(rcRender.sprSelf, zOffset)
+let fov=Render.defaultFov
 game.onUpdate(() => {
     if (isAdjusting){
         if (controller.up.isPressed() || controller.down.isPressed()) {
-            zOffset -= controller.dy(10)
-            rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
+            // zOffset -= controller.dy(10)
+            // rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
+            fov -= controller.dy(1)
+            Render.SetAttribute(Render.attribute.fov, fov)
+            // rcRender.fov -= controller.dy(1)
             info.setScore(zOffset * 100)
         }
     }

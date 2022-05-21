@@ -163,14 +163,18 @@ namespace Render {
         switch (attr) {
             case attribute.dirX:
                 raycastingRender.dirX = value
+                break
             case attribute.dirY:
                 raycastingRender.dirY = value
+                break
             case attribute.fov:
                 if (value < 0) value = 0
                 raycastingRender.fov = value
+                break
             case attribute.wallZScale:
                 if(value<0)value=0
                 raycastingRender.wallZScale = value
+                break
             default:
         }
     }
