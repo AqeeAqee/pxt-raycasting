@@ -144,8 +144,8 @@ let map = tiles.createTilemap(hex`1000100002020202020202020202020202020202020000
 `, [trans16, sprites.castle.tileGrass2, sprites.builtin.forestTiles0], TileScale.Sixteen);
 // tiles.setCurrentTilemap(map)
 const tm= tilemap`level1`
-// tm.scale = TileScale.ThirtyTwo
-tiles.setCurrentTilemap(tm)
+tm.scale = TileScale.ThirtyTwo
+// tiles.setCurrentTilemap(tm)
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
 rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
@@ -153,7 +153,7 @@ rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
 let count = 0
 function createSprite(x: number, y: number, vx: number, vy: number, textures: Image[][], kind: number) {
     const spr = sprites.create(textures[0][0], kind)
-    rcRender.takeoverSceneSprites()
+    // rcRender.takeoverSceneSprites()
     const tilemapScale = 1 << game.currentScene().tileMap.scale
     spr.setPosition(x * tilemapScale, y * tilemapScale)
     spr.setVelocity(vx, vy)
@@ -270,7 +270,7 @@ controller.A.onEvent(ControllerButtonEvent.Released, () => {
     Render.moveWithController(3, 2)
 })
 
-rcRender.wallZScale = 2
+rcRender.wallZScale = 1
 
 let zOffset = 0// tilemapScale / 2
 rcRender.setZOffset(rcRender.sprSelf, zOffset)

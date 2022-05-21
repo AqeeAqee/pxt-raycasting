@@ -26,7 +26,7 @@ namespace Render {
     export class RayCastingRender {
         velocityAngle: number = 2
         velocity: number = 3
-        protected _viewMode: ViewMode
+        protected _viewMode=ViewMode.raycastingView
         protected dirXFpx: number
         protected dirYFpx: number
         protected planeX: number
@@ -322,8 +322,9 @@ namespace Render {
 
             //self sprite
             this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)
-            scene.cameraFollowSprite(this.sprSelf)
+            this.takeoverSceneSprites()
             // this.setZOffset(this.sprSelf, this.tilemapScaleSize/2)
+            scene.cameraFollowSprite(this.sprSelf)
             this.updateSelfImage()
 
             game.onUpdate(function () {
