@@ -145,7 +145,8 @@ let map = tiles.createTilemap(hex`1000100002020202020202020202020202020202020000
 // tiles.setCurrentTilemap(map)
 const tm= tilemap`level1`
 tm.scale = TileScale.ThirtyTwo
-// tiles.setCurrentTilemap(tm)
+controller.pauseUntilAnyButtonIsPressed()
+tiles.setCurrentTilemap(tm)
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
 rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
