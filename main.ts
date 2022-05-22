@@ -205,14 +205,14 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
     if(!rcRender.isOverlapZ(sprite, otherSprite)) return
 
-    sprite.setKind(SpriteKind.Food)
-    music.baDing.play()
-    info.changeScoreBy(1)
-    otherSprite.destroy()
     sprite.setVelocity(0, 0)
     sprite.sayText("No!", 2000)
     rcRender.move(sprite,60,-160)
     rcRender.setZOffset(sprite,0)
+    music.baDing.play()
+    sprite.setKind(SpriteKind.Food)
+    info.changeScoreBy(1)
+    otherSprite.destroy()
     Render.setSpriteAnimations(sprite, new Render.Animations(120, texturesCoin))
     sprite.setImage(sprites.builtin.coin0)
     sprite.setScale(.5)
@@ -275,14 +275,11 @@ rcRender.setZOffset(rcRender.sprSelf, zOffset)
 let fov=Render.defaultFov
 game.onUpdate(() => {
     if (isAdjusting){
-        if (controller.up.isPressed() || controller.down.isPressed()) {
-            // zOffset -= controller.dy(10)
-            // rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
-            fov -= controller.dy(1)
-            Render.SetAttribute(Render.attribute.fov, fov)
-            // rcRender.fov -= controller.dy(1)
-            info.setScore(zOffset * 100)
-        }
+        // zOffset -= controller.dy(10)
+        // rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
+        fov -= controller.dy(1)
+        Render.SetAttribute(Render.attribute.fov, fov)
+        info.setScore(zOffset * 100)
     }
 })
 

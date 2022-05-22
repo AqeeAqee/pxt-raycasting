@@ -151,7 +151,7 @@ namespace Render {
             if (motionZ.p != motionZ.offset) {
                 if (duration === 0)
                     motionZ.p = motionZ.offset
-                else
+                else if(motionZ.v==0)
                     this.move(spr, (motionZ.offset - motionZ.p) / fpx_scale * 1000 / duration, 0)
             }
         }
