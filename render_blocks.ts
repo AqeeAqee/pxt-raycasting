@@ -84,6 +84,20 @@ namespace Render {
     }
 
     /**
+     * Get the render Sprite, which create automatically, for physical collisions, and holding the view point.
+     * You can consider it as "myself", and operate it like a usual sprite, eg.: position, speed, scale, collision, ...
+     * But properties relative 3D, eg. ZOffset, ZPosition, viewAngle, and etc. are not in the Sprite class.
+     */
+    //% group="Instance"
+    //% blockId=rcRender_getRenderSpriteVariable block="myself sprite"
+    //% expandableArgumentMode=toggle
+    //% blockSetVariable=mySprite
+    //% weight=99
+    export function getRenderSpriteVariable(): Sprite {
+        return raycastingRender.sprSelf
+    }
+
+    /**
      * Get the render Sprite, which create automatically, for physical collisions, and holding the view point.(but get/set view direction with dirX/dirY, which not in the Sprite class) 
      * You can consider it as "myself", and operate it like a usual sprite.
      * eg: position, speed, scale, collision, ...
@@ -91,7 +105,7 @@ namespace Render {
     //% group="Instance"
     //% blockId=rcRender_getRenderSpriteInstance block="myself sprite"
     //% expandableArgumentMode=toggle
-    //% weight=99
+    //% weight=98
     export function getRenderSpriteInstance(): Sprite {
         return raycastingRender.sprSelf
     }
