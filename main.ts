@@ -145,7 +145,6 @@ let map = tiles.createTilemap(hex`1000100002020202020202020202020202020202020000
 // tiles.setCurrentTilemap(map)
 const tm= tilemap`level1`
 tm.scale = TileScale.ThirtyTwo
-controller.pauseUntilAnyButtonIsPressed()
 tiles.setCurrentTilemap(tm)
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
@@ -164,7 +163,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0], textures[1], textures[2], textures[3]))
     // if (kind == SpriteKind.Enemy)
     //     tiles.placeOnRandomTile(spr, trans16)
-    spr.sayText(spr.id+" tesing !", 2999)
+    spr.sayText(spr.id+" tesing !")
     return spr
 }
 
@@ -211,14 +210,12 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
     info.changeScoreBy(1)
     otherSprite.destroy()
     sprite.setVelocity(0, 0)
+    sprite.sayText("No!", 2000)
+    rcRender.move(sprite,60,-160)
+    rcRender.setZOffset(sprite,0)
     Render.setSpriteAnimations(sprite, new Render.Animations(120, texturesCoin))
     sprite.setImage(sprites.builtin.coin0)
     sprite.setScale(.5)
-    rcRender.setZOffset(sprite,0)
-    rcRender.move(sprite,60,-160)
-    sprite.sayText("No!", 2000)
-    control.runInBackground(() => {
-    })
 })
 
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Food, function (sprite, otherSprite) {

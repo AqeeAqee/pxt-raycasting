@@ -226,16 +226,17 @@ namespace Render {
         }
 
         takeoverSceneSprites() {
-            const sc = game.currentScene()
-            sc.allSprites.forEach(spr => {
+            const sc_allSprites = game.currentScene().allSprites
+            for (let i=0;i<sc_allSprites.length;) {
+                const spr=sc_allSprites[i]
                 if (spr instanceof Sprite) {
                     if (this.sprites.indexOf(spr) < 0) {
                         this.sprites.push(spr as Sprite)
                         if (!this.spriteMotionZ[spr.id])
                             this.setZOffset(spr, 0)
-                        sc.allSprites.removeElement(spr)
+                        sc_allSprites.removeElement(spr)
                         spr.onDestroyed(() => {
-                            this.sprites.removeElement(spr)
+                            this.sprites.removeElement(spr as Sprite)
                             const sayRenderer = this.sayRederers[spr.id]
                             if (sayRenderer) {
                                 this.sayRederers.removeElement(sayRenderer)
@@ -243,19 +244,22 @@ namespace Render {
                             }
                         })
                     }
+                }else{ //if not remove; next
+                    i++
                 }
-            })
+            }
             this.sprites.forEach((spr) => {
                 if (spr)
                     this.takeoverSayRenderOfSprite(spr)
             })
         }
         takeoverSayRenderOfSprite(sprite: Sprite) {
-            const sayRenderer = (sprite as any).sayRenderer
-            if (sayRenderer) {
-                this.sayRederers[sprite.id] = sayRenderer
-                this.sayEndTimes[sprite.id] = (sprite as any).sayEndTime;
-                (sprite as any).sayRenderer = undefined
+            const sprite_as_any = (sprite as any)
+            if (sprite_as_any.sayRenderer) {
+                this.sayRederers[sprite.id] = sprite_as_any.sayRenderer
+                this.sayEndTimes[sprite.id] = sprite_as_any.sayEndTime;
+                sprite_as_any.sayRenderer = undefined
+                sprite_as_any.sayEndTime = undefined
             }
         }
 
@@ -322,8 +326,6 @@ namespace Render {
 
             //self sprite
             this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)
-            this.takeoverSceneSprites()
-            // this.setZOffset(this.sprSelf, this.tilemapScaleSize/2)
             scene.cameraFollowSprite(this.sprSelf)
             this.updateSelfImage()
 
@@ -569,9 +571,11 @@ namespace Render {
                 blitWidthSpr * texSpr.width / spriteScreenHalfWidth / 2, texSpr.height, true, false)
 
             //sayText
-            let anchor = this.sayRederers[spr.id]
+            const anchor = this.sayRederers[spr.id]
             if (anchor) {
-                if (control.millis() < this.sayEndTimes[spr.id]) {
+                if (this.sayEndTimes[spr.id] && control.millis() > this.sayEndTimes[spr.id]) {
+                    this.sayRederers[spr.id] = undefined
+                } else {
                     this.tempSprite.x = SWHalf
                     this.tempSprite.y = SH
                     this.camera.drawOffsetX = 0
@@ -594,8 +598,6 @@ namespace Render {
                             blitX, drawStart - height, blitWidth, height,
                             this.tempScreen,
                             blitXSaySrc, 0, blitWidthSaySrc, SH, true, false)
-                } else {
-                    this.sayRederers[spr.id] = undefined
                 }
             }
         }
