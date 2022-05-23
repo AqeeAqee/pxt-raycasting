@@ -163,7 +163,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0], textures[1], textures[2], textures[3]))
     // if (kind == SpriteKind.Enemy)
     //     tiles.placeOnRandomTile(spr, trans16)
-    spr.sayText(spr.id+" tesing !")
+    // spr.sayText(spr.id+"")
     return spr
 }
 
@@ -194,9 +194,7 @@ rcRender.setZOffset(fish, 8)
 // }
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
-    // game.splash(game.currentScene().allSprites.filter(spr => { return !(spr instanceof Sprite) }).map(spr => spr.z).join())
     music.pewPew.play()
-    // music.playTone(1555, 77)
     let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
     s.setScale(0.25)
     rcRender.setZOffset(s, rcRender.getMotionZPosition(rcRender.sprSelf)+2)  //todo, use VP height
@@ -261,11 +259,11 @@ controller.anyButton.onEvent(ControllerButtonEvent.Pressed,() => {
 })
 controller.B.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
-    Render.moveWithController(3, 2)
+    Render.moveWithController(3, 1)
 })
 controller.A.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
-    Render.moveWithController(3, 2)
+    Render.moveWithController(3, 1)
 })
 
 rcRender.wallZScale = 1

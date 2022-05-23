@@ -60,6 +60,9 @@ namespace Render {
         camera: scene.Camera
         tempScreen: Image = image.create(screen.width, screen.height)
         tempSprite: Sprite = sprites.create(img`0`)
+        protected transformX: number[] = []
+        protected transformY: number[] = []
+        protected angleSelfToSpr: number[] = []
 
         onSpriteDirectionUpdateHandler: (spr: Sprite, dir: number) => void
 
@@ -397,20 +400,23 @@ namespace Render {
             let lastTexX = 0
             let lastPerpWallDist = 0
             const ViewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2 << fpx)
+            let cameraRangeAngle = Math.atan(this.fov)+.1 //tolerance for spr center just out of camera
+            //debug
+            // const ms=control.millis()
             for (let x = 0; x < w; x++) {
                 const cameraX: number = one - Math.idiv((x << fpx) << 1, w)
                 let rayDirX = this.dirXFpx + (this.planeX * cameraX >> fpx)
                 let rayDirY = this.dirYFpx + (this.planeY * cameraX >> fpx)
+
+                // avoid division by zero
+                if (rayDirX == 0) rayDirX = 1
+                if (rayDirY == 0) rayDirY = 1
 
                 let mapX = this.xFpx >> fpx
                 let mapY = this.yFpx >> fpx
 
                 // length of ray from current position to next x or y-side
                 let sideDistX = 0, sideDistY = 0
-
-                // avoid division by zero
-                if (rayDirX == 0) rayDirX = 1
-                if (rayDirY == 0) rayDirY = 1
 
                 // length of ray from one x or y-side to next x or y-side
                 const deltaDistX = Math.abs(Math.idiv(one2, rayDirX));
@@ -494,31 +500,42 @@ namespace Render {
                 lastTexX = texX
                 this.dist[x] = perpWallDist
             }
-
+            //debug
+            // info.setScore(control.millis()-ms)
             // screen.print(lastPerpWallDist.toString(), 0,0,7 )
 
+            //debug
+            // let msSprs=control.millis()
             /////////////////// sprites ///////////////////
             this.sprites
                 .filter((spr, i) => { // transformY>0
-                    return (spr instanceof Sprite) && spr != this.sprSelf && !(spr.flags & sprites.Flag.RelativeToCamera) && (-this.planeY * (this.sprXFx8(spr) - this.xFpx) + this.planeX * (this.sprYFx8(spr) - this.yFpx)) > 0
+                    if (!(spr instanceof Sprite) || spr == this.sprSelf || (spr.flags & sprites.Flag.RelativeToCamera))
+                        return false
+                    const spriteX = this.sprXFx8(spr) - this.xFpx
+                    const spriteY = this.sprYFx8(spr) - this.yFpx
+                    this.angleSelfToSpr[spr.id] = Math.atan2(spriteX, spriteY)
+                    this.transformX[spr.id] = this.invDet * (this.dirYFpx * spriteX - this.dirXFpx * spriteY) >> fpx;
+                    this.transformY[spr.id] = this.invDet * (-this.planeY * spriteX + this.planeX * spriteY) >> fpx; //this is actually the depth inside the screen, that what Z is in 3D
+                    const angleInCamera= Math.atan2(this.transformX[spr.id]*this.fov, this.transformY[spr.id])
+                    return angleInCamera > -cameraRangeAngle && angleInCamera < cameraRangeAngle //(this.transformY[spr.id] > 0
                 }).sort((spr1, spr2) => {   // far to near
-                    return ((this.sprXFx8(spr2) - this.xFpx) ** 2 + (this.sprYFx8(spr2) - this.yFpx) ** 2) - ((this.sprXFx8(spr1) - this.xFpx) ** 2 + (this.sprYFx8(spr1) - this.yFpx) ** 2)
+                    return (this.transformY[spr2.id] - this.transformY[spr1.id])
                 }).forEach((spr, index) => {
-                    this.drawSprite(spr, index, ViewZPos)
+                    //debug
+                    // screen.print([spr.id,Math.roundWithPrecision(angle[spr.id],3)].join(), 0, index * 10 + 10,9)
+                    this.drawSprite(spr, index, ViewZPos, this.transformX[spr.id], this.transformY[spr.id], this.angleSelfToSpr[spr.id])
                 })
+
+            //debug
+            // info.setLife(control.millis() - msSprs+1)
+            // screen.print([Math.roundWithPrecision(angle0,3)].join(), 20,  0)
+
         }
 
         registerOnSpriteDirectionUpdate(handler: (spr: Sprite, dir: number) => void) {
             this.onSpriteDirectionUpdateHandler = handler
         }
-        drawSprite(spr: Sprite, index: number, ViewZPos: number) {
-            //debug
-            // screen.print(motionZ.p.toString(), 0, index*10+10)
-
-            const spriteX = this.sprXFx8(spr) - this.xFpx
-            const spriteY = this.sprYFx8(spr) - this.yFpx
-            const transformX = this.invDet * (this.dirYFpx * spriteX - this.dirXFpx * spriteY) >> fpx;
-            const transformY = this.invDet * (-this.planeY * spriteX + this.planeX * spriteY) >> fpx; //this is actually the depth inside the screen, that what Z is in 3D
+        drawSprite(spr: Sprite, index: number, ViewZPos: number, transformX: number, transformY: number, myAngle:number) {
             const spriteScreenX = Math.ceil((screen.width / 2) * (1 - transformX / transformY));
             const spriteScreenHalfWidth = Math.idiv((spr._width as any as number) / this.tilemapScaleSize / 2 * this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
 
@@ -545,7 +562,6 @@ namespace Render {
 
             const lineHeight = Math.idiv(this.wallHeightInView, transformY)
             const drawStart = (screen.height >> 1) + (lineHeight * ((ViewZPos - this.spriteMotionZ[spr.id].p - (spr._height as any as number)) / this.tilemapScaleSize) >> fpx)
-            const myAngle = Math.atan2(spriteX, spriteY)
 
             //for textures=image[][], abandoned
             //    const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
