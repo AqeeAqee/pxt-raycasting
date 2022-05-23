@@ -396,9 +396,8 @@ namespace Render {
             this.invDet = one2 / (this.planeX * this.dirYFpx - this.dirXFpx * this.planeY); //required for correct matrix multiplication
 
             let drawStart = 0
-            let drawEnd = 0
-            let lastTexX = 0
-            let lastPerpWallDist = 0
+            let drawHeight = 0
+            let lastDist = -1, lastTexX = -1, lastMapX = -1, lastMapY = -1
             const ViewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2 << fpx)
             let cameraRangeAngle = Math.atan(this.fov)+.1 //tolerance for spr center just out of camera
             //debug
@@ -488,16 +487,21 @@ namespace Render {
                 // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
                 //     texX = tex.width - texX - 1;
 
-                if (perpWallDist != lastPerpWallDist && texX != lastTexX) {//neighbor line of tex share same parameters
-                    lastPerpWallDist = perpWallDist
+                if (perpWallDist !== lastDist && (texX !== lastTexX || mapX !== lastMapX || mapY !== lastMapY)) {//neighbor line of tex share same parameters
                     const lineHeight = (this.wallHeightInView / perpWallDist)
-                    drawEnd = lineHeight * ViewZPos / this.tilemapScaleSize / fpx_scale;
+                    const drawEnd = lineHeight * ViewZPos / this.tilemapScaleSize / fpx_scale;
                     drawStart = drawEnd - lineHeight * (this._wallZScale) + 1;
+                    drawHeight = (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1)
+                    drawStart += (h >> 1) 
+                    
+                    lastDist = perpWallDist
+                    lastTexX = texX
+                    lastMapX = mapX
+                    lastMapY = mapY
                 }
                 //fix start&end points to avoid regmatic between lines
-                screen.blitRow(x, (h >> 1) + drawStart, tex, texX, (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1))
+                screen.blitRow(x, drawStart, tex, texX, drawHeight)
 
-                lastTexX = texX
                 this.dist[x] = perpWallDist
             }
             //debug
