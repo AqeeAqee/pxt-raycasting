@@ -9,7 +9,21 @@
         "README.md",
         "render_raycasting.ts",
         "render_blocks.ts",
-        "animation.ts"
+        "animation.ts",
+        "docs/get-render-sprite-variable.md",
+        "docs/get-render-sprite-instance.md",
+        "docs/create-animations.md",
+        "docs/set-sprite-animations.md",
+        "docs/toggle-view-mode.md",
+        "docs/is-view-mode.md",
+        "docs/set-view-mode.md",
+        "docs/get-attribute.md",
+        "docs/set-attribute.md",
+        "docs/get-default-fov.md",
+        "docs/set-view-angle-in-degree.md",
+        "docs/set-view-angle.md",
+        "docs/set-z-offset.md",
+        "docs/is-sprites-overlap-z.md"
     ],
     "testFiles": [
         "main.ts",

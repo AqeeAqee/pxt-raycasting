@@ -37,7 +37,7 @@ namespace Render {
  * @param animations the directional animates
  */
     //% blockId=set_animation
-    //% block="set $sprite=variables_get(mySprite) $animations"
+    //% block="set $sprite=variables_get(mySprite) with animations$animations"
     //% animations.shadow=create_animation
     //% group="Animate"
     //% weight=100
@@ -93,6 +93,7 @@ namespace Render {
     //% expandableArgumentMode=toggle
     //% blockSetVariable=mySprite
     //% weight=99
+    //% help=docs/get-render-sprite-variable.md
     export function getRenderSpriteVariable(): Sprite {
         return raycastingRender.sprSelf
     }
@@ -170,7 +171,7 @@ namespace Render {
      * @param viewMode
      */
     //% group="Basic"
-    //% block="Set %attribute = %value" 
+    //% block="set %attribute = %value" 
     //% blockId=rcRender_SetAttribute
     //% weight=82
     export function SetAttribute(attr: attribute, value: number) {

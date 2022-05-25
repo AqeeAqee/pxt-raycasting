@@ -1,5 +1,5 @@
 (Discuss on Makecode Arcade forum at: 
-[Raycasting 3D render with directional animation sprites](https://forum.makecode.com/t/raycasting-3d-render-with-directional-animation-sprites/12802) )
+[Raycasting 3D render with directional animation sprites](https://forum.makecode.com/t/raycasting-3d-render-blocks-edition/12921/) )
 
 ## Brief:
 An extension for Makecode Arcade, render a tilemap into 2.5D view, a kind of less calculation consuming 3D perspective view, with directional animations of sprites, 
@@ -42,10 +42,7 @@ based on mmoskal's [3d map](https://forum.makecode.com/t/3d-raycasting-in-arcade
     * Reason: The physical engine working in 2D mode, that consider sprite image as its size(x&y direction). But 3D render consider the image width as size for both x & y axises, height as sprite Z-axis size. This could be fix by override the physical engine, in future, if needed.
 
 ## Todo:
-* function/block for disable controller codes in this extension, so user can control "myself" in user code
-* Sprite sayText
-* particles
-* Effects (to be investigated)
+* Particles Effects
 * Override physic engine. Any one need?
 * Pose depended animations, stand, walk, attack. Any one need?
 * Perf tuning, Fx8
