@@ -12,7 +12,7 @@ Render.registerOnSpriteDirectionUpdateHandler()
 ## ~
 
 ## Parameters
-  * **dir** It is a float number, 0~1 corresponds to 0~360°, suggest use Math.round(dir*dirAniTotalCount)%dirAniTotalCount to get index of direction
+  * **dir** It is a float number, 0 ~ 1 corresponds to 0 ~ 360°, suggest use Math.round(dir*dirAniTotalCount)%dirAniTotalCount to get index of direction
 ## Returns
 
 * none
