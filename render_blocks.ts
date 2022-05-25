@@ -41,7 +41,7 @@ namespace Render {
     //% animations.shadow=create_animation
     //% group="Animate"
     //% weight=100
-    //% help=animation/run-image-animation
+    //% help=github:pxt-raycasting/docs/set-sprite-animations
     export function setSpriteAnimations(sprite: Sprite, animations: Animations) {
         raycastingRender.spriteAnimations[sprite.id] = animations
     }
@@ -60,7 +60,7 @@ namespace Render {
     //% inlineInputMode=inline
     //% group="Animate"
     //% weight=100
-    //% help=animation/run-image-animation
+    //% help=github:pxt-raycasting/docs/create-animations
     export function createAnimations(frameInterval: number, frames1: Image[], frames2?: Image[], frames3?: Image[], frames4?: Image[]): Animations {
         const animationList = [frames1]
         if (frames2) animationList.push(frames2)
@@ -93,7 +93,7 @@ namespace Render {
     //% expandableArgumentMode=toggle
     //% blockSetVariable=mySprite
     //% weight=99
-    //% help=docs/get-render-sprite-variable.md
+    //% help=github:pxt-raycasting/get-render-sprite-variable
     export function getRenderSpriteVariable(): Sprite {
         return raycastingRender.sprSelf
     }
@@ -107,6 +107,7 @@ namespace Render {
     //% blockId=rcRender_getRenderSpriteInstance block="myself sprite"
     //% expandableArgumentMode=toggle
     //% weight=98
+    //% help=github:pxt-raycasting/docs/get-render-sprite-instance
     export function getRenderSpriteInstance(): Sprite {
         return raycastingRender.sprSelf
     }
@@ -117,6 +118,7 @@ namespace Render {
     //% blockId=rcRender_toggleViewMode block="toggle current view mode"
     //% group="Basic"
     //% weight=89
+    //% help=github:pxt-raycasting/docs/toggle-view-mode
     export function toggleViewMode() {
         raycastingRender.viewMode = raycastingRender.viewMode == ViewMode.tilemapView ? ViewMode.raycastingView : ViewMode.tilemapView
     }
@@ -128,6 +130,7 @@ namespace Render {
     //% blockId=rcRender_isViewMode block="current is $viewMode"
     //% group="Basic"
     //% weight=88
+    //% help=github:pxt-raycasting/docs/is-view-mode
     export function isViewMode(viewMode: ViewMode): boolean {
         return viewMode == raycastingRender.viewMode
     }
@@ -139,6 +142,7 @@ namespace Render {
     //% blockId=rcRender_setViewMode block="set view mode $viewMode"
     //% group="Basic"
     //% weight=87
+    //% help=github:pxt-raycasting/docs/set-view-mode
     export function setViewMode(viewMode: ViewMode) {
         raycastingRender.viewMode = viewMode
     }
@@ -151,6 +155,7 @@ namespace Render {
     //% block="get %attribute" 
     //% blockId=rcRender_getAttribute
     //% weight=83
+    //% help=github:pxt-raycasting/docs/get-attribute
     export function getAttribute(attr: attribute): number {
         switch (attr) {
             case attribute.dirX:
@@ -174,6 +179,7 @@ namespace Render {
     //% block="set %attribute = %value" 
     //% blockId=rcRender_SetAttribute
     //% weight=82
+    //% help=github:pxt-raycasting/docs/set-attribute
     export function SetAttribute(attr: attribute, value: number) {
         switch (attr) {
             case attribute.dirX:
@@ -187,7 +193,7 @@ namespace Render {
                 raycastingRender.fov = value
                 break
             case attribute.wallZScale:
-                if(value<0)value=0
+                if (value < 0) value = 0
                 raycastingRender.wallZScale = value
                 break
             default:
@@ -202,6 +208,7 @@ namespace Render {
     //% block="defaultFov"
     //% blockId=rcRender_getDefaultFov
     //% weight=81
+    //% help=github:pxt-raycasting/docs/get-default-fov
     export function getDefaultFov(): number {
         return defaultFov
     }
@@ -214,6 +221,7 @@ namespace Render {
     //% angle.min=0 angle.max=360 angle.defl=90
     //% group="Basic"
     //% weight=80
+    //% help=github:pxt-raycasting/docs/set-view-angle-in-degree
     export function setViewAngleInDegree(angle: number) {
         raycastingRender.viewAngle = angle * Math.PI / 180
     }
@@ -226,6 +234,7 @@ namespace Render {
     //% blockId=rcRender_setViewAngle block="set view angle by dirX%dirX and dirY%dirY"
     //% group="Basic"
     //% weight=79
+    //% help=github:pxt-raycasting/docs/set-view-angle
     export function setViewAngle(dirX: number, dirY: number) {
         raycastingRender.viewAngle = Math.atan2(dirY, dirX)
     }
@@ -241,6 +250,7 @@ namespace Render {
     //% duration.min=0 duration.max=5000 duration.defl=0
     //% group="Dimension Z"
     //% weight=80
+    //% help=github:pxt-raycasting/docs/set-z-offset
     export function setZOffset(sprite: Sprite, offset: number, duration?: number) {
         raycastingRender.setZOffset(sprite, offset, duration)
     }
@@ -255,7 +265,8 @@ namespace Render {
     //% block="is sprites $sprite1=variables_get(mySprite) and $sprite2=variables_get(mySprite2) overlaps in Z dimension"
     //% group="Dimension Z"
     //% weight=78
-    export function isSpritesOverlapZ(sprite1: Sprite, sprite2: Sprite):boolean {
+    //% help=github:pxt-raycasting/docs/is-sprites-overlap-z
+    export function isSpritesOverlapZ(sprite1: Sprite, sprite2: Sprite): boolean {
         return raycastingRender.isOverlapZ(sprite1, sprite2)
     }
 
@@ -271,6 +282,7 @@ namespace Render {
     //% duration.min=50 duration.max=5000 duration.defl=500
     //% group="Dimension Z"
     //% weight=70
+    //% help=github:pxt-raycasting/docs/jump-with-height-and-duration
     export function jumpWithHeightAndDuration(sprite: Sprite, height: number, duration: number) {
         raycastingRender.jumpWithHeightAndDuration(sprite, height, duration)
     }
@@ -287,6 +299,7 @@ namespace Render {
     //% a.min=-1000 a.max=1000 a.defl=-250
     //% group="Dimension Z"
     //% weight=68
+    //% help=github:pxt-raycasting/docs/jump
     export function jump(sprite: Sprite, v?: number, a?: number) {
         raycastingRender.jump(sprite, v, a)
     }
@@ -302,6 +315,7 @@ namespace Render {
     //% a.min=-1000 a.max=1000 a.defl=-250
     //% group="Dimension Z"
     //% weight=66
+    //% help=github:pxt-raycasting/docs/move
     export function move(sprite: Sprite, v?: number, a?: number) {
         raycastingRender.move(sprite, v, a)
     }
@@ -320,9 +334,10 @@ namespace Render {
     //% group="Advanced"
     //% v.shadow="spriteSpeedPicker"
     //% va.shadow="spriteSpeedPicker"
+    //% help=github:pxt-raycasting/docs/move-with-controller
     export function moveWithController(v: number = 2, va: number = 3) {
-        raycastingRender.velocity=v
-        raycastingRender.velocityAngle=va
+        raycastingRender.velocity = v
+        raycastingRender.velocityAngle = va
     }
 
     /**
@@ -334,6 +349,7 @@ namespace Render {
     //% block="takeover sprites in scene"
     //% group="Advanced"
     //% weight=49
+    //% help=github:pxt-raycasting/docs/takeover-scene-sprites
     export function takeoverSceneSprites() {
         raycastingRender.takeoverSceneSprites()
     }
@@ -349,6 +365,7 @@ namespace Render {
     //% draggableParameters
     //% group="Advanced"
     //% weight=48
+    //% help=github:pxt-raycasting/docs/register-on-sprite-direction-update
     export function registerOnSpriteDirectionUpdateHandler(handler: (spr: Sprite, dir: number) => void) {
         raycastingRender.registerOnSpriteDirectionUpdate(handler)
     }

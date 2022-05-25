@@ -23,7 +23,13 @@
         "docs/set-view-angle-in-degree.md",
         "docs/set-view-angle.md",
         "docs/set-z-offset.md",
-        "docs/is-sprites-overlap-z.md"
+        "docs/is-sprites-overlap-z.md",
+        "docs/jump-with-height-and-duration.md",
+        "docs/jump.md",
+        "docs/move.md",
+        "docs/move-with-controller.md",
+        "docs/takeover-scene-sprites.md",
+        "docs/register-on-sprite-direction-update-handler.md"
     ],
     "testFiles": [
         "main.ts",
