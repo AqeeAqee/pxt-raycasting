@@ -276,7 +276,7 @@ game.onUpdate(() => {
         // zOffset -= controller.dy(10)
         // rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
         fov -= controller.dy(1)
-        Render.SetAttribute(Render.attribute.fov, fov)
+        Render.setAttribute(Render.attribute.fov, fov)
         info.setScore(zOffset * 100)
     }
 })

@@ -3,7 +3,7 @@
  * Set render arribute
 
 ```sig
-Render.SetAttribute()
+Render.setAttribute()
 ```
 
 
@@ -24,7 +24,7 @@ Render.SetAttribute()
 ## Example
 
 ```blocks
-Render.SetAttribute(Render.attribute.fov, Render.getAttribute(Render.attribute.fov)/2)
+Render.setAttribute(Render.attribute.fov, Render.getAttribute(Render.attribute.fov)/2)
 )
 ```
 

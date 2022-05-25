@@ -177,10 +177,10 @@ namespace Render {
      */
     //% group="Basic"
     //% block="set %attribute = %value" 
-    //% blockId=rcRender_SetAttribute
+    //% blockId=rcRender_setAttribute
     //% weight=82
     //% help=github:pxt-raycasting/docs/set-attribute
-    export function SetAttribute(attr: attribute, value: number) {
+    export function setAttribute(attr: attribute, value: number) {
         switch (attr) {
             case attribute.dirX:
                 raycastingRender.dirX = value
@@ -365,7 +365,7 @@ namespace Render {
     //% draggableParameters
     //% group="Advanced"
     //% weight=48
-    //% help=github:pxt-raycasting/docs/register-on-sprite-direction-update
+    //% help=github:pxt-raycasting/docs/register-on-sprite-direction-update-handler
     export function registerOnSpriteDirectionUpdateHandler(handler: (spr: Sprite, dir: number) => void) {
         raycastingRender.registerOnSpriteDirectionUpdate(handler)
     }
