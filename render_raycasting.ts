@@ -21,7 +21,7 @@ namespace Render {
         }
     }
 
-    export const defaultFov = screen.width / screen.height / 2  //Wall just fill screen height when standing 1 tile away
+    export const defaultFov = SW / SH / 2  //Wall just fill screen height when standing 1 tile away
 
     export class RayCastingRender {
         velocityAngle: number = 2
@@ -60,7 +60,7 @@ namespace Render {
         //for drawing sprites
         protected invDet: number //required for correct matrix multiplication
         camera: scene.Camera
-        tempScreen: Image = image.create(screen.width, screen.height)
+        tempScreen: Image = image.create(SW, SH)
         tempSprite: Sprite = sprites.create(img`0`)
         protected transformX: number[] = []
         protected transformY: number[] = []
@@ -114,7 +114,7 @@ namespace Render {
 
         set fov(fov: number) {
             this._fov = fov
-            this.wallHeightInView = (screen.width << (fpx - 1)) / this._fov
+            this.wallHeightInView = (SW << (fpx - 1)) / this._fov
             this.wallWidthInView = this.wallHeightInView >> fpx // not fpx  // wallSize / this.fov * 4 / 3 * 2
 
             this.setVectors()
@@ -399,8 +399,6 @@ namespace Render {
 
         render() {
             // based on https://lodev.org/cgtutor/raycasting.html
-            const w = screen.width
-            const h = screen.height
             const one = 1 << fpx
             const one2 = 1 << (fpx + fpx)
 
@@ -418,8 +416,8 @@ namespace Render {
             let cameraRangeAngle = Math.atan(this.fov)+.1 //tolerance for spr center just out of camera
             //debug
             // const ms=control.millis()
-            for (let x = 0; x < w; x++) {
-                const cameraX: number = one - Math.idiv((x << fpx) << 1, w)
+            for (let x = 0; x < SW; x++) {
+                const cameraX: number = one - Math.idiv((x << fpx) << 1, SW)
                 let rayDirX = this.dirXFpx + (this.planeX * cameraX >> fpx)
                 let rayDirY = this.dirYFpx + (this.planeY * cameraX >> fpx)
 
@@ -508,7 +506,7 @@ namespace Render {
                     const drawEnd = lineHeight * ViewZPos / this.tilemapScaleSize / fpx_scale;
                     drawStart = drawEnd - lineHeight * (this._wallZScale) + 1;
                     drawHeight = (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1)
-                    drawStart += (h >> 1) 
+                    drawStart += (SH >> 1) 
                     
                     lastDist = perpWallDist
                     lastTexX = texX
@@ -554,13 +552,13 @@ namespace Render {
             this.onSpriteDirectionUpdateHandler = handler
         }
         drawSprite(spr: Sprite, index: number, ViewZPos: number, transformX: number, transformY: number, myAngle:number) {
-            const spriteScreenX = Math.ceil((screen.width / 2) * (1 - transformX / transformY));
+            const spriteScreenX = Math.ceil((SWHalf) * (1 - transformX / transformY));
             const spriteScreenHalfWidth = Math.idiv((spr._width as any as number) / this.tilemapScaleSize / 2 * this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
 
             //calculate drawing range in X direction
             //assume there is one range only
             let blitX = 0, blitWidth = 0
-            for (let sprX = 0; sprX < screen.width; sprX++) {
+            for (let sprX = 0; sprX < SW; sprX++) {
                 if (this.dist[sprX] > transformY) {
                     if (blitWidth == 0)
                         blitX = sprX
@@ -579,7 +577,7 @@ namespace Render {
                 return
 
             const lineHeight = Math.idiv(this.wallHeightInView, transformY)
-            const drawStart = (screen.height >> 1) + (lineHeight * ((ViewZPos - this.spriteMotionZ[spr.id].p - (spr._height as any as number)) / this.tilemapScaleSize) >> fpx)
+            const drawStart = SHHalf + (lineHeight * ((ViewZPos - this.spriteMotionZ[spr.id].p - (spr._height as any as number)) / this.tilemapScaleSize) >> fpx)
 
             //for textures=image[][], abandoned
             //    const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
