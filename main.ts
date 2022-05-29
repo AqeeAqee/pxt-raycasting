@@ -156,7 +156,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     // rcRender.takeoverSceneSprites()
     const tilemapScale = 1 << game.currentScene().tileMap.scale
     spr.setPosition(x * tilemapScale, y * tilemapScale)
-    spr.setVelocity(vx, vy)
+    // spr.setVelocity(vx, vy)
     spr.setBounceOnWall(true)
     spr.setScale(0.5)
     // setCharacterAnimationForSprite(spr, textures)
@@ -192,6 +192,10 @@ rcRender.setZOffset(fish, 8)
 //     tiles.placeOnRandomTile(spr, trans16)
 //     rcRender.setZOffset(spr,.25)
 // }
+
+game.onUpdateInterval(3000, ()=>{
+    cake.setFlag(SpriteFlag.RelativeToCamera, !(cake.flags&SpriteFlag.RelativeToCamera))
+})
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     music.pewPew.play()
@@ -280,7 +284,6 @@ game.onUpdate(() => {
         info.setScore(zOffset * 100)
     }
 })
-cake.setFlag(SpriteFlag.RelativeToCamera, true)
 
 
 // controller.B.onEvent(ControllerButtonEvent.Pressed, () => {

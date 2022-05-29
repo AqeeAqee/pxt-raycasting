@@ -611,7 +611,7 @@ namespace Render {
                     this.sayRederers[spr.id] = undefined
                 } else {
                     this.tempSprite.x = SWHalf
-                    this.tempSprite.y = SH
+                    this.tempSprite.y = SH+2
                     this.camera.drawOffsetX = 0
                     this.camera.drawOffsetY = 0
                     this.tempScreen.fill(0)
