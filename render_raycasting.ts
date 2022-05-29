@@ -38,6 +38,8 @@ namespace Render {
         //sprites & accessories
         sprSelf: Sprite
         sprites: Sprite[] = []
+        sprites2D: Sprite[] = []
+        spriteLikes: SpriteLike[] = []
         spriteAnimations: Animations[] = []
         protected spriteMotionZ: MotionSet1D[] = []
         protected sayRederers: sprites.BaseSpriteSayRenderer[] = []
@@ -210,22 +212,6 @@ namespace Render {
 
         set viewMode(v: ViewMode) {
             this._viewMode = v
-            // const sc = game.currentScene()
-            // if (v == ViewMode.tilemapView) {
-            // game.currentScene().allSprites.removeElement(this.myRender)
-            // sc.allSprites.push(this.oldRender)
-            // this.bg = game.currentScene().background.image
-            // scene.setBackgroundImage(img`15`) //todo, add bgTilemap property for tilemap mode
-            // this.sprites.forEach(spr => {
-            //     sc.allSprites.push(spr)
-            // })
-            // } else {
-            // game.currentScene().allSprites.removeElement(this.oldRender)
-            // game.currentScene().allSprites.push(this.myRender)
-            // game.currentScene().background.image = this.bg
-            // this.takeoverSceneSprites()
-            // }
-
         }
 
         takeoverSceneSprites() {
@@ -233,13 +219,13 @@ namespace Render {
             for (let i=0;i<sc_allSprites.length;) {
                 const spr=sc_allSprites[i]
                 if (spr instanceof Sprite) {
-                    if (this.sprites.indexOf(spr) < 0) {
-                        this.sprites.push(spr as Sprite)
-                        if (!this.spriteMotionZ[spr.id])
-                            this.setZOffset(spr, 0)
-                        sc_allSprites.removeElement(spr)
+                    const sprList = (spr.flags & sprites.Flag.RelativeToCamera) ? this.sprites2D:this.sprites
+                    if (sprList.indexOf(spr) < 0) {
+                        sprList.push(spr as Sprite)
+                        this.getMotionZ(spr, 0)
                         spr.onDestroyed(() => {
-                            this.sprites.removeElement(spr as Sprite)
+                            this.sprites.removeElement(spr as Sprite)   //can be in one of 2 lists
+                            this.sprites2D.removeElement(spr as Sprite) //can be in one of 2 lists
                             const sayRenderer = this.sayRederers[spr.id]
                             if (sayRenderer) {
                                 this.sayRederers.removeElement(sayRenderer)
@@ -247,9 +233,11 @@ namespace Render {
                             }
                         })
                     }
-                }else{ //if not remove; next
-                    i++
+                } else {
+                    if (this.spriteLikes.indexOf(spr) < 0)
+                        this.spriteLikes.push(spr)
                 }
+                sc_allSprites.removeElement(spr)
             }
             this.sprites.forEach((spr) => {
                 if (spr)
@@ -272,14 +260,15 @@ namespace Render {
             this.textures = sc.tileMap.data.getTileset()
             this.tilemapScaleSize = 1 << sc.tileMap.data.scale
             this.oldRender = sc.tileMap.renderable
+            this.spriteLikes.removeElement(this.oldRender)
             sc.allSprites.removeElement(this.oldRender)
-            this.takeoverSceneSprites()
 
             let frameCallback_update = sc.eventContext.registerFrameHandler(scene.PRE_RENDER_UPDATE_PRIORITY + 1, () => {
                 const dt = sc.eventContext.deltaTime;
                 // sc.camera.update();  // already did in scene
                 for (const s of this.sprites)
                     s.__update(sc.camera, dt);
+                this.sprSelf.__update(sc.camera, dt)
             })
 
             let frameCallback_draw = sc.eventContext.registerFrameHandler(scene.RENDER_SPRITES_PRIORITY + 1, () => {
@@ -287,19 +276,16 @@ namespace Render {
                 if (this._viewMode == ViewMode.tilemapView) {
                     this.oldRender.__drawCore(sc.camera)
                     this.sprites.forEach(spr => spr.__draw(sc.camera))
-                    //draw hud, todo, walk around for being covered by tilemap
-                    sc.allSprites.forEach(spr => spr.__draw(sc.camera))
+                    this.sprSelf.__draw(sc.camera)
                 } else {
-                    this.takeoverSceneSprites() // in case some one new
+                    // this.takeoverSceneSprites() // in case some one new
                     this.render()
                     //draw hud, or other SpriteLike
-                    this.sprites.forEach(spr => {
-                        if ((spr.flags & sprites.Flag.RelativeToCamera))
-                            spr.__draw(sc.camera)
-                    })
-                    //todo, delete ?
-                    sc.allSprites.forEach(spr => spr.__draw(sc.camera))
                 }
+                this.sprites2D.forEach(spr => {
+                    spr.__draw(sc.camera)
+                    })
+                this.spriteLikes.forEach(spr => spr.__draw(sc.camera))
             })
 
             sc.tileMap.addEventListener(tiles.TileMapEvent.Unloaded, data => {
@@ -334,6 +320,24 @@ namespace Render {
 
             game.onUpdate(function () {
                 this.updateControls()
+            })
+
+            game.onUpdateInterval(400, ()=>{
+                for (let i = 0; i < this.sprites.length;) {
+                    const spr = this.sprites[i]
+                    if (spr.flags & sprites.Flag.RelativeToCamera) {
+                        this.sprites.removeElement(spr)
+                        this.sprites2D.push(spr)
+                    } else {i++}
+                }
+                for (let i = 0; i < this.sprites2D.length;) {
+                    const spr = this.sprites2D[i]
+                    if (!(spr.flags & sprites.Flag.RelativeToCamera)) {
+                        this.sprites2D.removeElement(spr)
+                        this.sprites.push(spr)
+                    } else {i++}
+                }
+                this.takeoverSceneSprites() // in case some one new
             })
         }
 
@@ -371,18 +375,24 @@ namespace Render {
                 }
             }
 
-            const dt = game.eventContext().deltaTime
             for (const spr of this.sprites) {
-                const motionZ = this.spriteMotionZ[spr.id]
-                if (!motionZ) continue
-
-                if (motionZ.v != 0 || motionZ.p != motionZ.offset) {
-                    motionZ.v += motionZ.a * dt, motionZ.p += motionZ.v * dt
-                    //landing
-                    if ((motionZ.a >= 0 && motionZ.v > 0 && motionZ.p > motionZ.offset) ||
-                        (motionZ.a <= 0 && motionZ.v < 0 && motionZ.p < motionZ.offset)) { motionZ.p = motionZ.offset, motionZ.v = 0 }
-                }
+                this.updateMotionZ(spr)
             }
+            this.updateMotionZ(this.sprSelf)
+        }
+
+        updateMotionZ(spr:Sprite){
+            const dt = game.eventContext().deltaTime
+            const motionZ = this.spriteMotionZ[spr.id]
+            //if (!motionZ) continue
+
+            if (motionZ.v != 0 || motionZ.p != motionZ.offset) {
+                motionZ.v += motionZ.a * dt, motionZ.p += motionZ.v * dt
+                //landing
+                if ((motionZ.a >= 0 && motionZ.v > 0 && motionZ.p > motionZ.offset) ||
+                    (motionZ.a <= 0 && motionZ.v < 0 && motionZ.p < motionZ.offset)) { motionZ.p = motionZ.offset, motionZ.v = 0 }
+            }
+
         }
 
         render() {
@@ -391,6 +401,10 @@ namespace Render {
             const h = screen.height
             const one = 1 << fpx
             const one2 = 1 << (fpx + fpx)
+
+            //perf const
+            const selfXFpx = this.xFpx
+            const selfYFpx = this.yFpx
 
             //for sprite
             this.invDet = one2 / (this.planeX * this.dirYFpx - this.dirXFpx * this.planeY); //required for correct matrix multiplication
@@ -411,8 +425,8 @@ namespace Render {
                 if (rayDirX == 0) rayDirX = 1
                 if (rayDirY == 0) rayDirY = 1
 
-                let mapX = this.xFpx >> fpx
-                let mapY = this.yFpx >> fpx
+                let mapX = selfXFpx >> fpx
+                let mapY = selfYFpx >> fpx
 
                 // length of ray from current position to next x or y-side
                 let sideDistX = 0, sideDistY = 0
@@ -428,17 +442,17 @@ namespace Render {
                 //calculate step and initial sideDist
                 if (rayDirX < 0) {
                     mapStepX = -1;
-                    sideDistX = ((this.xFpx - (mapX << fpx)) * deltaDistX) >> fpx;
+                    sideDistX = ((selfXFpx - (mapX << fpx)) * deltaDistX) >> fpx;
                 } else {
                     mapStepX = 1;
-                    sideDistX = (((mapX << fpx) + one - this.xFpx) * deltaDistX) >> fpx;
+                    sideDistX = (((mapX << fpx) + one - selfXFpx) * deltaDistX) >> fpx;
                 }
                 if (rayDirY < 0) {
                     mapStepY = -1;
-                    sideDistY = ((this.yFpx - (mapY << fpx)) * deltaDistY) >> fpx;
+                    sideDistY = ((selfYFpx - (mapY << fpx)) * deltaDistY) >> fpx;
                 } else {
                     mapStepY = 1;
-                    sideDistY = (((mapY << fpx) + one - this.yFpx) * deltaDistY) >> fpx;
+                    sideDistY = (((mapY << fpx) + one - selfYFpx) * deltaDistY) >> fpx;
                 }
 
                 let color = 0
@@ -468,11 +482,11 @@ namespace Render {
                 let perpWallDist = 0
                 let wallX = 0
                 if (!sideWallHit) {
-                    perpWallDist = Math.idiv(((mapX << fpx) - this.xFpx + (1 - mapStepX << fpx - 1)) << fpx, rayDirX)
-                    wallX = this.yFpx + (perpWallDist * rayDirY >> fpx);
+                    perpWallDist = Math.idiv(((mapX << fpx) - selfXFpx + (1 - mapStepX << fpx - 1)) << fpx, rayDirX)
+                    wallX = selfYFpx + (perpWallDist * rayDirY >> fpx);
                 } else {
-                    perpWallDist = Math.idiv(((mapY << fpx) - this.yFpx + (1 - mapStepY << fpx - 1)) << fpx, rayDirY)
-                    wallX = this.xFpx + (perpWallDist * rayDirX >> fpx);
+                    perpWallDist = Math.idiv(((mapY << fpx) - selfYFpx + (1 - mapStepY << fpx - 1)) << fpx, rayDirY)
+                    wallX = selfXFpx + (perpWallDist * rayDirX >> fpx);
                 }
                 wallX &= (1 << fpx) - 1
 
@@ -512,11 +526,9 @@ namespace Render {
             // let msSprs=control.millis()
             /////////////////// sprites ///////////////////
             this.sprites
-                .filter((spr, i) => { // transformY>0
-                    if (!(spr instanceof Sprite) || spr == this.sprSelf || (spr.flags & sprites.Flag.RelativeToCamera))
-                        return false
-                    const spriteX = this.sprXFx8(spr) - this.xFpx
-                    const spriteY = this.sprYFx8(spr) - this.yFpx
+                .filter((spr, i) => {
+                    const spriteX = this.sprXFx8(spr) - selfXFpx
+                    const spriteY = this.sprYFx8(spr) - selfYFpx
                     this.angleSelfToSpr[spr.id] = Math.atan2(spriteX, spriteY)
                     this.transformX[spr.id] = this.invDet * (this.dirYFpx * spriteX - this.dirXFpx * spriteY) >> fpx;
                     this.transformY[spr.id] = this.invDet * (-this.planeY * spriteX + this.planeX * spriteY) >> fpx; //this is actually the depth inside the screen, that what Z is in 3D
@@ -602,7 +614,6 @@ namespace Render {
                     this.camera.drawOffsetY = 0
                     this.tempScreen.fill(0)
                     anchor.draw(this.tempScreen, this.camera, this.tempSprite)
-
                     const height = SH * fpx_scale / transformY
                     const blitXSaySrc = (blitX - spriteScreenX) * transformY / fpx_scale + SWHalf
                     const blitWidthSaySrc = blitWidth * transformY / fpx_scale

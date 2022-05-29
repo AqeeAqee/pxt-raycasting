@@ -144,7 +144,7 @@ let map = tiles.createTilemap(hex`1000100002020202020202020202020202020202020000
 `, [trans16, sprites.castle.tileGrass2, sprites.builtin.forestTiles0], TileScale.Sixteen);
 // tiles.setCurrentTilemap(map)
 const tm= tilemap`level1`
-tm.scale = TileScale.ThirtyTwo
+// tm.scale =2// TileScale.Eight
 tiles.setCurrentTilemap(tm)
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
@@ -163,7 +163,8 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0], textures[1], textures[2], textures[3]))
     // if (kind == SpriteKind.Enemy)
     //     tiles.placeOnRandomTile(spr, trans16)
-    // spr.sayText(spr.id+"")
+    spr.sayText(spr.id+" test", 44444, true)
+
     return spr
 }
 
@@ -180,13 +181,12 @@ let sprHero = createSprite(10, 8, 6, 10, texturesHero, SpriteKind.Enemy)
 let sprSkelly = createSprite(11, 7, 6, 10, texturesSkelly, SpriteKind.Enemy)
 let sprPriness = createSprite(10, 7, 6, 10, texturesPrincess, SpriteKind.Enemy)
 let sprPlane=createSprite(9, 7, 6, 10, texturesPlane, SpriteKind.Enemy)
-let cake = createSprite(7, 8, 0, 0, texturesBigCake, SpriteKind.Enemy)
+let cake = createSprite(2, 2, 4, 2, texturesBigCake, SpriteKind.Enemy)
 let fish = createSprite(7, 9, 0, 0, texturesFish, SpriteKind.Enemy)
 rcRender.setZOffset(sprSkelly, 4)
 rcRender.setZOffset(sprPlane, 16)
 rcRender.setZOffset(cake, 4)
 rcRender.setZOffset(fish, 8)
-
 // for(let i=0;i<10;i++){
 //     let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
 //     tiles.placeOnRandomTile(spr, trans16)
@@ -241,7 +241,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSpr
 })
 
 controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
-    rcRender.viewMode = rcRender.viewMode == ViewMode.tilemapView ? ViewMode.raycastingView : ViewMode.tilemapView
+    Render.toggleViewMode()
 })
 
 controller.B.repeatDelay=0
@@ -259,14 +259,14 @@ controller.anyButton.onEvent(ControllerButtonEvent.Pressed,() => {
 })
 controller.B.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
-    Render.moveWithController(3, 1)
+    Render.moveWithController(3, 2)
 })
 controller.A.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
-    Render.moveWithController(3, 1)
+    Render.moveWithController(3, 2)
 })
 
-rcRender.wallZScale = 1
+rcRender.wallZScale = 2
 
 let zOffset = 0// tilemapScale / 2
 rcRender.setZOffset(rcRender.sprSelf, zOffset)
@@ -280,6 +280,7 @@ game.onUpdate(() => {
         info.setScore(zOffset * 100)
     }
 })
+cake.setFlag(SpriteFlag.RelativeToCamera, true)
 
 
 // controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
@@ -302,4 +303,3 @@ game.onUpdate(() => {
 //         character.loopFrames(spr, textures[Math.floor(i * textures.length / characterAniDirs.length)], 150, character.rule(dir))
 //     })
 // }
-
