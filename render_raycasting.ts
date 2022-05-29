@@ -315,6 +315,8 @@ namespace Render {
 
             //self sprite
             this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)
+            this.takeoverSceneSprites()
+            this.sprites.removeElement(this.sprSelf)
             scene.cameraFollowSprite(this.sprSelf)
             this.updateSelfImage()
 
