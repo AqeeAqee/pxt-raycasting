@@ -278,9 +278,10 @@ namespace Render {
                     this.sprites.forEach(spr => spr.__draw(sc.camera))
                     this.sprSelf.__draw(sc.camera)
                 } else {
-                    // this.takeoverSceneSprites() // in case some one new
+                    //debug
+                    // const ms=control.micros()
                     this.render()
-                    //draw hud, or other SpriteLike
+                    // info.setScore(control.micros()-ms)
                 }
                 this.sprites2D.forEach(spr => {
                     spr.__draw(sc.camera)
@@ -554,6 +555,8 @@ namespace Render {
         drawSprite(spr: Sprite, index: number, ViewZPos: number, transformX: number, transformY: number, myAngle:number) {
             const spriteScreenX = Math.ceil((SWHalf) * (1 - transformX / transformY));
             const spriteScreenHalfWidth = Math.idiv((spr._width as any as number) / this.tilemapScaleSize / 2 * this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
+            const spriteScreenLeft = spriteScreenX - spriteScreenHalfWidth
+            const spriteScreenRight = spriteScreenX + spriteScreenHalfWidth
 
             //calculate drawing range in X direction
             //assume there is one range only
@@ -564,15 +567,15 @@ namespace Render {
                         blitX = sprX
                     blitWidth++
                 } else if (blitWidth > 0) {
-                    if (blitX <= spriteScreenX + spriteScreenHalfWidth && blitX + blitWidth >= spriteScreenX - spriteScreenHalfWidth)
+                    if (blitX <= spriteScreenRight && blitX + blitWidth >= spriteScreenLeft)
                         break
                     else
                         blitX = 0, blitWidth = 0;
                 }
             }
             // screen.print([this.getxFx8(spr), this.getyFx8(spr)].join(), 0,index*10+10)
-            const blitXSpr = Math.max(blitX, spriteScreenX - spriteScreenHalfWidth)
-            const blitWidthSpr = Math.min(blitX + blitWidth, spriteScreenX + spriteScreenHalfWidth) - blitXSpr
+            const blitXSpr = Math.max(blitX, spriteScreenLeft)
+            const blitWidthSpr = Math.min(blitX + blitWidth, spriteScreenRight) - blitXSpr
             if (blitWidthSpr <= 0)
                 return
 
@@ -590,6 +593,7 @@ namespace Render {
             //     character.setCharacterState(spr, character.rule(characterAniDirs[iTexture]))
             //for this.spriteAnimations
             const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
+            const sprTexRatio = texSpr.width / spriteScreenHalfWidth / 2
             helpers.imageBlit(
                 screen,
                 blitXSpr,
@@ -597,10 +601,10 @@ namespace Render {
                 blitWidthSpr,
                 lineHeight * spr.height / this.tilemapScaleSize,
                 texSpr,
-                (blitXSpr - (spriteScreenX - spriteScreenHalfWidth)) * texSpr.width / spriteScreenHalfWidth / 2
+                (blitXSpr - (spriteScreenX - spriteScreenHalfWidth)) * sprTexRatio
                 ,
                 0,
-                blitWidthSpr * texSpr.width / spriteScreenHalfWidth / 2, texSpr.height, true, false)
+                blitWidthSpr * sprTexRatio, texSpr.height, true, false)
 
             //sayText
             const anchor = this.sayRederers[spr.id]
