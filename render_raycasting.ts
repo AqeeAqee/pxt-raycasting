@@ -616,13 +616,14 @@ namespace Render {
                     this.camera.drawOffsetY = 0
                     this.tempScreen.fill(0)
                     anchor.draw(this.tempScreen, this.camera, this.tempSprite)
-                    const height = SH * fpx_scale / transformY
-                    const blitXSaySrc = (blitX - spriteScreenX) * transformY / fpx_scale + SWHalf
-                    const blitWidthSaySrc = blitWidth * transformY / fpx_scale
+                    const sayTransformY = transformY/2
+                    const height = SH * fpx_scale / sayTransformY
+                    const blitXSaySrc = (blitX - spriteScreenX) * sayTransformY / fpx_scale + SWHalf
+                    const blitWidthSaySrc = blitWidth * sayTransformY / fpx_scale
                     if (blitXSaySrc < 0) { //imageBlit considers negative value as 0
                         helpers.imageBlit(
                             screen,
-                            spriteScreenX - SWHalf * fpx_scale / transformY, drawStart - height, (blitWidthSaySrc + blitXSaySrc) * fpx_scale / transformY, height,
+                            spriteScreenX - SWHalf * fpx_scale / sayTransformY, drawStart - height, (blitWidthSaySrc + blitXSaySrc) * fpx_scale / sayTransformY, height,
                             this.tempScreen,
                             0, 0, blitWidthSaySrc + blitXSaySrc, SH, true, false)
                     } else
