@@ -29,7 +29,9 @@
         "docs/move.md",
         "docs/move-with-controller.md",
         "docs/takeover-scene-sprites.md",
-        "docs/register-on-sprite-direction-update-handler.md"
+        "docs/register-on-sprite-direction-update-handler.md",
+        "docs/get-sprite-attribute.md",
+        "docs/set-sprite-attribute.md"
     ],
     "testFiles": [
         "main.ts",

@@ -1,3 +1,9 @@
+enum RCSpriteAttribute{
+    ZOffset,
+    ZPosition,
+    ZVelocity,
+    ZAcceleration
+}
 /**
  * A 2.5D Screen Render, using Raycasting algorithm
  **/
@@ -249,10 +255,64 @@ namespace Render {
     //% offset.min=-100 offset.max=100 offset.defl=8
     //% duration.min=0 duration.max=5000 duration.defl=0
     //% group="Dimension Z"
-    //% weight=80
+    //% weight=77
+    //% blockHidden
     //% help=github:pxt-raycasting/docs/set-z-offset
     export function setZOffset(sprite: Sprite, offset: number, duration?: number) {
         raycastingRender.setZOffset(sprite, offset, duration)
+    }
+
+    /**
+     * Set arribute of a Sprite
+     * @param spr Sprite
+     * @param attr RCSpriteAttribute
+     */
+    //% group="Dimension Z"
+    //% block="set Sprite %spr=variables_get(mySprite) %attribute = %value"
+    //% blockId=rcRender_setSpriteAttribute
+    //% weight=75
+    //% help=github:pxt-raycasting/docs/set-sprite-attribute
+    export function setSpriteAttribute(spr: Sprite, attr: RCSpriteAttribute, value: number) {
+        switch (attr) {
+            case RCSpriteAttribute.ZOffset:
+                raycastingRender.getMotionZ(spr).offset = value
+                break
+            case RCSpriteAttribute.ZPosition:
+                raycastingRender.getMotionZ(spr).p = value
+                break
+            case RCSpriteAttribute.ZVelocity:
+                raycastingRender.getMotionZ(spr).v = value
+                break
+            case RCSpriteAttribute.ZAcceleration:
+                raycastingRender.getMotionZ(spr).a = value
+                break
+            default:
+        }
+    }
+
+    /**
+     * Get arribute of a Sprite
+     * @param spr Sprite
+     * @param attr RCSpriteAttribute
+     */
+    //% group="Dimension Z"
+    //% block="get Sprite %spr=variables_get(mySprite) %attribute"
+    //% blockId=rcRender_getSpriteAttribute
+    //% weight=74
+    //% help=github:pxt-raycasting/docs/get-sprite-attribute
+    export function getSpriteAttribute(spr:Sprite, attr: RCSpriteAttribute): number {
+        switch (attr) {
+            case RCSpriteAttribute.ZOffset:
+                return raycastingRender.getMotionZ(spr).offset
+            case RCSpriteAttribute.ZPosition:
+                return raycastingRender.getMotionZ(spr).p
+            case RCSpriteAttribute.ZVelocity:
+                return raycastingRender.getMotionZ(spr).v
+            case RCSpriteAttribute.ZAcceleration:
+                return raycastingRender.getMotionZ(spr).a
+            default:
+                return 0
+        }
     }
 
     /**
@@ -264,7 +324,7 @@ namespace Render {
     //% blockId=rcRender_isSpritesOverlapZ
     //% block="is sprites $sprite1=variables_get(mySprite) and $sprite2=variables_get(mySprite2) overlaps in Z dimension"
     //% group="Dimension Z"
-    //% weight=78
+    //% weight=71
     //% help=github:pxt-raycasting/docs/is-sprites-overlap-z
     export function isSpritesOverlapZ(sprite1: Sprite, sprite2: Sprite): boolean {
         return raycastingRender.isOverlapZ(sprite1, sprite2)
