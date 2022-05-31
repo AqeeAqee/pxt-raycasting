@@ -193,9 +193,10 @@ rcRender.setZOffset(fish, 8)
 //     rcRender.setZOffset(spr,.25)
 // }
 
-game.onUpdateInterval(3000, ()=>{
-    cake.setFlag(SpriteFlag.RelativeToCamera, !(cake.flags&SpriteFlag.RelativeToCamera))
-})
+//test for RelativeToCamera
+// game.onUpdateInterval(3000, ()=>{
+//     cake.setFlag(SpriteFlag.RelativeToCamera, !(cake.flags&SpriteFlag.RelativeToCamera))
+// })
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     music.pewPew.play()
