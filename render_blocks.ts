@@ -387,7 +387,7 @@ namespace Render {
      * @param v The velocity used for forward/backword movement when up/down is pressed, in pixel/s
      * @param va The angle velocity used for turn view direction when left/right is pressed, in radian/s.
      */
-    //% blockId="rcRender_moveWithController" block="move with buttons velocity $v|| turn speed $va"
+    //% blockId="rcRender_moveWithController" block="move with buttons velocity $v|| turn speed $va camera sway$cameraSway pixels"
     //% weight=60
     //% expandableArgumentMode="toggle"
     //% v.defl=2 va.defl=3
@@ -395,9 +395,11 @@ namespace Render {
     //% v.shadow="spriteSpeedPicker"
     //% va.shadow="spriteSpeedPicker"
     //% help=github:pxt-raycasting/docs/move-with-controller
-    export function moveWithController(v: number = 2, va: number = 3) {
+    export function moveWithController(v: number = 2, va: number = 3, cameraSway?:number) {
         raycastingRender.velocity = v
         raycastingRender.velocityAngle = va
+        if(cameraSway!=undefined)
+            raycastingRender.cameraSway=cameraSway|0
     }
 
     /**

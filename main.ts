@@ -1,5 +1,7 @@
 game.stats = true
 const rcRender = Render.raycastingRender
+Render.moveWithController(2,2)
+rcRender.cameraSway=8
 
 let trans16 = image.create(16, 16)
 scene.setBackgroundImage(img`
@@ -264,11 +266,11 @@ controller.anyButton.onEvent(ControllerButtonEvent.Pressed,() => {
 })
 controller.B.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
-    Render.moveWithController(3, 2)
+    Render.moveWithController(2, 2)
 })
 controller.A.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
-    Render.moveWithController(3, 2)
+    Render.moveWithController(2, 2)
 })
 
 rcRender.wallZScale = 2

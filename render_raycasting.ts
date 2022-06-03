@@ -34,6 +34,9 @@ namespace Render {
         protected _angle: number
         protected _fov: number
         protected _wallZScale: number = 1
+        cameraSway = 0
+        protected isWalking=false
+        protected cameraOffsetX = 0
 
         //sprites & accessories
         sprSelf: Sprite
@@ -342,6 +345,12 @@ namespace Render {
                 }
                 this.takeoverSceneSprites() // in case some one new
             })
+
+
+            game.onUpdateInterval(25, () => {
+                if(this.cameraSway&&this.isWalking)
+                    this.cameraOffsetX = Math.sin(control.millis() / 150) * this.cameraSway
+            });
         }
 
         private setVectors() {
@@ -370,11 +379,14 @@ namespace Render {
                 }
             }
             if (this.velocity !== 0) {
+                this.isWalking=true
                 const dy = controller.dy(this.velocity)
                 if (dy) {
                     const nx = this.xFpx - Math.round(this.dirXFpx * dy)
                     const ny = this.yFpx - Math.round(this.dirYFpx * dy)
                     this.sprSelf.setPosition((nx * this.tilemapScaleSize / fpx_scale), (ny * this.tilemapScaleSize / fpx_scale))
+                }else{
+                    this.isWalking=false
                 }
             }
 
@@ -418,7 +430,7 @@ namespace Render {
             //debug
             // const ms=control.millis()
             for (let x = 0; x < SW; x++) {
-                const cameraX: number = one - Math.idiv((x << fpx) << 1, SW)
+                const cameraX: number = one - Math.idiv(((x+this.cameraOffsetX) << fpx) << 1, SW)
                 let rayDirX = this.dirXFpx + (this.planeX * cameraX >> fpx)
                 let rayDirY = this.dirYFpx + (this.planeY * cameraX >> fpx)
 
@@ -553,7 +565,7 @@ namespace Render {
             this.onSpriteDirectionUpdateHandler = handler
         }
         drawSprite(spr: Sprite, index: number, ViewZPos: number, transformX: number, transformY: number, myAngle:number) {
-            const spriteScreenX = Math.ceil((SWHalf) * (1 - transformX / transformY));
+            const spriteScreenX = Math.ceil((SWHalf) * (1 - transformX / transformY))-this.cameraOffsetX;
             const spriteScreenHalfWidth = Math.idiv((spr._width as any as number) / this.tilemapScaleSize / 2 * this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
             const spriteScreenLeft = spriteScreenX - spriteScreenHalfWidth
             const spriteScreenRight = spriteScreenX + spriteScreenHalfWidth
