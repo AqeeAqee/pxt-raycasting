@@ -1,3 +1,5 @@
+//lantern-raycasting
+
 enum ViewMode {
     //% block="TileMap Mode"
     tilemapView,
@@ -26,7 +28,7 @@ namespace Render {
     export class RayCastingRender {
         velocityAngle: number = 2
         velocity: number = 3
-        protected _viewMode=ViewMode.raycastingView
+        protected _viewMode = ViewMode.raycastingView
         protected dirXFpx: number
         protected dirYFpx: number
         protected planeX: number
@@ -156,7 +158,7 @@ namespace Render {
             if (motionZ.p != motionZ.offset) {
                 if (duration === 0)
                     motionZ.p = motionZ.offset
-                else if(motionZ.v==0)
+                else if (motionZ.v == 0)
                     this.move(spr, (motionZ.offset - motionZ.p) / fpx_scale * 1000 / duration, 0)
             }
         }
@@ -216,10 +218,10 @@ namespace Render {
 
         takeoverSceneSprites() {
             const sc_allSprites = game.currentScene().allSprites
-            for (let i=0;i<sc_allSprites.length;) {
-                const spr=sc_allSprites[i]
+            for (let i = 0; i < sc_allSprites.length;) {
+                const spr = sc_allSprites[i]
                 if (spr instanceof Sprite) {
-                    const sprList = (spr.flags & sprites.Flag.RelativeToCamera) ? this.sprites2D:this.sprites
+                    const sprList = (spr.flags & sprites.Flag.RelativeToCamera) ? this.sprites2D : this.sprites
                     if (sprList.indexOf(spr) < 0) {
                         sprList.push(spr as Sprite)
                         this.getMotionZ(spr, 0)
@@ -285,7 +287,7 @@ namespace Render {
                 }
                 this.sprites2D.forEach(spr => {
                     spr.__draw(sc.camera)
-                    })
+                })
                 this.spriteLikes.forEach(spr => spr.__draw(sc.camera))
             })
 
@@ -325,20 +327,20 @@ namespace Render {
                 this.updateControls()
             })
 
-            game.onUpdateInterval(400, ()=>{
+            game.onUpdateInterval(400, () => {
                 for (let i = 0; i < this.sprites.length;) {
                     const spr = this.sprites[i]
                     if (spr.flags & sprites.Flag.RelativeToCamera) {
                         this.sprites.removeElement(spr)
                         this.sprites2D.push(spr)
-                    } else {i++}
+                    } else { i++ }
                 }
                 for (let i = 0; i < this.sprites2D.length;) {
                     const spr = this.sprites2D[i]
                     if (!(spr.flags & sprites.Flag.RelativeToCamera)) {
                         this.sprites2D.removeElement(spr)
                         this.sprites.push(spr)
-                    } else {i++}
+                    } else { i++ }
                 }
                 this.takeoverSceneSprites() // in case some one new
             })
@@ -384,7 +386,7 @@ namespace Render {
             this.updateMotionZ(this.sprSelf)
         }
 
-        updateMotionZ(spr:Sprite){
+        updateMotionZ(spr: Sprite) {
             const dt = game.eventContext().deltaTime
             const motionZ = this.spriteMotionZ[spr.id]
             //if (!motionZ) continue
@@ -398,6 +400,7 @@ namespace Render {
 
         }
 
+        lightDelta:number
         render() {
             // based on https://lodev.org/cgtutor/raycasting.html
             const one = 1 << fpx
@@ -414,8 +417,27 @@ namespace Render {
             let drawHeight = 0
             let lastDist = -1, lastTexX = -1, lastMapX = -1, lastMapY = -1
             const ViewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2 << fpx)
-            let cameraRangeAngle = Math.atan(this.fov)+.1 //tolerance for spr center just out of camera
+            let cameraRangeAngle = Math.atan(this.fov) + .1 //tolerance for spr center just out of camera
             //debug
+            // this.lightDelta = Math.sin(control.millis() / 33) / 32 * fpx_scale
+            this.lightDelta = (1-control.millis() / 111 %3)/50 * fpx_scale
+            let lastTileColor = -1, lastDeltaC = -1
+            let texClone: Image
+            const palette_lantern = img`
+                . 1 2 3 4 5 6 7 8 9 a b c d e f
+                . d 4 2 e b 8 6 c 7 c a c b c f
+                . b b 4 c a a 8 c 8 c c c c c f
+                . c c b f c c c f c f c f c f f
+                . f f f f f f f f f f f f f f f
+            `
+            const palette_frog = img`
+                . 1 2 3 4 5 6 7 8 9 a b c d e f
+                . 1 3 d 3 d 9 9 a 9 a b b d 4 c
+                . 1 3 d d d b b c d b d b d 2 b
+                . 1 d 1 d 1 d d b d d d d 1 3 d
+                . 1 1 1 1 1 1 1 d 1 1 1 d 1 1 d
+            `
+
             // const ms=control.millis()
             for (let x = 0; x < SW; x++) {
                 const cameraX: number = one - Math.idiv((x << fpx) << 1, SW)
@@ -494,11 +516,34 @@ namespace Render {
                 // color = (color - 1) * 2
                 // if (sideWallHit) color++
 
-                const tex = this.textures[color]
-                if (!tex)
-                    continue
+                // const tex = this.textures[color].clone()
+                // if (!tex)
+                //     continue
 
-                let texX = (wallX * tex.width) >> fpx;
+                let deltaC = ((perpWallDist+this.lightDelta) >> (fpx ))
+                //lantern
+                if (lastTileColor != color || lastDeltaC != deltaC) {
+                    texClone = this.textures[color].clone()
+                    if (deltaC > 1)
+                        for (let i = 14; i > 0; i--)
+                            texClone.replace(i, palette_lantern.getPixel(i, Math.min(4, deltaC)))
+                    lastTileColor = color
+                    lastDeltaC = deltaC
+                }
+
+                //frog
+                // if (lastTileColor != color || lastDeltaC != deltaC) {
+                //     console.log(deltaC)
+                //     texClone = this.textures[color].clone()
+                //     if (deltaC > 0)
+                //         for (let i = 2; i <16; i++)
+                //             texClone.replace(i, palette_frog.getPixel(i, Math.min(4, deltaC)))
+                //     lastTileColor = color
+                //     lastDeltaC = deltaC
+                // }
+
+
+                let texX = (wallX * texClone.width) >> fpx;
                 // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
                 //     texX = tex.width - texX - 1;
 
@@ -507,15 +552,16 @@ namespace Render {
                     const drawEnd = lineHeight * ViewZPos / this.tilemapScaleSize / fpx_scale;
                     drawStart = drawEnd - lineHeight * (this._wallZScale) + 1;
                     drawHeight = (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1)
-                    drawStart += (SH >> 1) 
-                    
+                    drawStart += (SH >> 1)
+
                     lastDist = perpWallDist
                     lastTexX = texX
                     lastMapX = mapX
                     lastMapY = mapY
                 }
+
                 //fix start&end points to avoid regmatic between lines
-                screen.blitRow(x, drawStart, tex, texX, drawHeight)
+                screen.blitRow(x, drawStart, texClone, texX, drawHeight)
 
                 this.dist[x] = perpWallDist
             }
@@ -533,7 +579,7 @@ namespace Render {
                     this.angleSelfToSpr[spr.id] = Math.atan2(spriteX, spriteY)
                     this.transformX[spr.id] = this.invDet * (this.dirYFpx * spriteX - this.dirXFpx * spriteY) >> fpx;
                     this.transformY[spr.id] = this.invDet * (-this.planeY * spriteX + this.planeX * spriteY) >> fpx; //this is actually the depth inside the screen, that what Z is in 3D
-                    const angleInCamera= Math.atan2(this.transformX[spr.id]*this.fov, this.transformY[spr.id])
+                    const angleInCamera = Math.atan2(this.transformX[spr.id] * this.fov, this.transformY[spr.id])
                     return angleInCamera > -cameraRangeAngle && angleInCamera < cameraRangeAngle //(this.transformY[spr.id] > 0
                 }).sort((spr1, spr2) => {   // far to near
                     return (this.transformY[spr2.id] - this.transformY[spr1.id])
@@ -552,7 +598,7 @@ namespace Render {
         registerOnSpriteDirectionUpdate(handler: (spr: Sprite, dir: number) => void) {
             this.onSpriteDirectionUpdateHandler = handler
         }
-        drawSprite(spr: Sprite, index: number, ViewZPos: number, transformX: number, transformY: number, myAngle:number) {
+        drawSprite(spr: Sprite, index: number, ViewZPos: number, transformX: number, transformY: number, myAngle: number) {
             const spriteScreenX = Math.ceil((SWHalf) * (1 - transformX / transformY));
             const spriteScreenHalfWidth = Math.idiv((spr._width as any as number) / this.tilemapScaleSize / 2 * this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
             const spriteScreenLeft = spriteScreenX - spriteScreenHalfWidth
@@ -613,12 +659,12 @@ namespace Render {
                     this.sayRederers[spr.id] = undefined
                 } else {
                     this.tempSprite.x = SWHalf
-                    this.tempSprite.y = SH+2
+                    this.tempSprite.y = SH + 2
                     this.camera.drawOffsetX = 0
                     this.camera.drawOffsetY = 0
                     this.tempScreen.fill(0)
                     anchor.draw(this.tempScreen, this.camera, this.tempSprite)
-                    const sayTransformY = transformY/2
+                    const sayTransformY = transformY / 2
                     const height = SH * fpx_scale / sayTransformY
                     const blitXSaySrc = (blitX - spriteScreenX) * sayTransformY / fpx_scale + SWHalf
                     const blitWidthSaySrc = blitWidth * sayTransformY / fpx_scale
