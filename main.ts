@@ -156,7 +156,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     // rcRender.takeoverSceneSprites()
     const tilemapScale = 1 << game.currentScene().tileMap.scale
     spr.setPosition(x * tilemapScale, y * tilemapScale)
-    // spr.setVelocity(vx, vy)
+    spr.setVelocity(vx, vy)
     spr.setBounceOnWall(true)
     spr.setScale(0.5)
     // setCharacterAnimationForSprite(spr, textures)
@@ -164,7 +164,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     // if (kind == SpriteKind.Enemy)
     //     tiles.placeOnRandomTile(spr, trans16)
     // spr.sayText(spr.id+" test", 44444)
-    spr.startEffect(effects.bubbles,999999)
+    spr.startEffect(effects.halo,999999)
 
     return spr
 }

@@ -44,6 +44,7 @@ namespace Render {
         sprSelf: Sprite
         sprites: Sprite[] = []
         sprites2D: Sprite[] = []
+        spriteParticles: particles.ParticleSource[] = []
         spriteLikes: SpriteLike[] = []
         spriteAnimations: Animations[] = []
         protected spriteMotionZ: MotionSet1D[] = []
@@ -236,6 +237,12 @@ namespace Render {
                                 sayRenderer.destroy()
                             }
                         })
+                    }
+                } else if(spr instanceof particles.ParticleSource){
+                    const particle = (spr as particles.ParticleSource)
+                    if (this.spriteParticles.indexOf(particle) < 0) {
+                        this.spriteParticles[(particle.anchor as Sprite).id]=particle
+                        particle.anchor=this.tempSprite
                     }
                 } else {
                     if (this.spriteLikes.indexOf(spr) < 0)
@@ -649,14 +656,18 @@ namespace Render {
                             blitXSaySrc, 0, blitWidthSaySrc, SH, true, false)
                 }
             }
-            if (!game.currentScene().particleSources) return
-            const particleAnchor = game.currentScene().particleSources.find((v, i) => { return v.anchor==spr})
-            if (particleAnchor) {
-                this.tempScreen.print([spr.id].join(), 0,index*10+10)
-                    this.camera.drawOffsetX =  spr.x-SWHalf
-                    this.camera.drawOffsetY =  spr.y-SH
+            // if (!game.currentScene().particleSources) return
+            // const particleAnchor = game.currentScene().particleSources.find((v, i) => { return v.anchor==spr})
+            const particle=this.spriteParticles[spr.id]
+            if (particle) {
+                    //debug
+                    // this.tempScreen.print([spr.id].join(), 0,index*10+10)
+                    this.tempSprite.x=SWHalf
+                    this.tempSprite.y=SHHalf
+                    this.camera.drawOffsetX =  0//spr.x-SWHalf
+                    this.camera.drawOffsetY =  0//spr.y-SH
                     screen.fill(0)
-                    particleAnchor.__draw(this.camera)
+                    particle.__draw(this.camera)
                     const sayTransformY = transformY /4
                     const height = SH * fpx_scale / sayTransformY
                     const blitXSaySrc = (blitX - spriteScreenX) * sayTransformY / fpx_scale + SWHalf
@@ -664,13 +675,13 @@ namespace Render {
                     if (blitXSaySrc < 0) { //imageBlit considers negative value as 0
                         helpers.imageBlit(
                             this.tempScreen,
-                            spriteScreenX - SWHalf * fpx_scale / sayTransformY, drawStart - height+lineHeight/2, (blitWidthSaySrc + blitXSaySrc) * fpx_scale / sayTransformY, height,
+                            spriteScreenX - SWHalf * fpx_scale / sayTransformY, drawStart - height/2+lineHeight/4, (blitWidthSaySrc + blitXSaySrc) * fpx_scale / sayTransformY, height,
                             screen,
                             0, 0, blitWidthSaySrc + blitXSaySrc, SH, true, false)
                     } else
                         helpers.imageBlit(
                             this.tempScreen,
-                            blitX, drawStart - height + lineHeight/2, blitWidth, height,
+                            blitX, drawStart - height/2 + lineHeight/4, blitWidth, height,
                             screen,
                             blitXSaySrc, 0, blitWidthSaySrc, SH, true, false)
             }
