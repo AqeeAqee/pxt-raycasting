@@ -362,6 +362,17 @@ namespace Render {
                     updateScreen(screen)
             })
 
+            game.addScenePushHandler((oldScene) => {
+                control.__screen.setupUpdate(() => { updateScreen(screen) })
+            })
+            game.addScenePopHandler((oldScene) => {
+                control.__screen.setupUpdate(() => {
+                    if (this.viewMode == ViewMode.raycastingView)
+                        updateScreen(this.tempScreen)
+                    else
+                        updateScreen(screen)
+                })
+            })
         }
 
         private setVectors() {

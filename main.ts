@@ -164,7 +164,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     // if (kind == SpriteKind.Enemy)
     //     tiles.placeOnRandomTile(spr, trans16)
     // spr.sayText(spr.id+" test", 44444)
-    spr.startEffect(effects.halo,999999)
+    spr.startEffect(effects.fountain,9999)
 
     return spr
 }
