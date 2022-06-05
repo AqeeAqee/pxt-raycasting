@@ -37,6 +37,7 @@ namespace Render {
         cameraSway = 0
         protected isWalking=false
         protected cameraOffsetX = 0
+        protected cameraOffsetZ_fpx = 0
 
         //sprites & accessories
         sprSelf: Sprite
@@ -348,8 +349,10 @@ namespace Render {
 
 
             game.onUpdateInterval(25, () => {
-                if(this.cameraSway&&this.isWalking)
-                    this.cameraOffsetX = Math.sin(control.millis() / 150) * this.cameraSway
+                if(this.cameraSway&&this.isWalking){
+                    this.cameraOffsetX = (Math.sin(control.millis() / 150) * this.cameraSway * 3)|0
+                    this.cameraOffsetZ_fpx = tofpx(Math.cos(control.millis() / 75) * this.cameraSway)|0
+                }
             });
         }
 
@@ -386,7 +389,7 @@ namespace Render {
                     const ny = this.yFpx - Math.round(this.dirYFpx * dy)
                     this.sprSelf.setPosition((nx * this.tilemapScaleSize / fpx_scale), (ny * this.tilemapScaleSize / fpx_scale))
                 }else{
-                    this.isWalking=false
+                    this.isWalking =false
                 }
             }
 
@@ -425,7 +428,7 @@ namespace Render {
             let drawStart = 0
             let drawHeight = 0
             let lastDist = -1, lastTexX = -1, lastMapX = -1, lastMapY = -1
-            const ViewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2 << fpx)
+            const viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2<<fpx) + this.cameraOffsetZ_fpx
             let cameraRangeAngle = Math.atan(this.fov)+.1 //tolerance for spr center just out of camera
             //debug
             // const ms=control.millis()
@@ -516,7 +519,7 @@ namespace Render {
 
                 if (perpWallDist !== lastDist && (texX !== lastTexX || mapX !== lastMapX || mapY !== lastMapY)) {//neighbor line of tex share same parameters
                     const lineHeight = (this.wallHeightInView / perpWallDist)
-                    const drawEnd = lineHeight * ViewZPos / this.tilemapScaleSize / fpx_scale;
+                    const drawEnd = lineHeight * viewZPos / this.tilemapScaleSize / fpx_scale;
                     drawStart = drawEnd - lineHeight * (this._wallZScale) + 1;
                     drawHeight = (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1)
                     drawStart += (SH >> 1) 
@@ -552,7 +555,7 @@ namespace Render {
                 }).forEach((spr, index) => {
                     //debug
                     // screen.print([spr.id,Math.roundWithPrecision(angle[spr.id],3)].join(), 0, index * 10 + 10,9)
-                    this.drawSprite(spr, index, ViewZPos, this.transformX[spr.id], this.transformY[spr.id], this.angleSelfToSpr[spr.id])
+                    this.drawSprite(spr, index, viewZPos, this.transformX[spr.id], this.transformY[spr.id], this.angleSelfToSpr[spr.id])
                 })
 
             //debug

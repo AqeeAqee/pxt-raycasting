@@ -1,7 +1,7 @@
 game.stats = true
 const rcRender = Render.raycastingRender
-Render.moveWithController(2,2)
-rcRender.cameraSway=8
+Render.moveWithController(1.5,2)
+rcRender.cameraSway=1
 
 let trans16 = image.create(16, 16)
 scene.setBackgroundImage(img`
@@ -266,17 +266,17 @@ controller.anyButton.onEvent(ControllerButtonEvent.Pressed,() => {
 })
 controller.B.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
-    Render.moveWithController(2, 2)
+    Render.moveWithController(1.5, 2)
 })
 controller.A.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
-    Render.moveWithController(2, 2)
+    Render.moveWithController(1.5, 2)
 })
 
 rcRender.wallZScale = 2
 
-let zOffset = 0// tilemapScale / 2
-rcRender.setZOffset(rcRender.sprSelf, zOffset)
+let zOffset = 4// tilemapScale / 2
+rcRender.setZOffset(rcRender.sprSelf, zOffset,0)
 let fov=Render.defaultFov
 game.onUpdate(() => {
     if (isAdjusting){
