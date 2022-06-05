@@ -220,6 +220,7 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
     Render.setSpriteAnimations(sprite, new Render.Animations(120, texturesCoin))
     sprite.setImage(sprites.builtin.coin0)
     sprite.setScale(.5)
+    sprite.startEffect(effects.fire, 5000)
 })
 
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Food, function (sprite, otherSprite) {

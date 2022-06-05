@@ -671,6 +671,7 @@ namespace Render {
             // const particleAnchor = game.currentScene().particleSources.find((v, i) => { return v.anchor==spr})
             const particle=this.spriteParticles[spr.id]
             if (particle) {
+                if(particle.lifespan){
                     //debug
                     // this.tempScreen.print([spr.id].join(), 0,index*10+10)
                     this.tempSprite.x=SWHalf
@@ -695,6 +696,9 @@ namespace Render {
                             blitX, drawStart - height/2 + lineHeight/4, blitWidth, height,
                             screen,
                             blitXSaySrc, 0, blitWidthSaySrc, SH, true, false)
+                }else{
+                    this.spriteParticles[spr.id]=undefined
+                }
             }
         }
     }
