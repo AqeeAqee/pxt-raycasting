@@ -1,3 +1,6 @@
+//% shim=pxt::updateScreen
+function updateScreen(img: Image) { }
+
 enum ViewMode {
     //% block="TileMap Mode"
     tilemapView,
@@ -24,6 +27,8 @@ namespace Render {
     export const defaultFov = SW / SH / 2  //Wall just fill screen height when standing 1 tile away
 
     export class RayCastingRender {
+        private tempScreen: Image = image.create(SW, SH)
+
         velocityAngle: number = 2
         velocity: number = 3
         protected _viewMode=ViewMode.raycastingView
@@ -60,7 +65,6 @@ namespace Render {
         //for drawing sprites
         protected invDet: number //required for correct matrix multiplication
         camera: scene.Camera
-        tempScreen: Image = image.create(SW, SH)
         tempSprite: Sprite = sprites.create(img`0`)
         protected transformX: number[] = []
         protected transformY: number[] = []
@@ -272,12 +276,13 @@ namespace Render {
             })
 
             let frameCallback_draw = sc.eventContext.registerFrameHandler(scene.RENDER_SPRITES_PRIORITY + 1, () => {
-                screen.drawImage(sc.background.image, 0, 0)
                 if (this._viewMode == ViewMode.tilemapView) {
+                    screen.drawImage(sc.background.image, 0, 0)
                     this.oldRender.__drawCore(sc.camera)
                     this.sprites.forEach(spr => spr.__draw(sc.camera))
                     this.sprSelf.__draw(sc.camera)
                 } else {
+                    this.tempScreen.drawImage(sc.background.image, 0, 0)
                     //debug
                     // const ms=control.micros()
                     this.render()
@@ -342,6 +347,14 @@ namespace Render {
                 }
                 this.takeoverSceneSprites() // in case some one new
             })
+
+            control.__screen.setupUpdate(() => {
+                if(this.viewMode==ViewMode.raycastingView)
+                    updateScreen(this.tempScreen)
+                else
+                    updateScreen(screen)
+            })
+
         }
 
         private setVectors() {
@@ -515,13 +528,13 @@ namespace Render {
                     lastMapY = mapY
                 }
                 //fix start&end points to avoid regmatic between lines
-                screen.blitRow(x, drawStart, tex, texX, drawHeight)
+                this.tempScreen.blitRow(x, drawStart, tex, texX, drawHeight)
 
                 this.dist[x] = perpWallDist
             }
             //debug
             // info.setScore(control.millis()-ms)
-            // screen.print(lastPerpWallDist.toString(), 0,0,7 )
+            // this.tempScreen.print(lastPerpWallDist.toString(), 0,0,7 )
 
             //debug
             // let msSprs=control.millis()
@@ -539,13 +552,13 @@ namespace Render {
                     return (this.transformY[spr2.id] - this.transformY[spr1.id])
                 }).forEach((spr, index) => {
                     //debug
-                    // screen.print([spr.id,Math.roundWithPrecision(angle[spr.id],3)].join(), 0, index * 10 + 10,9)
+                    // this.tempScreen.print([spr.id,Math.roundWithPrecision(angle[spr.id],3)].join(), 0, index * 10 + 10,9)
                     this.drawSprite(spr, index, ViewZPos, this.transformX[spr.id], this.transformY[spr.id], this.angleSelfToSpr[spr.id])
                 })
 
             //debug
             // info.setLife(control.millis() - msSprs+1)
-            // screen.print([Math.roundWithPrecision(angle0,3)].join(), 20,  0)
+            // this.tempScreen.print([Math.roundWithPrecision(angle0,3)].join(), 20,  0)
 
         }
 
@@ -573,7 +586,7 @@ namespace Render {
                         blitX = 0, blitWidth = 0;
                 }
             }
-            // screen.print([this.getxFx8(spr), this.getyFx8(spr)].join(), 0,index*10+10)
+            // this.tempScreen.print([this.getxFx8(spr), this.getyFx8(spr)].join(), 0,index*10+10)
             const blitXSpr = Math.max(blitX, spriteScreenLeft)
             const blitWidthSpr = Math.min(blitX + blitWidth, spriteScreenRight) - blitXSpr
             if (blitWidthSpr <= 0)
@@ -595,7 +608,7 @@ namespace Render {
             const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
             const sprTexRatio = texSpr.width / spriteScreenHalfWidth / 2
             helpers.imageBlit(
-                screen,
+                this.tempScreen,
                 blitXSpr,
                 drawStart,
                 blitWidthSpr,
@@ -616,25 +629,50 @@ namespace Render {
                     this.tempSprite.y = SH+2
                     this.camera.drawOffsetX = 0
                     this.camera.drawOffsetY = 0
-                    this.tempScreen.fill(0)
-                    anchor.draw(this.tempScreen, this.camera, this.tempSprite)
+                    screen.fill(0)
+                    anchor.draw(screen, this.camera, this.tempSprite)
                     const sayTransformY = transformY/2
                     const height = SH * fpx_scale / sayTransformY
                     const blitXSaySrc = (blitX - spriteScreenX) * sayTransformY / fpx_scale + SWHalf
                     const blitWidthSaySrc = blitWidth * sayTransformY / fpx_scale
                     if (blitXSaySrc < 0) { //imageBlit considers negative value as 0
                         helpers.imageBlit(
-                            screen,
-                            spriteScreenX - SWHalf * fpx_scale / sayTransformY, drawStart - height, (blitWidthSaySrc + blitXSaySrc) * fpx_scale / sayTransformY, height,
                             this.tempScreen,
+                            spriteScreenX - SWHalf * fpx_scale / sayTransformY, drawStart - height, (blitWidthSaySrc + blitXSaySrc) * fpx_scale / sayTransformY, height,
+                            screen,
                             0, 0, blitWidthSaySrc + blitXSaySrc, SH, true, false)
                     } else
                         helpers.imageBlit(
-                            screen,
-                            blitX, drawStart - height, blitWidth, height,
                             this.tempScreen,
+                            blitX, drawStart - height, blitWidth, height,
+                            screen,
                             blitXSaySrc, 0, blitWidthSaySrc, SH, true, false)
                 }
+            }
+            if (!game.currentScene().particleSources) return
+            const particleAnchor = game.currentScene().particleSources.find((v, i) => { return v.anchor==spr})
+            if (particleAnchor) {
+                this.tempScreen.print([spr.id].join(), 0,index*10+10)
+                    this.camera.drawOffsetX =  spr.x-SWHalf
+                    this.camera.drawOffsetY =  spr.y-SH
+                    screen.fill(0)
+                    particleAnchor.__draw(this.camera)
+                    const sayTransformY = transformY /4
+                    const height = SH * fpx_scale / sayTransformY
+                    const blitXSaySrc = (blitX - spriteScreenX) * sayTransformY / fpx_scale + SWHalf
+                    const blitWidthSaySrc = blitWidth * sayTransformY / fpx_scale
+                    if (blitXSaySrc < 0) { //imageBlit considers negative value as 0
+                        helpers.imageBlit(
+                            this.tempScreen,
+                            spriteScreenX - SWHalf * fpx_scale / sayTransformY, drawStart - height+lineHeight/2, (blitWidthSaySrc + blitXSaySrc) * fpx_scale / sayTransformY, height,
+                            screen,
+                            0, 0, blitWidthSaySrc + blitXSaySrc, SH, true, false)
+                    } else
+                        helpers.imageBlit(
+                            this.tempScreen,
+                            blitX, drawStart - height + lineHeight/2, blitWidth, height,
+                            screen,
+                            blitXSaySrc, 0, blitWidthSaySrc, SH, true, false)
             }
         }
     }

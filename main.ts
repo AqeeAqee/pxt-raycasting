@@ -156,14 +156,15 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     // rcRender.takeoverSceneSprites()
     const tilemapScale = 1 << game.currentScene().tileMap.scale
     spr.setPosition(x * tilemapScale, y * tilemapScale)
-    spr.setVelocity(vx, vy)
+    // spr.setVelocity(vx, vy)
     spr.setBounceOnWall(true)
     spr.setScale(0.5)
     // setCharacterAnimationForSprite(spr, textures)
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0], textures[1], textures[2], textures[3]))
     // if (kind == SpriteKind.Enemy)
     //     tiles.placeOnRandomTile(spr, trans16)
-    spr.sayText(spr.id+" test", 44444)
+    // spr.sayText(spr.id+" test", 44444)
+    spr.startEffect(effects.bubbles,999999)
 
     return spr
 }
@@ -175,10 +176,10 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
 
 createSprite(8, 7, 6, 10, texturesDuck, SpriteKind.Enemy)
 createSprite(6, 7, 6, 10, texturesDonut, SpriteKind.Enemy)
-createSprite(5, 7, 6, 10, texturesDog, SpriteKind.Enemy)
+createSprite(5, 8, 6, 10, texturesDog, SpriteKind.Enemy)
 let sprPriness2 = createSprite(11, 8, 6, 10, texturesPrincess2, SpriteKind.Enemy)
 let sprHero = createSprite(10, 8, 6, 10, texturesHero, SpriteKind.Enemy)
-let sprSkelly = createSprite(11, 7, 6, 10, texturesSkelly, SpriteKind.Enemy)
+let sprSkelly = createSprite(9, 9, 6, 10, texturesSkelly, SpriteKind.Enemy)
 let sprPriness = createSprite(10, 7, 6, 10, texturesPrincess, SpriteKind.Enemy)
 let sprPlane=createSprite(9, 7, 6, 10, texturesPlane, SpriteKind.Enemy)
 let cake = createSprite(2, 2, 4, 2, texturesBigCake, SpriteKind.Enemy)
