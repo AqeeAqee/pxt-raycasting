@@ -273,8 +273,8 @@ controller.A.onEvent(ControllerButtonEvent.Released, () => {
 
 rcRender.wallZScale = 2
 
-let zOffset = 0// tilemapScale / 2
-rcRender.setZOffset(rcRender.sprSelf, zOffset)
+let zOffset = 3// tilemapScale / 2
+rcRender.setZOffset(rcRender.sprSelf, zOffset,0)
 let fov=Render.defaultFov
 game.onUpdate(() => {
     if (isAdjusting){
