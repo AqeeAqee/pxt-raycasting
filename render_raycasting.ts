@@ -624,6 +624,7 @@ namespace Render {
             //     character.setCharacterState(spr, character.rule(characterAniDirs[iTexture]))
             //for this.spriteAnimations
             const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
+            
             const sprTexRatio = texSpr.width / spriteScreenHalfWidth / 2
             helpers.imageBlit(
                 this.tempScreen,
@@ -637,69 +638,59 @@ namespace Render {
                 0,
                 blitWidthSpr * sprTexRatio, texSpr.height, true, false)
 
+            screen.fill(0)
+            const fpx_div_transformy = Math.roundWithPrecision(transformY / 4 / fpx_scale, 2)
+            const height = (SH / fpx_div_transformy)
+            const blitXSaySrc = ((blitX - spriteScreenX) * fpx_div_transformy) + SWHalf
+            const blitWidthSaySrc = (blitWidth * fpx_div_transformy)
+
+            //sprite
+            // screen.drawImage(texSpr, SWHalf-texSpr.width/2, SHHalf)
             //sayText
-            const anchor = this.sayRederers[spr.id]
-            if (anchor) {
+            const sayRender = this.sayRederers[spr.id]
+            if (sayRender) {
                 if (this.sayEndTimes[spr.id] && control.millis() > this.sayEndTimes[spr.id]) {
                     this.sayRederers[spr.id] = undefined
                 } else {
                     this.tempSprite.x = SWHalf
-                    this.tempSprite.y = SH+2
+                    this.tempSprite.y = SHHalf+2
                     this.camera.drawOffsetX = 0
                     this.camera.drawOffsetY = 0
-                    screen.fill(0)
-                    anchor.draw(screen, this.camera, this.tempSprite)
-                    const sayTransformY = transformY/2
-                    const height = SH * fpx_scale / sayTransformY
-                    const blitXSaySrc = (blitX - spriteScreenX) * sayTransformY / fpx_scale + SWHalf
-                    const blitWidthSaySrc = blitWidth * sayTransformY / fpx_scale
-                    if (blitXSaySrc < 0) { //imageBlit considers negative value as 0
-                        helpers.imageBlit(
-                            this.tempScreen,
-                            spriteScreenX - SWHalf * fpx_scale / sayTransformY, drawStart - height, (blitWidthSaySrc + blitXSaySrc) * fpx_scale / sayTransformY, height,
-                            screen,
-                            0, 0, blitWidthSaySrc + blitXSaySrc, SH, true, false)
-                    } else
-                        helpers.imageBlit(
-                            this.tempScreen,
-                            blitX, drawStart - height, blitWidth, height,
-                            screen,
-                            blitXSaySrc, 0, blitWidthSaySrc, SH, true, false)
+                    sayRender.draw(screen, this.camera, this.tempSprite)
                 }
             }
-            // if (!game.currentScene().particleSources) return
-            // const particleAnchor = game.currentScene().particleSources.find((v, i) => { return v.anchor==spr})
+            //particle
             const particle=this.spriteParticles[spr.id]
             if (particle) {
                 if(particle.lifespan){
                     //debug
                     // this.tempScreen.print([spr.id].join(), 0,index*10+10)
                     this.tempSprite.x=SWHalf
-                    this.tempSprite.y=SHHalf
+                    this.tempSprite.y=SHHalf+spr.height
                     this.camera.drawOffsetX =  0//spr.x-SWHalf
                     this.camera.drawOffsetY =  0//spr.y-SH
-                    screen.fill(0)
                     particle.__draw(this.camera)
-                    const sayTransformY = transformY /4
-                    const height = SH * fpx_scale / sayTransformY
-                    const blitXSaySrc = (blitX - spriteScreenX) * sayTransformY / fpx_scale + SWHalf
-                    const blitWidthSaySrc = blitWidth * sayTransformY / fpx_scale
-                    if (blitXSaySrc < 0) { //imageBlit considers negative value as 0
-                        helpers.imageBlit(
-                            this.tempScreen,
-                            spriteScreenX - SWHalf * fpx_scale / sayTransformY, drawStart - height/2+lineHeight/4, (blitWidthSaySrc + blitXSaySrc) * fpx_scale / sayTransformY, height,
-                            screen,
-                            0, 0, blitWidthSaySrc + blitXSaySrc, SH, true, false)
-                    } else
-                        helpers.imageBlit(
-                            this.tempScreen,
-                            blitX, drawStart - height/2 + lineHeight/4, blitWidth, height,
-                            screen,
-                            blitXSaySrc, 0, blitWidthSaySrc, SH, true, false)
                 }else{
                     this.spriteParticles[spr.id]=undefined
                 }
             }
+            //update screen for this spr
+            // const sayTransformY = 
+                if (blitXSaySrc <= 0) { //imageBlit considers negative value as 0
+                    helpers.imageBlit(
+                        this.tempScreen,
+                        spriteScreenX - SWHalf / fpx_div_transformy, drawStart - height / 2, (blitWidthSaySrc + blitXSaySrc) / fpx_div_transformy, height,
+                        screen,
+                        0, 0, blitWidthSaySrc + blitXSaySrc, SH, true, false)
+                } else{
+                    helpers.imageBlit(
+                        this.tempScreen,
+                        // blitX, drawStart - height / 2 , blitWidth, height,
+                        blitX, drawStart - height / 2, blitWidth, height,
+                        screen,
+                        blitXSaySrc, 0, blitWidthSaySrc, SH,
+                        true, false)
+                }
         }
     }
 
