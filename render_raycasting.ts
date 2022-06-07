@@ -423,11 +423,49 @@ namespace Render {
 
             let drawStart = 0
             let drawHeight = 0
-            let lastDist = -1, lastTexX = -1, lastMapX = -1, lastMapY = -1
+            let lastDist = -1, lastTexX = -1
+            let lastMapXY = -1
 
             //debug 
-            // const ms=control.micros()
+            const ms=control.millis()
             for (let x = 0; x < SW; x++) {
+                const result =this.raycast(x)
+                //[mapXY, perpWallDist, wallX, color]
+                const mapXY = result[0],  perpWallDist = result[1], wallX = result[2], color = result[3]
+
+                const tex = this.textures[color]
+                if (!tex)
+                    continue
+
+                let texX = (wallX * tex.width) >> fpx;
+                // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
+                //     texX = tex.width - texX - 1;
+
+                if (perpWallDist !== lastDist && (texX !== lastTexX || mapXY !== lastMapXY)) {//neighbor line of tex share same parameters
+                    const lineHeight = (this.wallHeightInView / perpWallDist)
+                    const drawEnd = lineHeight * this.ViewZPos / this.tilemapScaleSize / fpx_scale;
+                    drawStart = drawEnd - lineHeight * (this._wallZScale) + 1;
+                    drawHeight = (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1)
+                    drawStart += SHHalf
+
+                    lastDist = perpWallDist
+                    lastTexX = texX
+                    lastMapXY = mapXY
+                }
+                //fix start&end points to avoid regmatic between lines
+                screen.blitRow(x, drawStart, tex, texX, drawHeight)
+
+                this.dist[x] = perpWallDist
+            }
+
+            //debug
+            info.setScore(control.millis()-ms)
+            // screen.print(lastPerpWallDist.toString(), 0,0,7 )
+
+            this.drawSprites()
+        }
+        
+        raycast(x:number){
                 const cameraX: number = one - Math.idiv((x << fpx) << 1, SW)
                 let rayDirX = this.dirXFpx + (this.planeX * cameraX >> fpx)
                 let rayDirY = this.dirYFpx + (this.planeY * cameraX >> fpx)
@@ -481,14 +519,14 @@ namespace Render {
                     }
 
                     if (this.map.isOutsideMap(mapX, mapY))
-                        break
+                        return null
                     color = this.map.getTile(mapX, mapY)
                     if (color)
                         break; // hit!
                 }
 
-                if (this.map.isOutsideMap(mapX, mapY))
-                    continue
+                // if (this.map.isOutsideMap(mapX, mapY))
+                //     return null
 
                 let perpWallDist = 0
                 let wallX = 0
@@ -504,38 +542,9 @@ namespace Render {
                 // color = (color - 1) * 2
                 // if (sideWallHit) color++
 
-                const tex = this.textures[color]
-                if (!tex)
-                    continue
-
-                let texX = (wallX * tex.width) >> fpx;
-                // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
-                //     texX = tex.width - texX - 1;
-
-                if (perpWallDist !== lastDist && (texX !== lastTexX || mapX !== lastMapX || mapY !== lastMapY)) {//neighbor line of tex share same parameters
-                    const lineHeight = (this.wallHeightInView / perpWallDist)
-                    const drawEnd = lineHeight * this.ViewZPos / this.tilemapScaleSize / fpx_scale;
-                    drawStart = drawEnd - lineHeight * (this._wallZScale) + 1;
-                    drawHeight = (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1)
-                    drawStart += (SH >> 1) 
-                    
-                    lastDist = perpWallDist
-                    lastTexX = texX
-                    lastMapX = mapX
-                    lastMapY = mapY
-                }
-                //fix start&end points to avoid regmatic between lines
-                screen.blitRow(x, drawStart, tex, texX, drawHeight)
-
-                this.dist[x] = perpWallDist
-            }
-            //debug
-            // info.setScore(control.micros()-ms)
-            // screen.print(lastPerpWallDist.toString(), 0,0,7 )
-
-            this.drawSprites()
+                return [mapX+mapY*this.map.width, perpWallDist, wallX, color]
         }
-        
+
         drawSprites(){
             //debug
             // let msSprs=control.millis()
