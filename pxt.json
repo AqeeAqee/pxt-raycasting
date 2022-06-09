@@ -1,5 +1,5 @@
 {
-    "name": "pxt-raycasting",
+    "name": "bisearch-pxt-raycasting",
     "version": "0.3.13",
     "description": "",
     "dependencies": {

@@ -295,6 +295,9 @@ namespace Render {
                     //debug
                     // const ms=control.micros()
                     this.render()
+                    this.render()
+                    this.drawSprites()
+
                     // info.setScore(control.micros()-ms)
                 }
                 this.sprites2D.forEach(spr => {
@@ -415,6 +418,9 @@ namespace Render {
 
         }
 
+        r1:Result
+        newAlgorithm=true
+        wallXs:number[]=[]
         render() {
             // based on https://lodev.org/cgtutor/raycasting.html
 
@@ -426,43 +432,124 @@ namespace Render {
             let lastDist = -1, lastTexX = -1
             let lastMapXY = -1
 
-            //debug 
-            const ms=control.millis()
+        //debug 
+        const ms=control.millis()
+        if (this.newAlgorithm){
+            this.r1=this.raycast(0)
+            this.bisearch(this.r1, this.raycast(SW-1))
+            
+            let curResult = this.r1
+            let startResult = this.r1
+            // info.setLife(control.millis() - ms + 1)
+            // const ms2 = control.millis()
+            // console.log("----------")
+            while (curResult) {
+                if (!curResult.next || startResult.mapXY!=curResult.next.mapXY){
+                    const tex = this.textures[startResult.color]
+                    if (!tex) break
+
+                    let texX = (startResult.wallX * tex.width); // /fpx_scale
+                    
+                    let perpWallDist = startResult.perpWallDist
+                    // const lineHeight = Math.idiv(this.wallHeightInView , perpWallDist)
+                    // const drawEnd = lineHeight * this.ViewZPos / this.tilemapScaleSize / fpx_scale;
+                    drawHeight = Math.idiv(tofpx(this.wallHeightInView * this._wallZScale), perpWallDist) // (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1)
+                    let drawStart = tofpx(SHHalf + Math.idiv(this.wallHeightInView * this.ViewZPos / this.tilemapScaleSize / fpx_scale, perpWallDist) + 1) - drawHeight;
+
+                    const deltaX = (curResult.x - startResult.x + 1)
+                    const texXDelta = ((curResult.wallX - startResult.wallX) / deltaX * tex.width)|0 // /fpx_scale
+                    const wallDistDelta = (curResult.perpWallDist - startResult.perpWallDist) / deltaX |0
+                    const oneDivWallDistDelta = (one/curResult.perpWallDist-one/startResult.perpWallDist)/deltaX 
+                    const drawHeightDelta = this.wallHeightInView * this._wallZScale* oneDivWallDistDelta |0
+                    const drawStartDelta = this.wallHeightInView * (this.ViewZPos / this.tilemapScaleSize / fpx_scale) * oneDivWallDistDelta - drawHeightDelta |0
+                    // console.log([texXDelta,wallDistDelta,drawHeightDelta, drawStartDelta, oneDivWallDistDelta])
+                    for (let x = startResult.x; x <= curResult.x
+                        ; x++,
+                        texX += texXDelta,
+                        drawStart += drawStartDelta ,
+                        drawHeight += drawHeightDelta ,
+                        perpWallDist += wallDistDelta
+                        ) {
+                        screen.blitRow(x, drawStart >> fpx, tex, texX>>fpx, drawHeight>>fpx)
+                        this.dist[x] = perpWallDist
+                        //debug
+                        screen.drawLine(x,SHHalf,x,SHHalf+(texX>>fpx),15)
+                    }
+                    if (curResult.next)
+                        startResult = curResult.next
+                    else
+                        break
+                } 
+                curResult=curResult.next
+            }
+            // console.log("===========")
+        }
+        else
+        {
             for (let x = 0; x < SW; x++) {
                 const result =this.raycast(x)
                 //[mapXY, perpWallDist, wallX, color]
-                const mapXY = result[0],  perpWallDist = result[1], wallX = result[2], color = result[3]
+                // const mapXY = result[0],  perpWallDist = result[1], wallX = result[2], color = result[3]
 
-                const tex = this.textures[color]
+                const tex = this.textures[result.color]
                 if (!tex)
                     continue
 
-                let texX = (wallX * tex.width) >> fpx;
+                let texX = (result.wallX * tex.width) >> fpx;
                 // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
                 //     texX = tex.width - texX - 1;
 
-                if (perpWallDist !== lastDist && (texX !== lastTexX || mapXY !== lastMapXY)) {//neighbor line of tex share same parameters
-                    const lineHeight = (this.wallHeightInView / perpWallDist)
+                if (result.perpWallDist !== lastDist && (texX !== lastTexX || result.mapXY !== lastMapXY)) {//neighbor line of tex share same parameters
+                    const lineHeight = (this.wallHeightInView / result.perpWallDist)
                     const drawEnd = lineHeight * this.ViewZPos / this.tilemapScaleSize / fpx_scale;
                     drawStart = drawEnd - lineHeight * (this._wallZScale) + 1;
                     drawHeight = (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1)
                     drawStart += SHHalf
 
-                    lastDist = perpWallDist
+                    lastDist = result.perpWallDist
                     lastTexX = texX
-                    lastMapXY = mapXY
+                    lastMapXY = result.mapXY
                 }
                 //fix start&end points to avoid regmatic between lines
                 screen.blitRow(x, drawStart, tex, texX, drawHeight)
 
-                this.dist[x] = perpWallDist
+                this.dist[x] = result.perpWallDist
+                this.wallXs[x] = result.wallX
+                //debug
+                screen.drawLine(x, SHHalf, x, SHHalf + texX, result.mapXY > 10000 ? 3:15)
             }
 
-            //debug
-            info.setScore(control.millis()-ms)
             // screen.print(lastPerpWallDist.toString(), 0,0,7 )
 
-            this.drawSprites()
+        }
+        //debug
+        info.setScore(control.millis() - ms + 1)
+
+        }
+
+        bisearch(r1:Result, r2:Result){
+            // console.log("bisearch: " + r1.x+"("+r1.mapXY+") " + "," + r2.x+"("+r2.mapXY+") ")
+            if (r2.x - r1.x > 1) {
+                const x3=(r2.x+r1.x)>>1
+                const r3=this.raycast(x3)
+                // console.log("bisearch r3: " + r3.x+"("+r3.mapXY+") ")
+                if (r3.mapXY != r1.mapXY)
+                    this.bisearch(r1, r3)
+                else{
+                    // console.log("bisearch r1->r3:" + r1.x+"("+r1.mapXY+") " + "," + r3.x+"("+r3.mapXY+") ")
+                    r1.next=r3
+                }
+                if (r3.mapXY != r2.mapXY)
+                    this.bisearch(r3, r2)
+                else{
+                    // console.log("bisearch r3->r2:" + r3.x+"("+r3.mapXY+") " + "," + r2.x+"("+r2.mapXY+") ")
+                    r3.next=r2
+                }
+
+            } else if (r2.x - r1.x==1){
+                r1.next=r2
+                // console.log("bisearch r1->r2:" + r1.x+"("+r1.mapXY+") " + "," + r2.x+"("+r2.mapXY+") ")
+            }
         }
         
         raycast(x:number){
@@ -532,18 +619,21 @@ namespace Render {
                 let wallX = 0
                 if (!sideWallHit) {
                     perpWallDist = Math.idiv(((mapX << fpx) - this.selfXFpx + (1 - mapStepX << fpx - 1)) << fpx, rayDirX)
-                    wallX = this.selfYFpx + (perpWallDist * rayDirY >> fpx);
+                    wallX = this.selfYFpx + (perpWallDist * rayDirY / fpx_scale);
                 } else {
                     perpWallDist = Math.idiv(((mapY << fpx) - this.selfYFpx + (1 - mapStepY << fpx - 1)) << fpx, rayDirY)
-                    wallX = this.selfXFpx + (perpWallDist * rayDirX >> fpx);
+                    wallX = this.selfXFpx + (perpWallDist * rayDirX / fpx_scale);
                 }
+                // wallX-=1
                 wallX &= FPX_MAX
 
                 // color = (color - 1) * 2
                 // if (sideWallHit) color++
 
-                return [mapX+mapY*this.map.width, perpWallDist, wallX, color]
+                // return [mapX+mapY*this.map.width, perpWallDist, wallX, color]
+            return new Result(x, mapX + mapY * this.map.width +( sideWallHit?100000:0), perpWallDist, wallX, color)
         }
+
 
         drawSprites(){
             //debug
@@ -664,6 +754,17 @@ namespace Render {
                 }
             }
         }
+    }
+
+    class Result {
+        public next: Result
+        constructor(
+            public x:number,
+            public mapXY: number,
+            public perpWallDist: number,
+            public wallX: number,
+            public color: number,
+            ){}
     }
 
     //%fixedinstance
