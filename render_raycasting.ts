@@ -295,7 +295,6 @@ namespace Render {
                     //debug
                     // const ms=control.micros()
                     this.render()
-                    this.render()
                     this.drawSprites()
 
                     // info.setScore(control.micros()-ms)
@@ -433,7 +432,7 @@ namespace Render {
             let lastMapXY = -1
 
         //debug 
-        const ms=control.millis()
+        // const ms=control.millis()
         if (this.newAlgorithm){
             this.r1=this.raycast(0)
             this.bisearch(this.r1, this.raycast(SW-1))
@@ -523,7 +522,7 @@ namespace Render {
 
         }
         //debug
-        info.setScore(control.millis() - ms + 1)
+        // info.setScore(control.millis() - ms + 1)
 
         }
 
@@ -618,13 +617,15 @@ namespace Render {
                 let perpWallDist = 0
                 let wallX = 0
                 if (!sideWallHit) {
-                    perpWallDist = Math.idiv(((mapX << fpx) - this.selfXFpx + (1 - mapStepX << fpx - 1)) << fpx, rayDirX)
-                    wallX = this.selfYFpx + (perpWallDist * rayDirY / fpx_scale);
-                    mapX = (perpWallDist * rayDirX / fpx_scale) / this.tilemapScaleSize
+                    // perpWallDist = Math.idiv(((mapX << fpx) - this.selfXFpx + (1 - mapStepX << fpx - 1)) << fpx, rayDirX)
+                    perpWallDist = (sideDistX - deltaDistX);
+                    wallX = this.selfYFpx + (perpWallDist * rayDirY >> fpx);
+                    mapY = wallX>>fpx
                 } else {
-                    perpWallDist = Math.idiv(((mapY << fpx) - this.selfYFpx + (1 - mapStepY << fpx - 1)) << fpx, rayDirY)
-                    wallX = this.selfXFpx + (perpWallDist * rayDirX / fpx_scale);
-                    mapY = (perpWallDist * rayDirY / fpx_scale) / this.tilemapScaleSize
+                    // perpWallDist = Math.idiv(((mapY << fpx) - this.selfYFpx + (1 - mapStepY << fpx - 1)) << fpx, rayDirY)
+                    perpWallDist = (sideDistY - deltaDistY)
+                    wallX = this.selfXFpx + (perpWallDist * rayDirX >> fpx);
+                    mapX = wallX >> fpx
                 }
                 // wallX-=1
                 wallX &= FPX_MAX
