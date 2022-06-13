@@ -42,6 +42,10 @@ namespace Render {
         protected _angle: number
         protected _fov: number
         protected _wallZScale: number = 1
+        cameraSway = 0
+        protected isWalking=false
+        protected cameraOffsetX = 0
+        protected cameraOffsetZ_fpx = 0
 
         //sprites & accessories
         sprSelf: Sprite
@@ -370,6 +374,13 @@ namespace Render {
                 this.takeoverSceneSprites() // in case some one new
             })
 
+
+            game.onUpdateInterval(25, () => {
+                if(this.cameraSway&&this.isWalking){
+                    this.cameraOffsetX = (Math.sin(control.millis() / 150) * this.cameraSway * 3)|0
+                    this.cameraOffsetZ_fpx = tofpx(Math.cos(control.millis() / 75) * this.cameraSway)|0
+                }
+            });
             control.__screen.setupUpdate(() => {
                 if(this.viewMode==ViewMode.raycastingView)
                     updateScreen(this.tempScreen)
@@ -416,11 +427,14 @@ namespace Render {
                 }
             }
             if (this.velocity !== 0) {
+                this.isWalking=true
                 const dy = controller.dy(this.velocity)
                 if (dy) {
                     const nx = this.xFpx - Math.round(this.dirXFpx * dy)
                     const ny = this.yFpx - Math.round(this.dirYFpx * dy)
                     this.sprSelf.setPosition((nx * this.tilemapScaleSize / fpx_scale), (ny * this.tilemapScaleSize / fpx_scale))
+                }else{
+                    this.isWalking =false
                 }
             }
 
@@ -455,11 +469,12 @@ namespace Render {
             let drawStart = 0
             let drawHeight = 0
             let lastDist = -1, lastTexX = -1, lastMapX = -1, lastMapY = -1
-
-            //debug 
-            // const ms=control.micros()
+            const viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2<<fpx) + this.cameraOffsetZ_fpx
+            let cameraRangeAngle = Math.atan(this.fov)+.1 //tolerance for spr center just out of camera
+            //debug
+            // const ms=control.millis()
             for (let x = 0; x < SW; x++) {
-                const cameraX: number = one - Math.idiv((x << fpx) << 1, SW)
+                const cameraX: number = one - Math.idiv(((x+this.cameraOffsetX) << fpx) << 1, SW)
                 let rayDirX = this.dirXFpx + (this.planeX * cameraX >> fpx)
                 let rayDirY = this.dirYFpx + (this.planeY * cameraX >> fpx)
 
@@ -601,8 +616,9 @@ namespace Render {
         registerOnSpriteDirectionUpdate(handler: (spr: Sprite, dir: number) => void) {
             this.onSpriteDirectionUpdateHandler = handler
         }
+      
         drawSprite(spr: Sprite, index: number, transformX: number, transformY: number, myAngle:number) {
-            const spriteScreenX = Math.ceil((SWHalf) * (1 - transformX / transformY));
+            const spriteScreenX = Math.ceil((SWHalf) * (1 - transformX / transformY))-this.cameraOffsetX;
             const spriteScreenHalfWidth = Math.idiv((spr._width as any as number) / this.tilemapScaleSize / 2 * this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
             const spriteScreenLeft = spriteScreenX - spriteScreenHalfWidth
             const spriteScreenRight = spriteScreenX + spriteScreenHalfWidth
