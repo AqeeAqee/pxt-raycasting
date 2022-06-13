@@ -473,7 +473,7 @@ namespace Render {
                         screen.blitRow(x, drawStart >> fpx, tex, texX>>fpx, drawHeight>>fpx)
                         this.dist[x] = perpWallDist
                         //debug
-                        screen.drawLine(x,SHHalf,x,SHHalf+(texX>>fpx),15)
+                        // screen.drawLine(x,SHHalf,x,SHHalf+(texX>>fpx),15)
                     }
                     if (curResult.next)
                         startResult = curResult.next
@@ -620,9 +620,11 @@ namespace Render {
                 if (!sideWallHit) {
                     perpWallDist = Math.idiv(((mapX << fpx) - this.selfXFpx + (1 - mapStepX << fpx - 1)) << fpx, rayDirX)
                     wallX = this.selfYFpx + (perpWallDist * rayDirY / fpx_scale);
+                    mapX = (perpWallDist * rayDirX / fpx_scale) / this.tilemapScaleSize
                 } else {
                     perpWallDist = Math.idiv(((mapY << fpx) - this.selfYFpx + (1 - mapStepY << fpx - 1)) << fpx, rayDirY)
                     wallX = this.selfXFpx + (perpWallDist * rayDirX / fpx_scale);
+                    mapY = (perpWallDist * rayDirY / fpx_scale) / this.tilemapScaleSize
                 }
                 // wallX-=1
                 wallX &= FPX_MAX
