@@ -165,7 +165,8 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0], textures[1], textures[2], textures[3]))
     // if (kind == SpriteKind.Enemy)
     //     tiles.placeOnRandomTile(spr, trans16)
-    spr.sayText(spr.id+" test", 44444)
+    // spr.sayText(spr.id+" test", 444444)
+    // spr.startEffect(effects.fountain,999)
 
     return spr
 }
@@ -177,18 +178,18 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
 
 createSprite(8, 7, 6, 10, texturesDuck, SpriteKind.Enemy)
 createSprite(6, 7, 6, 10, texturesDonut, SpriteKind.Enemy)
-createSprite(5, 7, 6, 10, texturesDog, SpriteKind.Enemy)
+createSprite(5, 8, 6, 10, texturesDog, SpriteKind.Enemy)
 let sprPriness2 = createSprite(11, 8, 6, 10, texturesPrincess2, SpriteKind.Enemy)
 let sprHero = createSprite(10, 8, 6, 10, texturesHero, SpriteKind.Enemy)
-let sprSkelly = createSprite(11, 7, 6, 10, texturesSkelly, SpriteKind.Enemy)
+let sprSkelly = createSprite(9, 9, 6, 10, texturesSkelly, SpriteKind.Enemy)
 let sprPriness = createSprite(10, 7, 6, 10, texturesPrincess, SpriteKind.Enemy)
 let sprPlane=createSprite(9, 7, 6, 10, texturesPlane, SpriteKind.Enemy)
 let cake = createSprite(2, 2, 4, 2, texturesBigCake, SpriteKind.Enemy)
 let fish = createSprite(7, 9, 0, 0, texturesFish, SpriteKind.Enemy)
-rcRender.setZOffset(sprSkelly, 4)
-rcRender.setZOffset(sprPlane, 16)
-rcRender.setZOffset(cake, 4)
-rcRender.setZOffset(fish, 8)
+// rcRender.setZOffset(sprSkelly, 4)
+// rcRender.setZOffset(sprPlane, 16)
+// rcRender.setZOffset(cake, 4)
+// rcRender.setZOffset(fish, 8)
 // for(let i=0;i<10;i++){
 //     let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
 //     tiles.placeOnRandomTile(spr, trans16)
@@ -215,12 +216,13 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
     rcRender.move(sprite,60,-160)
     rcRender.setZOffset(sprite,0)
     music.baDing.play()
-    sprite.setKind(SpriteKind.Food)
+    // sprite.setKind(SpriteKind.Food)
     info.changeScoreBy(1)
     otherSprite.destroy()
-    Render.setSpriteAnimations(sprite, new Render.Animations(120, texturesCoin))
-    sprite.setImage(sprites.builtin.coin0)
+    // Render.setSpriteAnimations(sprite, new Render.Animations(120, texturesCoin))
+    // sprite.setImage(sprites.builtin.coin0)
     sprite.setScale(.5)
+    sprite.startEffect(effects.fire, 5000)
 })
 
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Food, function (sprite, otherSprite) {
