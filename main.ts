@@ -1,7 +1,6 @@
 game.stats = true
 const rcRender = Render.raycastingRender
-Render.moveWithController(1.5,2)
-rcRender.cameraSway=1
+Render.moveWithController(1.5,2,1)
 
 let trans16 = image.create(16, 16)
 scene.setBackgroundImage(img`
@@ -165,8 +164,8 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0], textures[1], textures[2], textures[3]))
     // if (kind == SpriteKind.Enemy)
     //     tiles.placeOnRandomTile(spr, trans16)
-    // spr.sayText(spr.id+" test", 444444)
-    // spr.startEffect(effects.fountain,999)
+    spr.sayText(spr.id+" test", 444444)
+    // spr.startEffect(effects.fountain,9999)
 
     return spr
 }

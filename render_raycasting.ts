@@ -72,7 +72,7 @@ namespace Render {
         protected dist: number[] = []
         //render perf const
         cameraRangeAngle:number
-        ViewZPos:number
+        viewZPos:number
         selfXFpx:number
         selfYFpx:number
 
@@ -234,7 +234,7 @@ namespace Render {
         }
 
         updateViewZPos() {
-            this.ViewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2 << fpx)
+            this.viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2 << fpx)
         }
 
         takeoverSceneSprites() {
@@ -469,7 +469,7 @@ namespace Render {
             let drawStart = 0
             let drawHeight = 0
             let lastDist = -1, lastTexX = -1, lastMapX = -1, lastMapY = -1
-            const viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2<<fpx) + this.cameraOffsetZ_fpx
+            this.viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2<<fpx) + this.cameraOffsetZ_fpx
             let cameraRangeAngle = Math.atan(this.fov)+.1 //tolerance for spr center just out of camera
             //debug
             // const ms=control.millis()
@@ -560,7 +560,7 @@ namespace Render {
 
                 if (perpWallDist !== lastDist && (texX !== lastTexX || mapX !== lastMapX || mapY !== lastMapY)) {//neighbor line of tex share same parameters
                     const lineHeight = (this.wallHeightInView / perpWallDist)
-                    const drawEnd = lineHeight * this.ViewZPos / this.tilemapScaleSize / fpx_scale;
+                    const drawEnd = lineHeight * this.viewZPos / this.tilemapScaleSize / fpx_scale;
                     drawStart = drawEnd - lineHeight * (this._wallZScale) + 1;
                     drawHeight = (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1)
                     drawStart += (SH >> 1) 
@@ -604,7 +604,7 @@ namespace Render {
                 }).forEach((spr, index) => {
                     //debug
                     // this.tempScreen.print([spr.id,Math.roundWithPrecision(angle[spr.id],3)].join(), 0, index * 10 + 10,9)
-                    this.drawSprite(spr, index, ViewZPos, this.transformX[spr.id], this.transformY[spr.id], this.angleSelfToSpr[spr.id])
+                    this.drawSprite(spr, index, this.transformX[spr.id], this.transformY[spr.id], this.angleSelfToSpr[spr.id])
                 })
 
             //debug
@@ -645,7 +645,7 @@ namespace Render {
                 return
 
             const lineHeight = Math.idiv(this.wallHeightInView, transformY)
-            const drawStart = SHHalf + (lineHeight * ((this.ViewZPos - this.spriteMotionZ[spr.id].p - (spr._height as any as number)) / this.tilemapScaleSize) >> fpx)
+            const drawStart = SHHalf + (lineHeight * ((this.viewZPos - this.spriteMotionZ[spr.id].p - (spr._height as any as number)) / this.tilemapScaleSize) >> fpx)
 
             //for textures=image[][], abandoned
             //    const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)

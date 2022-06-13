@@ -1,5 +1,5 @@
 {
-    "name": "override-screen-raycasting",
+    "name": "pxt-raycasting",
     "version": "0.3.13",
     "description": "",
     "dependencies": {
