@@ -310,3 +310,8 @@ game.onUpdate(() => {
 //         character.loopFrames(spr, textures[Math.floor(i * textures.length / characterAniDirs.length)], 150, character.rule(dir))
 //     })
 // }
+info.setScore(999)
+info.setLife(3)
+let mySprite = sprites.create(sprites.builtin.computer1, SpriteKind.Player)
+mySprite.setPosition(80,10)
+mySprite.setFlag(SpriteFlag.RelativeToCamera, true)

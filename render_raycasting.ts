@@ -312,11 +312,12 @@ namespace Render {
                     // const ms=control.micros()
                     this.render()
                     // info.setScore(control.micros()-ms)
+                    screen.fill(0)
                 }
-                this.sprites2D.forEach(spr => {
-                    spr.__draw(sc.camera)
-                    })
+                this.sprites2D.forEach(spr => spr.__draw(sc.camera))
                 this.spriteLikes.forEach(spr => spr.__draw(sc.camera))
+                if (this._viewMode == ViewMode.raycastingView) 
+                    this.tempScreen.drawTransparentImage(screen,0,0)
             })
 
             sc.tileMap.addEventListener(tiles.TileMapEvent.Unloaded, data => {
