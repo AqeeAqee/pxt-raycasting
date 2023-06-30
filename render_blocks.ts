@@ -275,16 +275,16 @@ namespace Render {
     export function setSpriteAttribute(spr: Sprite, attr: RCSpriteAttribute, value: number) {
         switch (attr) {
             case RCSpriteAttribute.ZOffset:
-                raycastingRender.getMotionZ(spr).offset = value
+                raycastingRender.setZOffset(spr, value, 0)
                 break
             case RCSpriteAttribute.ZPosition:
-                raycastingRender.getMotionZ(spr).p = value
+                raycastingRender.getMotionZ(spr).p = Render.tofpx(value)
                 break
             case RCSpriteAttribute.ZVelocity:
-                raycastingRender.getMotionZ(spr).v = value
+                raycastingRender.getMotionZ(spr).v = Render.tofpx(value)
                 break
             case RCSpriteAttribute.ZAcceleration:
-                raycastingRender.getMotionZ(spr).a = value
+                raycastingRender.getMotionZ(spr).a = Render.tofpx(value)
                 break
             default:
         }
@@ -305,11 +305,11 @@ namespace Render {
             case RCSpriteAttribute.ZOffset:
                 return raycastingRender.getMotionZ(spr).offset
             case RCSpriteAttribute.ZPosition:
-                return raycastingRender.getMotionZ(spr).p
+                return raycastingRender.getMotionZ(spr).p << Render.fpx
             case RCSpriteAttribute.ZVelocity:
-                return raycastingRender.getMotionZ(spr).v
+                return raycastingRender.getMotionZ(spr).v << Render.fpx
             case RCSpriteAttribute.ZAcceleration:
-                return raycastingRender.getMotionZ(spr).a
+                return raycastingRender.getMotionZ(spr).a << Render.fpx
             default:
                 return 0
         }

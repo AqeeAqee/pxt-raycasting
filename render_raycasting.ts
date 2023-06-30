@@ -11,11 +11,11 @@ enum ViewMode {
 namespace Render {
     const SH = screen.height, SHHalf = SH / 2
     const SW = screen.width, SWHalf = SW / 2
-    const fpx = 8
+    export const fpx = 8
     const fpx2=fpx*2
     const fpx2_4 = fpx2 - 4
     const fpx_scale = 2 ** fpx
-    function tofpx(n: number) { return (n * fpx_scale) | 0 }
+    export function tofpx(n: number) { return (n * fpx_scale) | 0 }
     const one = 1 << fpx
     const one2 = 1 << (fpx + fpx)
     const FPX_MAX = (1 << fpx) - 1
