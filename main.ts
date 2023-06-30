@@ -1,8 +1,9 @@
+
 game.stats = true
 const rcRender = Render.raycastingRender
-Render.moveWithController(1.5,2,1)
+// Render.moveWithController(1.5,2,1)
 
-let trans16 = image.create(16, 16)
+// let trans16 = image.create(16, 16)
 scene.setBackgroundImage(img`
     ................................................................................................................................................................
     ................................................................................................................................................................
@@ -125,29 +126,14 @@ scene.setBackgroundImage(img`
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 `)
-let map = tiles.createTilemap(hex`1000100002020202020202020202020202020202020000000000000000000000000000020200000000000000000000000000000202000000000000000000000000000002020000000000000000000000000000020200000002020200000101010100000202000000020000000000000001000002020000000200000000000000010000020200000000000000000000000000000202000000000000000200000000000002020000000200000000000000010000020200000002000000000000000100000202000000020202020000010101000002020000000000000000000000000000020200000000000000000000000000000202020202020202020202020202020202`, img`
-2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
-2 . . . . . . . . . . . . . . 2 
-2 . . . . . . . . . . . . . . 2 
-2 . . . . . . . . . . . . . . 2 
-2 . . . . . . . . . . . . . . 2 
-2 . . . 2 2 2 . . 2 2 2 2 . . 2 
-2 . . . 2 . . . . . . . 2 . . 2 
-2 . . . 2 . . . . . . . 2 . . 2 
-2 . . . . . . . . . . . . . . 2 
-2 . . . . . . . 2 . . . . . . 2 
-2 . . . 2 . . . . . . . 2 . . 2 
-2 . . . 2 . . . . . . . 2 . . 2 
-2 . . . 2 2 2 2 . . 2 2 2 . . 2 
-2 . . . . . . . . . . . . . . 2 
-2 . . . . . . . . . . . . . . 2 
-2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
-`, [trans16, sprites.castle.tileGrass2, sprites.builtin.forestTiles0], TileScale.Sixteen);
 // tiles.setCurrentTilemap(map)
-const tm= tilemap`level1`
+const tm = tilemap`level1`
 // tm.scale =2// TileScale.Eight
 tiles.setCurrentTilemap(tm)
 
+
+/*
+*/
 const tilemapScale = 1 << game.currentScene().tileMap.scale
 rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
 
@@ -164,7 +150,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0], textures[1], textures[2], textures[3]))
     // if (kind == SpriteKind.Enemy)
     //     tiles.placeOnRandomTile(spr, trans16)
-    spr.sayText(spr.id+" test", 444444)
+    spr.sayText(spr.id + " test\n test", 9999)
     // spr.startEffect(effects.fountain,9999)
 
     return spr
@@ -182,13 +168,14 @@ let sprPriness2 = createSprite(11, 8, 6, 10, texturesPrincess2, SpriteKind.Enemy
 let sprHero = createSprite(10, 8, 6, 10, texturesHero, SpriteKind.Enemy)
 let sprSkelly = createSprite(9, 9, 6, 10, texturesSkelly, SpriteKind.Enemy)
 let sprPriness = createSprite(10, 7, 6, 10, texturesPrincess, SpriteKind.Enemy)
-let sprPlane=createSprite(9, 7, 6, 10, texturesPlane, SpriteKind.Enemy)
+let sprPlane = createSprite(9, 7, 6, 10, texturesPlane, SpriteKind.Enemy)
 let cake = createSprite(2, 2, 4, 2, texturesBigCake, SpriteKind.Enemy)
 let fish = createSprite(7, 9, 0, 0, texturesFish, SpriteKind.Enemy)
-// rcRender.setZOffset(sprSkelly, 4)
-// rcRender.setZOffset(sprPlane, 16)
-// rcRender.setZOffset(cake, 4)
-// rcRender.setZOffset(fish, 8)
+
+rcRender.setZOffset(sprSkelly, 4)
+rcRender.setZOffset(sprPlane, 16)
+rcRender.setZOffset(cake, 4)
+rcRender.setZOffset(fish, 8)
 // for(let i=0;i<10;i++){
 //     let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
 //     tiles.placeOnRandomTile(spr, trans16)
@@ -204,16 +191,16 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     music.pewPew.play()
     let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
     s.setScale(0.25)
-    rcRender.setZOffset(s, rcRender.getMotionZPosition(rcRender.sprSelf)+2)  //todo, use VP height
+    rcRender.setZOffset(s, rcRender.getMotionZPosition(rcRender.sprSelf) + 2)  //todo, use VP height
 })
 
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
-    if(!rcRender.isOverlapZ(sprite, otherSprite)) return
+    if (!rcRender.isOverlapZ(sprite, otherSprite)) return
 
     sprite.setVelocity(0, 0)
     sprite.sayText("No!", 2000)
-    rcRender.move(sprite,60,-160)
-    rcRender.setZOffset(sprite,0)
+    rcRender.move(sprite, 60, -160)
+    rcRender.setZOffset(sprite, 0)
     music.baDing.play()
     // sprite.setKind(SpriteKind.Food)
     info.changeScoreBy(1)
@@ -252,15 +239,15 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
     Render.toggleViewMode()
 })
 
-controller.B.repeatDelay=0
+controller.B.repeatDelay = 0
 
-let isAdjusting=false
-controller.anyButton.onEvent(ControllerButtonEvent.Pressed,() => {
+let isAdjusting = false
+controller.anyButton.onEvent(ControllerButtonEvent.Pressed, () => {
     if (controller.B.isPressed()) {
-        if (controller.A.isPressed()){
+        if (controller.A.isPressed()) {
             Render.moveWithController(0, 0)
-            isAdjusting=true
-        }else{
+            isAdjusting = true
+        } else {
             rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale, 500)
         }
     }
@@ -277,10 +264,10 @@ controller.A.onEvent(ControllerButtonEvent.Released, () => {
 rcRender.wallZScale = 2
 
 let zOffset = 3// tilemapScale / 2
-rcRender.setZOffset(rcRender.sprSelf, zOffset,0)
-let fov=Render.defaultFov
-game.onUpdate(() => {  
-    if (isAdjusting){
+rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
+let fov = Render.defaultFov
+game.onUpdate(() => {
+    if (isAdjusting) {
         // zOffset -= controller.dy(10)
         // rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
         fov -= controller.dy(1)
@@ -312,6 +299,8 @@ game.onUpdate(() => {
 // }
 info.setScore(999)
 info.setLife(3)
-let mySprite = sprites.create(sprites.builtin.computer1, SpriteKind.Player)
-mySprite.setPosition(80,10)
-mySprite.setFlag(SpriteFlag.RelativeToCamera, true)
+// let mySprite = sprites.create(sprites.builtin.computer1, SpriteKind.Player)
+// mySprite.setPosition(80,10)
+// mySprite.setFlag(SpriteFlag.RelativeToCamera, true)
+
+

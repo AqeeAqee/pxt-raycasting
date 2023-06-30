@@ -12,6 +12,8 @@ namespace Render {
     const SH = screen.height, SHHalf = SH / 2
     const SW = screen.width, SWHalf = SW / 2
     const fpx = 8
+    const fpx2=fpx*2
+    const fpx2_4 = fpx2 - 4
     const fpx_scale = 2 ** fpx
     function tofpx(n: number) { return (n * fpx_scale) | 0 }
     const one = 1 << fpx
@@ -61,6 +63,7 @@ namespace Render {
         //reference
         protected tilemapScaleSize = 1 << TileScale.Sixteen
         map: tiles.TileMapData
+        mapData:Array<number>
         bg: Image
         textures: Image[]
         protected oldRender: scene.Renderable
@@ -286,8 +289,9 @@ namespace Render {
         tilemapLoaded() {
             const sc = game.currentScene()
             this.map = sc.tileMap.data
-            this.textures = sc.tileMap.data.getTileset()
+            this.mapData = ((this.map as any).data as Buffer).toArray(NumberFormat.Int8LE)
             this.tilemapScaleSize = 1 << sc.tileMap.data.scale
+            this.textures = sc.tileMap.data.getTileset()
             this.oldRender = sc.tileMap.renderable
             this.spriteLikes.removeElement(this.oldRender)
             sc.allSprites.removeElement(this.oldRender)
@@ -474,6 +478,39 @@ namespace Render {
             let cameraRangeAngle = Math.atan(this.fov)+.1 //tolerance for spr center just out of camera
             //debug
             // const ms=control.millis()
+
+            let ms:number
+            //floor
+            if(0){
+            ms= control.benchmark(()=>
+            {
+                    const posZ = (SH * this.viewZPos / this.tilemapScaleSize)|0 
+                for (let yFloor = SHHalf; yFloor < SH; yFloor++) {
+                    const rowDistance = (posZ / (yFloor - SHHalf)) | 0
+                    const floorStepX = -Math.idiv (rowDistance * this.planeX*2 , SW) 
+                    const floorStepY = -Math.idiv (rowDistance * this.planeY*2 , SW)
+
+                    let floorX = (this.selfXFpx * fpx_scale + (rowDistance * (this.dirXFpx  + this.planeX)))
+                    let floorY = (this.selfYFpx * fpx_scale + (rowDistance * (this.dirYFpx  + this.planeY)))
+                    //if (0)
+                        for (let xFloor = 0; xFloor < SW; xFloor++) { //21
+                            const tileType = this.mapData[4 + (floorX >> fpx2) + (floorY >> fpx2) * this.map.width] //this.getTileIndex(floorX,floorY);//this.map.getTile(floorX, floorY)
+                            const floorTex = this.textures[tileType]
+                            if (floorTex) {
+                                const tx = (floorX >> (fpx2_4)) & 0xF //17
+                                const ty = (floorY >> (fpx2_4)) & 0xF
+                                const c = floorTex.getPixel(tx, ty)
+                                this.tempScreen.setPixel(xFloor, yFloor, c)
+                            }
+                            floorX += floorStepX
+                            floorY += floorStepY
+                        }
+                }
+            })
+            this.tempScreen.print(ms.toString(),0,10)
+            }
+
+            // ms=control.benchmark(()=>{
             for (let x = 0; x < SW; x++) {
                 const cameraX: number = one - Math.idiv(((x+this.cameraOffsetX) << fpx) << 1, SW)
                 let rayDirX = this.dirXFpx + (this.planeX * cameraX >> fpx)
@@ -515,6 +552,7 @@ namespace Render {
 
                 let color = 0
 
+                let isOutsideMap=false
                 while (true) {
                     //jump to next map square, OR in x-direction, OR in y-direction
                     if (sideDistX < sideDistY) {
@@ -527,17 +565,20 @@ namespace Render {
                         sideWallHit = true;
                     }
 
-                    if (this.map.isOutsideMap(mapX, mapY))
+                    if (this.map.isOutsideMap(mapX, mapY)){
+                        isOutsideMap=true
                         break
-                    color = this.map.getTile(mapX, mapY)
-                    if (color)
+                    }
+                    if (this.map.isWall(mapX, mapY)){
+                        color = this.mapData [4 + (mapX | 0) + (mapY | 0) * this.map.width]
                         break; // hit!
+                    }
                 }
 
-                if (this.map.isOutsideMap(mapX, mapY))
+                if (isOutsideMap)
                     continue
 
-                let perpWallDist = 0
+                let perpWallDist:number
                 let wallX = 0
                 if (!sideWallHit) {
                     perpWallDist = Math.idiv(((mapX << fpx) - this.selfXFpx + (1 - mapStepX << fpx - 1)) << fpx, rayDirX)
@@ -576,11 +617,17 @@ namespace Render {
 
                 this.dist[x] = perpWallDist
             }
+            // })
+            // this.tempScreen.print(ms.toString(), 0, 20)
+
             //debug
             // info.setScore(control.millis()-ms)
             // this.tempScreen.print(lastPerpWallDist.toString(), 0,0,7 )
 
+            // ms=control.benchmark(()=>
             this.drawSprites()
+            // )
+            // this.tempScreen.print(ms.toString(), 0, 30)
         }
         
         drawSprites(){
