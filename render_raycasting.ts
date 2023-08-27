@@ -261,9 +261,12 @@ namespace Render {
                     }
                 } else if(spr instanceof particles.ParticleSource){
                     const particle = (spr as particles.ParticleSource)
-                    if (this.spriteParticles.indexOf(particle) < 0) {
-                        this.spriteParticles[(particle.anchor as Sprite).id]=particle
-                        particle.anchor=this.tempSprite
+                    if (this.spriteParticles.indexOf(particle) < 0 && particle.anchor instanceof Sprite) {
+                        const spr = (particle.anchor as Sprite)
+                        if(this.sprites.indexOf(spr)>=0){
+                            this.spriteParticles[spr.id]=particle
+                            particle.anchor=this.tempSprite
+                        }
                     }
                 } else {
                     if (this.spriteLikes.indexOf(spr) < 0)
