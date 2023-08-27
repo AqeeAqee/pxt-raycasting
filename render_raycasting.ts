@@ -481,33 +481,32 @@ namespace Render {
 
             let ms:number
             //floor
-            if(0){
-            ms= control.benchmark(()=>
-            {
-                    const posZ = (SH * this.viewZPos / this.tilemapScaleSize)|0 
-                for (let yFloor = SHHalf; yFloor < SH; yFloor++) {
-                    const rowDistance = (posZ / (yFloor - SHHalf)) | 0
-                    const floorStepX = -Math.idiv (rowDistance * this.planeX*2 , SW) 
-                    const floorStepY = -Math.idiv (rowDistance * this.planeY*2 , SW)
-
-                    let floorX = (this.selfXFpx * fpx_scale + (rowDistance * (this.dirXFpx  + this.planeX)))
-                    let floorY = (this.selfYFpx * fpx_scale + (rowDistance * (this.dirYFpx  + this.planeY)))
-                    //if (0)
+            if (0) {
+                ms = control.benchmark(() => {
+                    const posZ = (SH * this.viewZPos / this.tilemapScaleSize) | 0
+                    for (let yFloor = SHHalf; yFloor < SH; yFloor++) {
+                        const rowDistance = (posZ / (yFloor - SHHalf)) | 0
+                        let floorX = this.selfXFpx * fpx_scale + (rowDistance * (this.dirXFpx + this.planeX))
+                        let floorY = this.selfYFpx * fpx_scale + (rowDistance * (this.dirYFpx + this.planeY))
+                        const floorStepX = -Math.idiv(rowDistance * this.planeX, SWHalf)
+                        const floorStepY = -Math.idiv(rowDistance * this.planeY, SWHalf)
                         for (let xFloor = 0; xFloor < SW; xFloor++) { //21
                             const tileType = this.mapData[4 + (floorX >> fpx2) + (floorY >> fpx2) * this.map.width] //this.getTileIndex(floorX,floorY);//this.map.getTile(floorX, floorY)
-                            const floorTex = this.textures[tileType]
-                            if (floorTex) {
-                                const tx = (floorX >> (fpx2_4)) & 0xF //17
-                                const ty = (floorY >> (fpx2_4)) & 0xF
-                                const c = floorTex.getPixel(tx, ty)
-                                this.tempScreen.setPixel(xFloor, yFloor, c)
+                            {
+                                const floorTex = this.textures[tileType]
+                                if (floorTex) {
+                                    const tx = (floorX >> (fpx2_4)) & 0xF //17
+                                    const ty = (floorY >> (fpx2_4)) & 0xF
+                                    const c = floorTex.getPixel(tx, ty)
+                                    this.tempScreen.setPixel(xFloor, yFloor, c)
+                                }
                             }
                             floorX += floorStepX
                             floorY += floorStepY
                         }
-                }
-            })
-            this.tempScreen.print(ms.toString(),0,10)
+                    }
+                })
+                this.tempScreen.print(ms.toString(), 0, 10)
             }
 
             // ms=control.benchmark(()=>{
