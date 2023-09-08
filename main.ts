@@ -209,8 +209,6 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
     // sprite.setImage(sprites.builtin.coin0)
     sprite.setScale(.5)
     sprite.startEffect(effects.fire, 5000)
-
-    game.showLongText(sprite.id+" "+otherSprite.id, DialogLayout.Bottom)
 })
 
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Food, function (sprite, otherSprite) {
