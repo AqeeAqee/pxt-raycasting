@@ -31,8 +31,10 @@ namespace Render {
 
     export const defaultFov = SW / SH / 2  //Wall just fill screen height when standing 1 tile away
 
-    export class RayCastingRender {
+    export class RayCastingRender{
+
         private tempScreen: Image = image.create(SW, SH)
+        private tempBackground: scene.BackgroundLayer //for "see through" when scene popped out
 
         velocityAngle: number = 2
         velocity: number = 3
@@ -308,35 +310,29 @@ namespace Render {
             })
 
             let frameCallback_draw = sc.eventContext.registerFrameHandler(scene.RENDER_SPRITES_PRIORITY + 1, () => {
-                if (this._viewMode == ViewMode.tilemapView) {
-                    screen.drawImage(sc.background.image, 0, 0)
+                if (this._viewMode == ViewMode.raycastingView) {
+                    if (!this.tempBackground) {
+                        this.tempScreen.drawImage(game.currentScene().background.image, 0, 0)
+                        this.render()
+                        screen.fill(0)
+                        this.sprites2D.forEach(spr => spr.__draw(sc.camera))
+                        this.spriteLikes.forEach(spr => spr.__draw(sc.camera))
+                        this.tempScreen.drawTransparentImage(screen, 0, 0)
+                    }
+                } else {
+                    screen.drawImage(game.currentScene().background.image, 0, 0)
                     this.oldRender.__drawCore(sc.camera)
                     this.sprites.forEach(spr => spr.__draw(sc.camera))
                     this.sprSelf.__draw(sc.camera)
-                } else {
-                    this.tempScreen.drawImage(sc.background.image, 0, 0)
-                    //debug
-                    // const ms=control.micros()
-                    this.render()
-                    // info.setScore(control.micros()-ms)
-                    screen.fill(0)
+                    this.sprites2D.forEach(spr => spr.__draw(sc.camera))
+                    this.spriteLikes.forEach(spr => spr.__draw(sc.camera))
                 }
-                this.sprites2D.forEach(spr => spr.__draw(sc.camera))
-                this.spriteLikes.forEach(spr => spr.__draw(sc.camera))
-                if (this._viewMode == ViewMode.raycastingView) 
-                    this.tempScreen.drawTransparentImage(screen,0,0)
             })
 
             sc.tileMap.addEventListener(tiles.TileMapEvent.Unloaded, data => {
                 sc.eventContext.unregisterFrameHandler(frameCallback_update)
                 sc.eventContext.unregisterFrameHandler(frameCallback_draw)
             })
-
-            // this.myRender = scene.createRenderable(
-            //     scene.TILE_MAP_Z,
-            //     (t, c) => this.trace(t, c)
-            // )
-
         }
 
         constructor() {
@@ -397,9 +393,12 @@ namespace Render {
             })
 
             game.addScenePushHandler((oldScene) => {
+                this.tempBackground = oldScene.background.addLayer(this.tempScreen, 0, BackgroundAlignment.Center)
                 control.__screen.setupUpdate(() => { updateScreen(screen) })
             })
             game.addScenePopHandler((oldScene) => {
+                ((oldScene.background as any)._layers as scene.BackgroundLayer[]).removeElement(this.tempBackground)
+                this.tempBackground=undefined
                 control.__screen.setupUpdate(() => {
                     if (this.viewMode == ViewMode.raycastingView)
                         updateScreen(this.tempScreen)
@@ -626,10 +625,7 @@ namespace Render {
             // info.setScore(control.millis()-ms)
             // this.tempScreen.print(lastPerpWallDist.toString(), 0,0,7 )
 
-            // ms=control.benchmark(()=>
             this.drawSprites()
-            // )
-            // this.tempScreen.print(ms.toString(), 0, 30)
         }
         
         drawSprites(){
@@ -710,7 +706,7 @@ namespace Render {
             const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
             
             const sprTexRatio = texSpr.width / spriteScreenHalfWidth / 2
-            helpers.imageBlit(
+                helpers.imageBlit(
                 this.tempScreen,
                 blitXSpr,
                 drawStart,
