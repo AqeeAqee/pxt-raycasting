@@ -126,7 +126,7 @@ namespace Render {
     //% weight=89
     //% help=github:pxt-raycasting/docs/toggle-view-mode
     export function toggleViewMode() {
-        raycastingRender.viewMode = raycastingRender.viewMode == ViewMode.tilemapView ? ViewMode.raycastingView : ViewMode.tilemapView
+        raycastingRender.viewMode = raycastingRender.viewMode == ViewMode.tilemapView ? ViewMode.isometricView : ViewMode.tilemapView
     }
 
     /**
