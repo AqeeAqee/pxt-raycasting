@@ -329,7 +329,7 @@ namespace Render {
         }
 
         constructor() {
-            this._angle = 4.5
+            this._angle = Math.PI/4
             this.fov = defaultFov
             this.camera = new scene.Camera()
 
@@ -468,62 +468,85 @@ namespace Render {
             // let xIn = (-x * D + y * B + D * X0 - B * Y0) / AD_BC - (H - X0)
             // let yIn = (-x * C + y * A + C * X0 - A * Y0) / AD_BC - (V - Y0)
 
-            //scale=1
+            const scaleX = 2
+            const scaleY = 1
             const size=Math.max(inImg.width,inImg.height)
-            const outImg= image.create(size<<1, size<<1)
-            const H = size >> 1, V = size >> 1
-            // const H =0, V =0
-            const X0=size, Y0=size
-            const A = (Math.cos(Math.PI * degree / 180)* fpx_scale) | 0
-            const B = (Math.sin(Math.PI * degree / 180)* fpx_scale) | 0
+            const outImg = image.create(size * 2* scaleX , size *2 * scaleY)
+            // const H = size >> 1, V = size >> 1
+            const H =0, V =0
+            // const X0 = size, Y0 = size
+            const X0 = size/2, Y0 = size/2
+            const A = Math.SQRT2 * (Math.cos( degree ) * fpx_scale) | 0
+            const B = Math.SQRT2 * (Math.sin( degree ) * fpx_scale) | 0
+            // const A = fpx_scale
+            // const B =( (A * Math.tan(Math.PI * (degree) / 180) )|0)+1
             const C = -B
-            const D = A
+            const D = A 
 
-            // outImg.fill(1)
+            // outImg.fill(i+1)
             // outImg.drawRect(0,0,size*2,size*2,1)
 
-            const AD_BC = 1// (A * D - B * C)  //  = scale**2
+            const AD_BC = (A * D - B * C)   //1<<fpx2 //
             let xIn0_FX = (((D * X0 - B * Y0) / AD_BC) - (H - X0) * fpx_scale) | 0
             let yIn0_FX = (((C * X0 - A * Y0) / AD_BC) - (V - Y0) * fpx_scale) | 0
-            const B_ADBC = (B / AD_BC) 
-            const A_ADBC = (A / AD_BC) 
-            const D_ADBC = (D / AD_BC) 
-            const C_ADBC = (C / AD_BC) 
+            const B_ADBC = (B<<fpx2) / AD_BC
+            const A_ADBC = (A<<fpx2) / AD_BC
+            const D_ADBC = (D<<fpx2) / AD_BC
+            const C_ADBC = (C<<fpx2) / AD_BC
 
-            let x = X0 - size;
+            let x = (X0 - size*scaleX);
             xIn0_FX -= x * D_ADBC
             yIn0_FX -= x * C_ADBC
             
-            for (; x <= X0 + size; x++) {
+        const xIn_FXs=[]
+            for (; x <= X0 + size * scaleX; x++) {
                 let xIn_FX = xIn0_FX
                 let yIn_FX = yIn0_FX
-                let y = Y0 - size
+                let y = (Y0 - size * scaleY*2 )
                 xIn_FX += y * B_ADBC
                 yIn_FX += y * A_ADBC
-                for (; y <= Y0 + size; y++) {
+                for (; y <= Y0 + size * scaleY; y++) { //
                     let xIn = xIn_FX >> fpx
                     let yIn = yIn_FX >> fpx
                     if (0 <= xIn && xIn < size && 0 <= yIn && yIn < size) 
                     {
                         // if (0 <= xOut && xOut < outImg.width && 0 <= yOut && yOut < outImg.height) {
-                        outImg.setPixel(x, y, inImg.getPixel(xIn_FX >> fpx, yIn_FX >> fpx))
+                        const c = inImg.getPixel(inImg.width - xIn-1, yIn)
+                        outImg.setPixel((x + size-1) * scaleX,   (y+size-1) * scaleY, c)
+                        outImg.setPixel((x + size-1) * scaleX+1, (y+size-1) * scaleY, c)
                         // outImg.setPixel(x, y, i+1)
                     }
                     xIn_FX += B_ADBC
                     yIn_FX += A_ADBC
                 }
+                // xIn_FXs.push(Math.roundWithPrecision(xIn_FX/fpx_scale,2))
+
                 xIn0_FX -= D_ADBC
                 yIn0_FX -= C_ADBC
             }
+            // console.log(xIn_FXs.join())
+            // console.log(" -")
+            // console.log(" -")
 
             return outImg
         }
 
-        rotatedTiles:Image[]
-        initTiles(){
-            info.setScore(this._angle)
-            this.rotatedTiles= this.map.getTileset().map((v,i)=> this.rotate(v, this._angle*10, i))
+        shearDoubleX(inImg: Image, degree: number, i = 0){
+            //fix 45°
+            const size = Math.max(inImg.width, inImg.height)
+            const outImg = image.create(size << 2, size << 1)
+            
+            // outImg.fill(i+1)
+            for (let x = 0; x < inImg.width; x++) {
+                for (let y = 0; y < inImg.height; y++) {
+                    const xo =  (x+y)*2, yo=15 - x + y
+                    outImg.drawLine(xo,yo, xo+3,yo, inImg.getPixel(x,y))
+                }
+            }
+            return outImg
         }
+
+        rotatedTiles:Image[]
 
         render() {
             // based on https://lodev.org/cgtutor/raycasting.html
@@ -532,40 +555,106 @@ namespace Render {
             this.viewYFpx = this.yFpx
             this.viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2<<fpx) + this.cameraOffsetZ_fpx
 
+        // if(!this.rotatedTiles)
+        {
+
+            this.tempScreen.drawImage(
+//shear doubled, manually, for reference
+img`
+    ..............................7777..............................
+    ............................77777777............................
+    ..........................777777777777..........................
+    ........................7777111111117777........................
+    ......................77777777777766667777......................
+    ....................777777771111111177777777....................
+    ..................7777777777776666777777777777..................
+    ................77777777777777777777777777777777................
+    ..............777777777777777777777777777777777777..............
+    ............7777777777775555777777777777777777777777............
+    ..........77777777777777775555777755556666777777777777..........
+    ........777777777777777777776666777755557777111133331111........
+    ......777777777777777777777777777755556666111111111111dddd......
+    ....55557777111133331111777777777777555577771111666611116666....
+    ..77777777111111111111dddd777777777777777733336666777733337777..
+    5555777777771111666611116666777777777777777711117777111166667777
+    ..7777777733336666777733337777111111117777111111111111dddd7777..
+    ....7777777711117777111166667777777766667777dddd3333dddd7777....
+    ......7777111111111111dddd77771111111177777777666666667777......
+    ........7777dddd3333dddd77777777666677777777777777777777........
+    ..........77776666666677777777777777777777777777777777..........
+    ............7777777777777777777777777777777777777777............
+    ..............777777777777777777777777777777777777..............
+    ................77777777111111117777777777777777................
+    ..................7777777777776666777777777777..................
+    ....................777711111111777777777777....................
+    ......................77776666777777777777......................
+    ........................7777777777777777........................
+    ..........................777777775555..........................
+    ............................77777777............................
+    ..............................7777..............................
+    ................................................................
+`, 50, 0)
+
             let ms:number
-                // if(!this.rotatedTiles)
-                    this.initTiles()
-
-                this.rotatedTiles.forEach((v, i) =>
-                    this.tempScreen.drawImage(v, (i%5) * 32, 30+ 32*((i/5)|0))
-                )
-
-            
-            const size=16
-            const A = (size * (Math.cos(Math.PI * this._angle*10 / 180))*fpx_scale) | 0
-            const B = (size * (Math.sin(Math.PI * this._angle*10 / 180))*fpx_scale) | 0
-            const C = -B
-            const D =  A
-
 
             ms = control.benchmark(() => {
+                this.rotatedTiles = this.map.getTileset().map((v, i) => this.rotate(v, this._angle, i))
+            }); this.tempScreen.print(ms.toString(), 0, 110)
 
-            info.setScore(A*100)
+                // this.rotatedTiles.forEach((v, i) =>{
+                // if (i <4)
+                //     this.tempScreen.drawImage(v, (i % 3) * 64, 32+32*((i/3)|0))})
+
+//            ms = control.benchmark(() => {
+//                this.rotatedTiles = this.map.getTileset().map((v, i) => this.shearDoubleX(v, this._angle, i))
+//            }); this.tempScreen.print(ms.toString(), 0, 100)
+//            
+//            this.rotatedTiles.forEach((v, i) =>{
+//                if(i<4)
+//                this.tempScreen.drawImage(v, (i % 3) * 64, 32 * ((i / 3) | 0))})
+//
+//                this.tempScreen.drawImage(this.map.getTileImage(3), 0, 12)
+
+        }
+// return
+            
+            info.setScore(this._angle*180/Math.PI)
+
+            const size=16
+
+            //rotate
+            const A = (((2*size -1) * Math.SQRT2 * Math.cos(-Math.PI/2-this._angle)) * fpx_scale* fpx_scale)
+            const B = (((2*size -1) * Math.SQRT2 * Math.sin(-Math.PI/2-this._angle)) * fpx_scale* fpx_scale)
+            const C = -B
+            const D = A
+
+            //shearDoubleX
+            // const A = 32 * fpx_scale* fpx_scale
+            // const B = 16 * fpx_scale* fpx_scale
+            // const C = -A
+            // const D =  B
+
+
+            let ms = control.benchmark(() => {
+
             let offsetX = 0, offsetY = 0
             for (let i = 0; i < this.map.width; i++) {
-                offsetX = (i - 8.5) * B - A * 8.5 + 80 * fpx_scale
-                offsetY = (i - 8.5) * D - C * 8.5 + 80 * fpx_scale
+                offsetX =  (i -(this.sprSelf.y/tilemapScale)) * C + A * (0-this.sprSelf.x/tilemapScale) + (80) * fpx_scale*fpx_scale
+                offsetY =  (i -(this.sprSelf.y/tilemapScale)) * D + B * (0-this.sprSelf.x/tilemapScale) + (80) * fpx_scale*fpx_scale
                 for (let j = 0; j < this.map.height; j++) {
-                    const t=this.map.getTile(i,j)
-                    // if ((offsetX >> fpx)>-size*2 && ( offsetY >> fpx)>-size*2)
-                        this.tempScreen.blit(  offsetX>>fpx,offsetY>>(fpx+0), size*2, size*2, 
-                            this.rotatedTiles[t], 0, 0, size*2, size*2, true,false)
+                    const t=this.map.getTile(j,i)
+                    if ((offsetX >> fpx2)>-size*4 && ( offsetY >> (fpx2+1))>-size*2)
+                    this.tempScreen.blit(offsetX >> fpx2, (offsetY >> (fpx2+1)) , size*4, size*2,
+                            this.rotatedTiles[t], 0, 0, size*4, size*2, true,false)
                     offsetX+=A
-                    offsetY+=C
+                    offsetY+=B
                 }
             }
             }); this.tempScreen.print(ms.toString(), 0, 20)
 
+            const loc = this.sprSelf.tilemapLocation()
+            this.tempScreen.print(loc.row + "," + loc.col, 0, 100)
+            this.tempScreen.print(this.sprSelf.x + "," + this.sprSelf.y, 0, 90)
 
 
 

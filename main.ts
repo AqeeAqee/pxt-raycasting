@@ -126,14 +126,27 @@ scene.setBackgroundImage(img`
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 `)
-// tiles.setCurrentTilemap(map)
-const tm = tilemap`level1`
+const tm = tiles.createTilemap(hex`1000100003040506070102010201020102010201010201020102010201020102010201020201020102010201020102010201020101020102010201020102010201020102020102010201020102010201020102010102010201020102010201020102010202010201020102010201020102010201010201020102010201020102010201020201020102010201020102010201020101020102010201020102010201020102020102010201020102010201020102010102010201020102010201020102010202010201020102010201020102010201010201020102010201020102010201020201020102010201020102010201020101020102010201020102010201020102`, img`
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
+`, [myTiles.transparency16,myTiles.tile3,myTiles.tile4,sprites.castle.tileGrass2,sprites.castle.tilePath5,sprites.vehicle.roadVertical,sprites.vehicle.roadHorizontal,sprites.dungeon.chestClosed], TileScale.Sixteen);
 // tm.scale =2// TileScale.Eight
-tiles.setCurrentTilemap(tm)
+tiles.setCurrentTilemap(tilemap`level1`)
 
-
-/*
-*/
 const tilemapScale = 1 << game.currentScene().tileMap.scale
 rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
 
