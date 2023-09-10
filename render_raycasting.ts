@@ -342,7 +342,7 @@ namespace Render {
             game.currentScene().tileMap.addEventListener(tiles.TileMapEvent.Loaded, data => this.tilemapLoaded())
 
             //self sprite
-            this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)
+            this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 0, this.tilemapScaleSize >> 0), SpriteKind.Player)
             this.takeoverSceneSprites()
             this.sprites.removeElement(this.sprSelf)
             this.updateViewZPos()
@@ -476,8 +476,8 @@ namespace Render {
             const H =0, V =0
             // const X0 = size, Y0 = size
             const X0 = size/2, Y0 = size/2
-            const A = Math.SQRT2 * (Math.cos( degree ) * fpx_scale) | 0
-            const B = Math.SQRT2 * (Math.sin( degree ) * fpx_scale) | 0
+            const A = (Math.SQRT2 * Math.cos( degree ) * fpx_scale) | 0
+            const B = (Math.SQRT2 * Math.sin( degree ) * fpx_scale) | 0
             // const A = fpx_scale
             // const B =( (A * Math.tan(Math.PI * (degree) / 180) )|0)+1
             const C = -B
@@ -639,8 +639,8 @@ img`
 
             let offsetX = 0, offsetY = 0
             for (let i = 0; i < this.map.width; i++) {
-                offsetX =  (i -(this.sprSelf.y/tilemapScale)) * C + A * (0-this.sprSelf.x/tilemapScale) + (80) * fpx_scale*fpx_scale
-                offsetY =  (i -(this.sprSelf.y/tilemapScale)) * D + B * (0-this.sprSelf.x/tilemapScale) + (80) * fpx_scale*fpx_scale
+                offsetX =  (i+.5 -this.sprSelf.y/tilemapScale-0) * C + A * (0-this.sprSelf.x/tilemapScale+.5)+ (50) * fpx_scale*fpx_scale
+                offsetY =  (i+.5 -this.sprSelf.y/tilemapScale-0) * D + B * (0-this.sprSelf.x/tilemapScale+.5)+ (100) * fpx_scale*fpx_scale
                 for (let j = 0; j < this.map.height; j++) {
                     const t=this.map.getTile(j,i)
                     if ((offsetX >> fpx2)>-size*4 && ( offsetY >> (fpx2+1))>-size*2)
@@ -651,6 +651,9 @@ img`
                 }
             }
             }); this.tempScreen.print(ms.toString(), 0, 20)
+
+            this.tempScreen.blit(80-16,50-16, 32,32,
+                sprites.castle.heroWalkFront1, 0,0,16,16,true,false)
 
             const loc = this.sprSelf.tilemapLocation()
             this.tempScreen.print(loc.row + "," + loc.col, 0, 100)
