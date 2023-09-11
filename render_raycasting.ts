@@ -28,6 +28,7 @@ namespace Render {
     let A_Fpx = 0
     let B_Fpx = 0
     const AD_BC_Fpx2 = 2 << fpx2 //= Math.SQRT2**2 == (A * D - B * C)   
+    const WallHeight = TileSize * 2
     function rotatePoint(xIn: number, yIn: number, A:number, B:number) {
         const D=A, C=-B
         const xOut = A * (xIn + H - X0) + B * (yIn + V - Y0) + X0
@@ -532,6 +533,26 @@ namespace Render {
             return outImg
         }
 
+        drawWall(offsetX: number, offsetY:number){
+                    const p0x = offsetX + TileSize + this.corners[0].x, p0y = offsetY + TileSize / 2 + this.corners[0].y
+                    const p1x = offsetX + TileSize + this.corners[1].x, p1y = offsetY + TileSize / 2 + this.corners[1].y
+                    const p3x = offsetX + TileSize + this.corners[3].x, p3y = offsetY + TileSize / 2 + this.corners[3].y
+
+                    this.tempScreen.fillPolygon4(
+                        p0x, p0y,
+                        p0x, p0y - WallHeight,
+                        p1x, p1y - WallHeight,
+                        p1x, p1y,
+                        12)
+
+                    this.tempScreen.fillPolygon4(
+                        p3x, p3y,
+                        p3x, p3y - WallHeight,
+                        p1x, p1y - WallHeight,
+                        p1x, p1y,
+                        12)
+        }
+
         rotatedTiles:Image[]
         lastRenderAngle=-1
         selfSprAniId=0
@@ -631,9 +652,10 @@ namespace Render {
             const top_CenterTile = 80 - (TileSize * ScaleY)
 
             let ms = control.benchmark(() => {
-        //4 layer: floor,sprite,wall, roof
+                const bottomWalls=[]
+        //4 layer: floor,wall(up)&sprite&wall(bottom), roof
         for (let iLayer = 0; iLayer < 4; iLayer++) {
-            if(iLayer==1){
+            if(iLayer==2){
                 //draw self Sprite
                 if (this.spriteAnimations[this.sprSelf.id].animations[0]) {
                     const widthSelf = this.sprSelf.width * Scale
@@ -642,6 +664,7 @@ namespace Render {
                         this.spriteAnimations[this.sprSelf.id].animations[0][(this.selfSprAniId++ / 10) | 0], 0, 0, 16, 16, true, false)
                     this.selfSprAniId %= (this.spriteAnimations[this.sprSelf.id].animations[0].length * 10)
                 }
+                bottomWalls.forEach(v=>this.drawWall(v[0],v[1]))
                 continue
             }
             let offsetX_Fpx = 0, offsetY_Fpx = 0
@@ -654,32 +677,20 @@ namespace Render {
                     if (offsetX > -TileSize * 4 && offsetX < screen.width + TileSize * 4 && offsetY > -TileSize * 2 && offsetY < screen.height + TileSize * 2) {
                         const t = this.map.getTile(j, i)
                         if (this.map.isWall(j, i)) {
-                            const wallHeight = TileSize * 2
-                            if (iLayer == 2){
-                            const p0x = offsetX + TileSize + this.corners[0].x, p0y = offsetY + TileSize / 2 + this.corners[0].y
-                            const p1x = offsetX + TileSize + this.corners[1].x, p1y = offsetY + TileSize / 2 + this.corners[1].y
-                            const p3x = offsetX + TileSize + this.corners[3].x, p3y = offsetY + TileSize / 2 + this.corners[3].y
-
-                            this.tempScreen.fillPolygon4(
-                                p0x, p0y,
-                                p0x, p0y - wallHeight,
-                                p1x, p1y - wallHeight,
-                                p1x, p1y,
-                                13)
-
-                            this.tempScreen.fillPolygon4(
-                                p3x, p3y,
-                                p3x, p3y - wallHeight,
-                                p1x, p1y - wallHeight,
-                                p1x, p1y,
-                                13)
+                            if (iLayer == 1){//wall
+                                if (offsetY < 80) {
+                                    this.drawWall(offsetX, offsetY)
+                                } else {
+                                    bottomWalls.push([offsetX, offsetY])
+                                }
                             }
-                            if (iLayer == 3){
-                                offsetY -= wallHeight
+                            if (iLayer == 3) { //roof
+                                offsetY -= WallHeight
                                 this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
                             }
                         }
-                        if (iLayer == 0) 
+
+                        if (iLayer == 0) //floor
                             this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
                     }
                     offsetX_Fpx+=A_px_Fpx
