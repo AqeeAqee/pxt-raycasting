@@ -51,21 +51,15 @@
     "level1": {
         "id": "level1",
         "mimeType": "application/mkcd-tilemap",
-        "data": "MTAxMDAwMTAwMDAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMzAzMDMwMzAzMDMwMzAzMDMwMzAzMDMwMzAzMDEwMTAzMDUwMjAyMDIwMjBjMGMwMjAyMDIwMjA2MDMwMTAxMDMwNDAzMDMwMzAzMDQwNDAzMDMwMzAzMDQwMzAxMDEwMzA0MDMwMTAxMDEwNDA0MDEwMTAxMDMwNDAzMDEwMTAzMDQwMzAxMDMwMzA0MDQwMzAzMDEwMzA0MDMwMTAxMDMwNDAzMDEwMzAzMDQwNDAzMDMwMTAzMDQwMzAxMDEwMzBhMDIwMjAyMDIwODA3MDIwMjAyMDIwYjAzMDEwMTAzMGEwMjAyMDIwMjA2MDUwMjAyMDIwMjBiMDMwMTAxMDMwNDAzMDEwMzAzMDQwNDAzMDMwMTAzMDQwMzAxMDEwMzA0MDMwMTAzMDMwNDA0MDMwMzAxMDMwNDAzMDEwMTAzMDQwMzAxMDEwMTA0MDQwMTAxMDEwMzA0MDMwMTAxMDMwNDAzMDMwMzAzMDQwNDAzMDMwMzAzMDQwMzAxMDEwMzA3MDIwMjAyMDIwOTA5MDIwMjAyMDIwODAzMDEwMTAzMDMwMzAzMDMwMzAzMDMwMzAzMDMwMzAzMDMwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMjIyMjIyMjIyMjIyMjIyMjAyMDAwMDAwMDAwMDAwMjAwMjAwMDAwMDAwMDAwMDIwMDIwMDAwMDAwMDAwMDAyMDAyMDAyMjAyMjAyMjAwMjAwMjAwMDIwMDAwMjAwMDIwMDIwMDAyMDAwMDIwMDAyMDAyMDAwMDAwMDAwMDAwMjAwMjAwMDAwMDAwMDAwMDIwMDIwMDAyMDAwMDIwMDAyMDAyMDAwMjAwMDAyMDAwMjAwMjAwMjIwMjIwMjIwMDIwMDIwMDAwMDAwMDAwMDAyMDAyMDAwMDAwMDAwMDAwMjAwMjAwMDAwMDAwMDAwMDIwMjIyMjIyMjIyMjIyMjIyMg==",
+        "data": "MTAxMDAwMTAwMDAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMzAzMDMwMzAzMDMwMzAzMDMwMzAzMDMwMzAzMDEwMTAzMDYwMjAyMDIwMjA1MDUwMjAyMDIwMjA2MDMwMTAxMDMwNDAzMDMwMzAzMDQwNDAzMDMwMzAzMDQwMzAxMDEwMzA0MDMwMTAxMDEwNDA0MDEwMTAxMDMwNDAzMDEwMTAzMDQwMzAxMDMwMzA0MDQwMzAzMDEwMzA0MDMwMTAxMDMwNDAzMDEwMzAzMDQwNDAzMDMwMTAzMDQwMzAxMDEwMzA2MDIwMjAyMDIwNjA2MDIwMjAyMDIwNjAzMDEwMTAzMDYwMjAyMDIwMjA2MDYwMjAyMDIwMjA2MDMwMTAxMDMwNDAzMDEwMzAzMDQwNDAzMDMwMTAzMDQwMzAxMDEwMzA0MDMwMTAzMDMwNDA0MDMwMzAxMDMwNDAzMDEwMTAzMDQwMzAxMDEwMTA0MDQwMTAxMDEwMzA0MDMwMTAxMDMwNDAzMDMwMzAzMDQwNDAzMDMwMzAzMDQwMzAxMDEwMzA2MDIwMjAyMDIwNjA2MDIwMjAyMDIwNjAzMDEwMTAzMDMwMzAzMDMwMzAzMDMwMzAzMDMwMzAzMDMwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMjIyMjIyMjIyMjIyMjIyMjAyMDAwMDAwMDAwMDAwMjAwMjAwMDAwMDAwMDAwMDIwMDIwMDAwMDAwMDAwMDAyMDAyMDAyMjAyMjAyMjAwMjAwMjAwMDIwMDAwMjAwMDIwMDIwMDAyMDAwMDIwMDAyMDAyMDAwMDAwMDAwMDAwMjAwMjAwMDAwMDAwMDAwMDIwMDIwMDAyMDAwMDIwMDAyMDAyMDAwMjAwMDAyMDAwMjAwMjAwMjIwMjIwMjIwMDIwMDIwMDAwMDAwMDAwMDAyMDAyMDAwMDAwMDAwMDAwMjAwMjAwMDAwMDAwMDAwMDIwMjIyMjIyMjIyMjIyMjIyMg==",
         "tileset": [
             "myTiles.transparency16",
             "sprites.builtin.brick",
             "sprites.vehicle.roadHorizontal",
             "sprites.skillmap.islandTile4",
             "sprites.vehicle.roadVertical",
-            "sprites.vehicle.roadTurn1",
-            "sprites.vehicle.roadTurn2",
-            "sprites.vehicle.roadTurn3",
-            "sprites.vehicle.roadTurn4",
-            "sprites.vehicle.roadIntersection1",
-            "sprites.vehicle.roadIntersection2",
-            "sprites.vehicle.roadIntersection4",
-            "sprites.vehicle.roadIntersection3"
+            "sprites.vehicle.roadIntersection3",
+            "sprites.castle.tilePath5"
         ],
         "displayName": "level1"
     },

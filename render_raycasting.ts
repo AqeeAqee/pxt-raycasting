@@ -28,6 +28,12 @@ namespace Render {
     let A_Fpx = 0
     let B_Fpx = 0
     const AD_BC_Fpx2 = 2 << fpx2 //= Math.SQRT2**2 == (A * D - B * C)   
+    function rotatePoint(xIn: number, yIn: number, A:number, B:number) {
+        const D=A, C=-B
+        const xOut = A * (xIn + H - X0) + B * (yIn + V - Y0) + X0
+        const yOut = C * (xIn + H - X0) + D * (yIn + V - Y0) + Y0
+        return { x: xOut*Scale, y: yOut }
+    }
 
     class MotionSet1D {
         p: number
@@ -528,6 +534,8 @@ namespace Render {
 
         rotatedTiles:Image[]
         lastRenderAngle=-1
+        selfSprAniId=0
+        corners:{x:number,y:number}[]=[]
         render() {
             // isometricView, ref: https://forum.makecode.com/t/snes-mode-7-transformations/8530
 
@@ -562,6 +570,23 @@ namespace Render {
 
                 // this.rotatedTiles.forEach((v, i) =>{
                 //     this.tempScreen.drawImage(v, (i % 3) * 64, 32+32*((i/3)|0))})
+
+                //tile corners, for drawing wall
+                this.corners.splice(0,this.corners.length)
+                this.corners=[
+                    rotatePoint(0, 0,  A_Fpx / fpx_scale, -B_Fpx / fpx_scale),
+                    rotatePoint(0, 15, A_Fpx / fpx_scale, -B_Fpx / fpx_scale),
+                    rotatePoint(15, 0, A_Fpx / fpx_scale, -B_Fpx / fpx_scale),
+                    rotatePoint(15, 15,A_Fpx / fpx_scale, -B_Fpx / fpx_scale),
+                ]
+                //sort by x, so 0 is left, 3 is right
+                this.corners.sort((v1,v2)=> v1.x-v2.x)
+                //1 is bottom
+                if (this.corners[1].y < this.corners[2].y)
+                    this.corners[1] = this.corners[2]
+
+                this.corners.forEach((p,i)=>this.tempScreen.setPixel(p.x+TileSize, 64+p.y+TileSize/2,i+1))
+
                 // return
 
                 //shear doubled, manually, for reference
@@ -606,6 +631,19 @@ namespace Render {
             const top_CenterTile = 80 - (TileSize * ScaleY)
 
             let ms = control.benchmark(() => {
+        //4 layer: floor,sprite,wall, roof
+        for (let iLayer = 0; iLayer < 4; iLayer++) {
+            if(iLayer==1){
+                //draw self Sprite
+                if (this.spriteAnimations[this.sprSelf.id].animations[0]) {
+                    const widthSelf = this.sprSelf.width * Scale
+                    const heightSelf = this.sprSelf.height * Scale
+                    this.tempScreen.blit(80 - (widthSelf >> 1), 80 - heightSelf, widthSelf, heightSelf,
+                        this.spriteAnimations[this.sprSelf.id].animations[0][(this.selfSprAniId++ / 10) | 0], 0, 0, 16, 16, true, false)
+                    this.selfSprAniId %= (this.spriteAnimations[this.sprSelf.id].animations[0].length * 10)
+                }
+                continue
+            }
             let offsetX_Fpx = 0, offsetY_Fpx = 0
             for (let i = 0; i < this.map.width; i++) {
                 offsetX_Fpx = (i + .5 - this.sprSelf.y / tilemapScale - 0) * C_px_Fpx + A_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) + left_CenterTile  * fpx_scale
@@ -615,19 +653,42 @@ namespace Render {
                     let offsetY = offsetY_Fpx >> (fpx + 1)
                     if (offsetX > -TileSize * 4 && offsetX < screen.width + TileSize * 4 && offsetY > -TileSize * 2 && offsetY < screen.height + TileSize * 2) {
                         const t = this.map.getTile(j, i)
-                        this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
+                        if (this.map.isWall(j, i)) {
+                            const wallHeight = TileSize * 2
+                            if (iLayer == 2){
+                            const p0x = offsetX + TileSize + this.corners[0].x, p0y = offsetY + TileSize / 2 + this.corners[0].y
+                            const p1x = offsetX + TileSize + this.corners[1].x, p1y = offsetY + TileSize / 2 + this.corners[1].y
+                            const p3x = offsetX + TileSize + this.corners[3].x, p3y = offsetY + TileSize / 2 + this.corners[3].y
+
+                            this.tempScreen.fillPolygon4(
+                                p0x, p0y,
+                                p0x, p0y - wallHeight,
+                                p1x, p1y - wallHeight,
+                                p1x, p1y,
+                                13)
+
+                            this.tempScreen.fillPolygon4(
+                                p3x, p3y,
+                                p3x, p3y - wallHeight,
+                                p1x, p1y - wallHeight,
+                                p1x, p1y,
+                                13)
+                            }
+                            if (iLayer == 3){
+                                offsetY -= wallHeight
+                                this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
+                            }
+                        }
+                        if (iLayer == 0) 
+                            this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
                     }
                     offsetX_Fpx+=A_px_Fpx
                     offsetY_Fpx+=B_px_Fpx
                 }
             }
-            }); this.tempScreen.print(ms.toString(), 0, 20)
+        }
+        }); this.tempScreen.print(ms.toString(), 0, 20)
 
-            //draw self Sprite
-            const widthSelf = this.sprSelf.width*Scale
-            const heightSelf = this.sprSelf.height*Scale
-            this.tempScreen.blit(80 - (widthSelf >> 1), 80 - heightSelf, widthSelf, heightSelf,
-                sprites.castle.heroWalkFront1, 0,0,16,16,true,false)
 
             //debug info
             // const loc = this.sprSelf.tilemapLocation()
