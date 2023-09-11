@@ -342,7 +342,7 @@ namespace Render {
             game.currentScene().tileMap.addEventListener(tiles.TileMapEvent.Loaded, data => this.tilemapLoaded())
 
             //self sprite
-            this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 0, this.tilemapScaleSize >> 0), SpriteKind.Player)
+            this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)
             this.takeoverSceneSprites()
             this.sprites.removeElement(this.sprSelf)
             this.updateViewZPos()
@@ -548,6 +548,7 @@ namespace Render {
 
         rotatedTiles:Image[]
 
+        lastRenderAngle=-1
         render() {
             // based on https://lodev.org/cgtutor/raycasting.html
 
@@ -555,51 +556,18 @@ namespace Render {
             this.viewYFpx = this.yFpx
             this.viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2<<fpx) + this.cameraOffsetZ_fpx
 
-        // if(!this.rotatedTiles)
+        if(this.lastRenderAngle!=this._angle || !this.rotatedTiles)
         {
+            //shear doubled, manually, for reference
+            // this.tempScreen.drawImage(assets.image`shearDoubleX_reference`, 50, 0)
 
-            this.tempScreen.drawImage(
-//shear doubled, manually, for reference
-img`
-    ..............................7777..............................
-    ............................77777777............................
-    ..........................777777777777..........................
-    ........................7777111111117777........................
-    ......................77777777777766667777......................
-    ....................777777771111111177777777....................
-    ..................7777777777776666777777777777..................
-    ................77777777777777777777777777777777................
-    ..............777777777777777777777777777777777777..............
-    ............7777777777775555777777777777777777777777............
-    ..........77777777777777775555777755556666777777777777..........
-    ........777777777777777777776666777755557777111133331111........
-    ......777777777777777777777777777755556666111111111111dddd......
-    ....55557777111133331111777777777777555577771111666611116666....
-    ..77777777111111111111dddd777777777777777733336666777733337777..
-    5555777777771111666611116666777777777777777711117777111166667777
-    ..7777777733336666777733337777111111117777111111111111dddd7777..
-    ....7777777711117777111166667777777766667777dddd3333dddd7777....
-    ......7777111111111111dddd77771111111177777777666666667777......
-    ........7777dddd3333dddd77777777666677777777777777777777........
-    ..........77776666666677777777777777777777777777777777..........
-    ............7777777777777777777777777777777777777777............
-    ..............777777777777777777777777777777777777..............
-    ................77777777111111117777777777777777................
-    ..................7777777777776666777777777777..................
-    ....................777711111111777777777777....................
-    ......................77776666777777777777......................
-    ........................7777777777777777........................
-    ..........................777777775555..........................
-    ............................77777777............................
-    ..............................7777..............................
-    ................................................................
-`, 50, 0)
-
+            if(this.rotatedTiles)
+                this.rotatedTiles.splice(0, this.rotatedTiles.length)
             let ms:number
-
             ms = control.benchmark(() => {
-                this.rotatedTiles = this.map.getTileset().map((v, i) => this.rotate(v, this._angle, i))
+                this.rotatedTiles = this.map.getTileset().map((v, i) => this.rotate(v, this._angle+Math.PI/2, i))
             }); this.tempScreen.print(ms.toString(), 0, 110)
+            info.setScore(ms)
 
                 // this.rotatedTiles.forEach((v, i) =>{
                 // if (i <4)
@@ -615,12 +583,14 @@ img`
 //
 //                this.tempScreen.drawImage(this.map.getTileImage(3), 0, 12)
 
+            this.lastRenderAngle=this._angle
         }
 // return
             
-            info.setScore(this._angle*180/Math.PI)
+            // info.setScore(this._angle*180/Math.PI)
 
             const size=16
+            const scaleX=2, scaleY=1
 
             //rotate
             const A = (((2*size -1) * Math.SQRT2 * Math.cos(-Math.PI/2-this._angle)) * fpx_scale* fpx_scale)
@@ -634,25 +604,30 @@ img`
             // const C = -A
             // const D =  B
 
+            const left_CenterTile = 80 - (size * scaleX)
+            const top_CenterTile = 80 - (size * scaleY)
 
             let ms = control.benchmark(() => {
-
-            let offsetX = 0, offsetY = 0
+            let offsetX_Fpx = 0, offsetY_Fpx = 0
             for (let i = 0; i < this.map.width; i++) {
-                offsetX =  (i+.5 -this.sprSelf.y/tilemapScale-0) * C + A * (0-this.sprSelf.x/tilemapScale+.5)+ (50) * fpx_scale*fpx_scale
-                offsetY =  (i+.5 -this.sprSelf.y/tilemapScale-0) * D + B * (0-this.sprSelf.x/tilemapScale+.5)+ (100) * fpx_scale*fpx_scale
+                offsetX_Fpx = (i + .5 - this.sprSelf.y / tilemapScale - 0) * C + A * (0 - this.sprSelf.x / tilemapScale + .5) + left_CenterTile * fpx_scale*fpx_scale
+                offsetY_Fpx = (i + .5 - this.sprSelf.y / tilemapScale - 0) * D + B * (0 - this.sprSelf.x / tilemapScale + .5) + top_CenterTile*2 * fpx_scale*fpx_scale
                 for (let j = 0; j < this.map.height; j++) {
                     const t=this.map.getTile(j,i)
-                    if ((offsetX >> fpx2)>-size*4 && ( offsetY >> (fpx2+1))>-size*2)
-                    this.tempScreen.blit(offsetX >> fpx2, (offsetY >> (fpx2+1)) , size*4, size*2,
-                            this.rotatedTiles[t], 0, 0, size*4, size*2, true,false)
-                    offsetX+=A
-                    offsetY+=B
+                    const offsetX = offsetX_Fpx >> fpx2, offsetY = offsetY_Fpx >> (fpx2 + 1)
+                    if (offsetX > -size * 4 && offsetX < screen.width + size * 4 && offsetY > -size * 2 && offsetY < screen.height + size * 2)
+                        this.tempScreen.blit(offsetX, (offsetY_Fpx >> (fpx2+1)) , size*4-1, size*2-1,
+                            this.rotatedTiles[t], 0, 0, size*4-1, size*2-1, true,false)
+                    offsetX_Fpx+=A
+                    offsetY_Fpx+=B
                 }
             }
             }); this.tempScreen.print(ms.toString(), 0, 20)
 
-            this.tempScreen.blit(80-16,50-16, 32,32,
+
+            const widthSelf = this.sprSelf.width*scaleX
+            const heightSelf = this.sprSelf.height*scaleX
+            this.tempScreen.blit(80 - (widthSelf >> 1), 80 - heightSelf, widthSelf, heightSelf,
                 sprites.castle.heroWalkFront1, 0,0,16,16,true,false)
 
             const loc = this.sprSelf.tilemapLocation()
