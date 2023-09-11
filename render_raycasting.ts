@@ -20,6 +20,15 @@ namespace Render {
     const one2 = 1 << (fpx + fpx)
     const FPX_MAX = (1 << fpx) - 1
 
+    //for Isometric
+    const TileSize = 16 // Math.max(inImgs[0].width, inImgs[0].height)
+    const H = 0, V = 0
+    const X0 = TileSize >> 1, Y0 = TileSize >> 1
+    const Scale = 2, ScaleY = 1 //16x16 Rotate&Scale to 32x32, then stretch to 64x32
+    let A_Fpx = 0
+    let B_Fpx = 0
+    const AD_BC_Fpx2 = 2 << fpx2 //= Math.SQRT2**2 == (A * D - B * C)   
+
     class MotionSet1D {
         p: number
         v: number = 0
@@ -460,7 +469,7 @@ namespace Render {
 
         }
 
-        rotate(inImg:Image, degree:number, i=0){
+        rotateAll(inImgs: Image[], A_Fpx: number, B_Fpx: number, AD_BC_Fpx2: number) {
             //Derivation 1
             // const xOut = A * (xIn + H - X0) + B * (yIn + V - Y0) + X0
             // const yOut = C * (xIn + H - X0) + D * (yIn + V - Y0) + Y0
@@ -468,67 +477,38 @@ namespace Render {
             // let xIn = (-x * D + y * B + D * X0 - B * Y0) / AD_BC - (H - X0)
             // let yIn = (-x * C + y * A + C * X0 - A * Y0) / AD_BC - (V - Y0)
 
-            const scaleX = 2
-            const scaleY = 1
-            const size=Math.max(inImg.width,inImg.height)
-            const outImg = image.create(size * 2* scaleX , size *2 * scaleY)
-            // const H = size >> 1, V = size >> 1
-            const H =0, V =0
-            // const X0 = size, Y0 = size
-            const X0 = size/2, Y0 = size/2
-            const A = (Math.SQRT2 * Math.cos( degree ) * fpx_scale) | 0
-            const B = (Math.SQRT2 * Math.sin( degree ) * fpx_scale) | 0
-            // const A = fpx_scale
-            // const B =( (A * Math.tan(Math.PI * (degree) / 180) )|0)+1
-            const C = -B
-            const D = A 
+            const B_ADBC = (B_Fpx << fpx2) / AD_BC_Fpx2
+            const A_ADBC = (A_Fpx << fpx2) / AD_BC_Fpx2
+            const D_ADBC = A_ADBC
+            const C_ADBC = -B_ADBC
 
-            // outImg.fill(i+1)
-            // outImg.drawRect(0,0,size*2,size*2,1)
-
-            const AD_BC = (A * D - B * C)   //1<<fpx2 //
-            let xIn0_FX = (((D * X0 - B * Y0) / AD_BC) - (H - X0) * fpx_scale) | 0
-            let yIn0_FX = (((C * X0 - A * Y0) / AD_BC) - (V - Y0) * fpx_scale) | 0
-            const B_ADBC = (B<<fpx2) / AD_BC
-            const A_ADBC = (A<<fpx2) / AD_BC
-            const D_ADBC = (D<<fpx2) / AD_BC
-            const C_ADBC = (C<<fpx2) / AD_BC
-
-            let x = (X0 - size*scaleX);
-            xIn0_FX -= x * D_ADBC
-            yIn0_FX -= x * C_ADBC
-            
-        const xIn_FXs=[]
-            for (; x <= X0 + size * scaleX; x++) {
-                let xIn_FX = xIn0_FX
-                let yIn_FX = yIn0_FX
-                let y = (Y0 - size * scaleY*2 )
-                xIn_FX += y * B_ADBC
-                yIn_FX += y * A_ADBC
-                for (; y <= Y0 + size * scaleY; y++) { //
+            let xOut = (X0 - TileSize * Scale) + TileSize;
+            let xIn0_FX = ((D_ADBC * X0 - B_ADBC * Y0 >> fpx) + (X0 - H << fpx)) - (xOut - TileSize) * D_ADBC
+            let yIn0_FX = ((C_ADBC * X0 - A_ADBC * Y0 >> fpx) + (Y0 - V << fpx)) - (xOut - TileSize) * C_ADBC
+            const xIn_FXs = []
+            for (; xOut <= X0 + TileSize * Scale + TileSize; xOut++) {
+                let yOut = (Y0 - TileSize * Scale) + TileSize
+                let xIn_FX = xIn0_FX + (yOut - TileSize) * B_ADBC
+                let yIn_FX = yIn0_FX + (yOut - TileSize) * A_ADBC
+                for (; yOut <= (Y0 + TileSize) + TileSize; yOut++) { //
                     let xIn = xIn_FX >> fpx
                     let yIn = yIn_FX >> fpx
-                    if (0 <= xIn && xIn < size && 0 <= yIn && yIn < size) 
-                    {
-                        // if (0 <= xOut && xOut < outImg.width && 0 <= yOut && yOut < outImg.height) {
-                        const c = inImg.getPixel(inImg.width - xIn-1, yIn)
-                        outImg.setPixel((x + size-1) * scaleX,   (y+size-1) * scaleY, c)
-                        outImg.setPixel((x + size-1) * scaleX+1, (y+size-1) * scaleY, c)
-                        // outImg.setPixel(x, y, i+1)
+                    if (0 <= xIn && xIn < TileSize && 0 <= yIn && yIn < TileSize) {
+                        for (let i = 1; i < inImgs.length; i++) {
+                            const c = inImgs[i].getPixel(TileSize - xIn - 1, yIn)
+                            //stretch to 64x32
+                            this.rotatedTiles[i].setPixel(xOut * Scale, yOut, c)
+                            this.rotatedTiles[i].setPixel(xOut * Scale + 1, yOut, c)
+                            // this.rotatedTiles[i].drawLine(xOut * scale, yOut,
+                            //     xOut * scale + 1, yOut , c)
+                        }
                     }
                     xIn_FX += B_ADBC
                     yIn_FX += A_ADBC
                 }
-                // xIn_FXs.push(Math.roundWithPrecision(xIn_FX/fpx_scale,2))
-
                 xIn0_FX -= D_ADBC
                 yIn0_FX -= C_ADBC
             }
-            // console.log(xIn_FXs.join())
-            // console.log(" -")
-            // console.log(" -")
-
-            return outImg
         }
 
         shearDoubleX(inImg: Image, degree: number, i = 0){
@@ -547,92 +527,112 @@ namespace Render {
         }
 
         rotatedTiles:Image[]
-
         lastRenderAngle=-1
         render() {
-            // based on https://lodev.org/cgtutor/raycasting.html
+            // isometricView, ref: https://forum.makecode.com/t/snes-mode-7-transformations/8530
 
             this.viewXFpx = this.xFpx
             this.viewYFpx = this.yFpx
             this.viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2<<fpx) + this.cameraOffsetZ_fpx
 
-        if(this.lastRenderAngle!=this._angle || !this.rotatedTiles)
-        {
-            //shear doubled, manually, for reference
-            // this.tempScreen.drawImage(assets.image`shearDoubleX_reference`, 50, 0)
-
-            if(this.rotatedTiles)
-                this.rotatedTiles.splice(0, this.rotatedTiles.length)
-            let ms:number
-            ms = control.benchmark(() => {
-                this.rotatedTiles = this.map.getTileset().map((v, i) => this.rotate(v, this._angle+Math.PI/2, i))
-            }); this.tempScreen.print(ms.toString(), 0, 110)
-            info.setScore(ms)
-
-                // this.rotatedTiles.forEach((v, i) =>{
-                // if (i <4)
-                //     this.tempScreen.drawImage(v, (i % 3) * 64, 32+32*((i/3)|0))})
-
-//            ms = control.benchmark(() => {
-//                this.rotatedTiles = this.map.getTileset().map((v, i) => this.shearDoubleX(v, this._angle, i))
-//            }); this.tempScreen.print(ms.toString(), 0, 100)
-//            
-//            this.rotatedTiles.forEach((v, i) =>{
-//                if(i<4)
-//                this.tempScreen.drawImage(v, (i % 3) * 64, 32 * ((i / 3) | 0))})
-//
-//                this.tempScreen.drawImage(this.map.getTileImage(3), 0, 12)
-
-            this.lastRenderAngle=this._angle
-        }
-// return
-            
+            const angle = -this._angle - Math.PI / 2
             // info.setScore(this._angle*180/Math.PI)
 
-            const size=16
-            const scaleX=2, scaleY=1
+            //update tiles and parameters
+            if(this.lastRenderAngle!=this._angle || !this.rotatedTiles)
+            {
 
-            //rotate
-            const A = (((2*size -1) * Math.SQRT2 * Math.cos(-Math.PI/2-this._angle)) * fpx_scale* fpx_scale)
-            const B = (((2*size -1) * Math.SQRT2 * Math.sin(-Math.PI/2-this._angle)) * fpx_scale* fpx_scale)
-            const C = -B
-            const D = A
+                A_Fpx = (Math.SQRT2 * Math.cos(angle) * fpx_scale) | 0
+                B_Fpx = (Math.SQRT2 * Math.sin(angle) * fpx_scale) | 0
+
+                if(this.rotatedTiles){
+                    for (let i = 0; i < this.rotatedTiles.length; i++)
+                        this.rotatedTiles[i].fill(0)
+                }else{
+                    this.rotatedTiles = []
+                    for (let i = 0; i < this.map.getTileset().length; i++)
+                        this.rotatedTiles.push(image.create(TileSize * 2 * Scale, TileSize * 2 * ScaleY))
+                }
+
+                let ms: number
+
+                ms = control.benchmark(() => {
+                    this.rotateAll(this.map.getTileset(),A_Fpx, -B_Fpx, AD_BC_Fpx2)
+                }); info.setScore(ms) // this.tempScreen.print(ms.toString(), 0, 110)
+
+                // this.rotatedTiles.forEach((v, i) =>{
+                //     this.tempScreen.drawImage(v, (i % 3) * 64, 32+32*((i/3)|0))})
+                // return
+
+                //shear doubled, manually, for reference
+                // this.tempScreen.drawImage(assets.image`shearDoubleX_reference`, 50, 0)
+
+                // ms = control.benchmark(() => {
+                // this.rotatedTiles = this.map.getTileset().map((v, i) => this.shearDoubleX(v, this._angle, i))
+                // }); this.tempScreen.print(ms.toString(), 0, 100)
+                // this.rotatedTiles.forEach((v, i) =>{
+                // this.tempScreen.drawImage(v, (i % 3) * 64, 32 * ((i / 3) | 0))})
+                // 
+                // this.tempScreen.drawImage(this.map.getTileImage(3), 0, 12)
+
+                this.lastRenderAngle=this._angle
+            }
+
+            const A_px_Fpx = (Scale*TileSize -2) * A_Fpx // -2 is a workaround avoiding gaps between tiles 
+            const B_px_Fpx = (Scale*TileSize -2) * B_Fpx // -2 is a workaround avoiding gaps between tiles 
+            const C_px_Fpx = -B_px_Fpx
+            const D_px_Fpx = A_px_Fpx
 
             //shearDoubleX
-            // const A = 32 * fpx_scale* fpx_scale
-            // const B = 16 * fpx_scale* fpx_scale
+            // const A = 32 * fpx_scale
+            // const B = 16 * fpx_scale
             // const C = -A
             // const D =  B
 
-            const left_CenterTile = 80 - (size * scaleX)
-            const top_CenterTile = 80 - (size * scaleY)
+            if(0){//debug tiles align with A B
+                const A = A_px_Fpx >> fpx
+                const B = B_px_Fpx >> (fpx+1)
+                const C = -B
+                const D = A
+
+                this.tempScreen.drawTransparentImage(this.rotatedTiles[3], 0, 32)
+                this.tempScreen.drawTransparentImage(this.rotatedTiles[3], 0 + A, 32 + B)
+                this.tempScreen.drawLine(0, 32, 0 + A, 32 + B, 2)
+                this.tempScreen.drawLine(0, 32 - B, 0 + C, 32 - B + D/2, 2)
+                return
+            }
+
+            const left_CenterTile = 80 - (TileSize * Scale)
+            const top_CenterTile = 80 - (TileSize * ScaleY)
 
             let ms = control.benchmark(() => {
             let offsetX_Fpx = 0, offsetY_Fpx = 0
             for (let i = 0; i < this.map.width; i++) {
-                offsetX_Fpx = (i + .5 - this.sprSelf.y / tilemapScale - 0) * C + A * (0 - this.sprSelf.x / tilemapScale + .5) + left_CenterTile * fpx_scale*fpx_scale
-                offsetY_Fpx = (i + .5 - this.sprSelf.y / tilemapScale - 0) * D + B * (0 - this.sprSelf.x / tilemapScale + .5) + top_CenterTile*2 * fpx_scale*fpx_scale
+                offsetX_Fpx = (i + .5 - this.sprSelf.y / tilemapScale - 0) * C_px_Fpx + A_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) + left_CenterTile  * fpx_scale
+                offsetY_Fpx = (i + .5 - this.sprSelf.y / tilemapScale - 0) * D_px_Fpx + B_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) + top_CenterTile*2 * fpx_scale
                 for (let j = 0; j < this.map.height; j++) {
-                    const t=this.map.getTile(j,i)
-                    const offsetX = offsetX_Fpx >> fpx2, offsetY = offsetY_Fpx >> (fpx2 + 1)
-                    if (offsetX > -size * 4 && offsetX < screen.width + size * 4 && offsetY > -size * 2 && offsetY < screen.height + size * 2)
-                        this.tempScreen.blit(offsetX, (offsetY_Fpx >> (fpx2+1)) , size*4-1, size*2-1,
-                            this.rotatedTiles[t], 0, 0, size*4-1, size*2-1, true,false)
-                    offsetX_Fpx+=A
-                    offsetY_Fpx+=B
+                    const offsetX = offsetX_Fpx >> fpx
+                    let offsetY = offsetY_Fpx >> (fpx + 1)
+                    if (offsetX > -TileSize * 4 && offsetX < screen.width + TileSize * 4 && offsetY > -TileSize * 2 && offsetY < screen.height + TileSize * 2) {
+                        const t = this.map.getTile(j, i)
+                        this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
+                    }
+                    offsetX_Fpx+=A_px_Fpx
+                    offsetY_Fpx+=B_px_Fpx
                 }
             }
             }); this.tempScreen.print(ms.toString(), 0, 20)
 
-
-            const widthSelf = this.sprSelf.width*scaleX
-            const heightSelf = this.sprSelf.height*scaleX
+            //draw self Sprite
+            const widthSelf = this.sprSelf.width*Scale
+            const heightSelf = this.sprSelf.height*Scale
             this.tempScreen.blit(80 - (widthSelf >> 1), 80 - heightSelf, widthSelf, heightSelf,
                 sprites.castle.heroWalkFront1, 0,0,16,16,true,false)
 
-            const loc = this.sprSelf.tilemapLocation()
-            this.tempScreen.print(loc.row + "," + loc.col, 0, 100)
-            this.tempScreen.print(this.sprSelf.x + "," + this.sprSelf.y, 0, 90)
+            //debug info
+            // const loc = this.sprSelf.tilemapLocation()
+            // this.tempScreen.print(loc.row + "," + loc.col, 0, 100)
+            // this.tempScreen.print(this.sprSelf.x + "," + this.sprSelf.y, 0, 90)
 
 
 

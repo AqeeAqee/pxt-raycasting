@@ -52,7 +52,7 @@ namespace myTiles {
 . . . . . . . . . . . . . . . . 
 `, [myTiles.transparency16], TileScale.Sixteen);
             case "level1":
-            case "level1":return tiles.createTilemap(hex`100010000101010101010101010101010101010101060606060606060606060606060601010608050505050f0f050505050906010106070606060607070606060607060101060706020202070710101006070601010607060206060707060610060706010106070602060607070606100607060101060d050505050b0a050505050e060101060d050505050908050505050e06010106070603060607070606040607060101060706030606070706060406070601010607060303030707040404060706010106070606060607070606060607060101060a050505050c0c050505050b06010106060606060606060606060606060101010101010101010101010101010101`, img`
+            case "level1":return tiles.createTilemap(hex`100010000101010101010101010101010101010101030303030303030303030303030301010305020202020c0c020202020603010103040303030304040303030304030101030403010101040401010103040301010304030103030404030301030403010103040301030304040303010304030101030a020202020807020202020b030101030a020202020605020202020b030101030403010303040403030103040301010304030103030404030301030403010103040301010104040101010304030101030403030303040403030303040301010307020202020909020202020803010103030303030303030303030303030101010101010101010101010101010101`, img`
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
 2 . . . . . . . . . . . . . . 2 
 2 . . . . . . . . . . . . . . 2 
@@ -69,7 +69,7 @@ namespace myTiles {
 2 . . . . . . . . . . . . . . 2 
 2 . . . . . . . . . . . . . . 2 
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
-`, [myTiles.transparency16,myTiles.tile1,sprites.castle.tileGrass2,sprites.builtin.brick,sprites.dungeon.hazardLava0,sprites.vehicle.roadHorizontal,sprites.skillmap.islandTile4,sprites.vehicle.roadVertical,sprites.vehicle.roadTurn1,sprites.vehicle.roadTurn2,sprites.vehicle.roadTurn3,sprites.vehicle.roadTurn4,sprites.vehicle.roadIntersection1,sprites.vehicle.roadIntersection2,sprites.vehicle.roadIntersection4,sprites.vehicle.roadIntersection3,sprites.builtin.forestTiles0], TileScale.Sixteen);
+`, [myTiles.transparency16,sprites.builtin.brick,sprites.vehicle.roadHorizontal,sprites.skillmap.islandTile4,sprites.vehicle.roadVertical,sprites.vehicle.roadTurn1,sprites.vehicle.roadTurn2,sprites.vehicle.roadTurn3,sprites.vehicle.roadTurn4,sprites.vehicle.roadIntersection1,sprites.vehicle.roadIntersection2,sprites.vehicle.roadIntersection4,sprites.vehicle.roadIntersection3], TileScale.Sixteen);
         }
         return null;
     })
