@@ -22,7 +22,7 @@ namespace Render {
 
     //for Isometric
     const TileSize = 16 // Math.max(inImgs[0].width, inImgs[0].height)
-    const H = 0, V = 0
+    const H = -8, V = -8
     const X0 = TileSize >> 1, Y0 = TileSize >> 1
     const Scale = 2, ScaleY = 1 //16x16 Rotate&Scale to 32x32, then stretch to 64x32
     let A_Fpx = 0
@@ -30,10 +30,13 @@ namespace Render {
     const AD_BC_Fpx2 = 2 << fpx2 //= Math.SQRT2**2 == (A * D - B * C)   
     const WallHeight = TileSize * 2
     function rotatePoint(xIn: number, yIn: number, A_Fpx:number, B_Fpx:number) {
+        A_Fpx<<=1;B_Fpx<<=1
         // const D=A, C=-B
-        const xOut = ( A_Fpx * (xIn + H - X0) + B_Fpx * (yIn + V - Y0) >>fpx) + X0
-        const yOut = (-B_Fpx * (xIn + H - X0) + A_Fpx * (yIn + V - Y0) >>fpx) + Y0
-        return { x: xOut * Scale + TileSize, y: yOut + TileSize / 2}
+        // const xOut = ( A_Fpx * (xIn + H - X0) + B_Fpx * (yIn + V - Y0) >>fpx) + X0
+        // const yOut = (-B_Fpx * (xIn + H - X0) + A_Fpx * (yIn + V - Y0) >>fpx) + Y0
+        let xOut = (-xIn *  A_Fpx + yIn * B_Fpx + A_Fpx * X0 - B_Fpx * Y0 <<fpx) / AD_BC_Fpx2 - (H - X0)
+        let yOut = (-xIn * -B_Fpx + yIn * A_Fpx - B_Fpx * X0 - A_Fpx * Y0 <<fpx) / AD_BC_Fpx2 - (V - Y0)
+        return { x: xOut * Scale , y: yOut }
     }
 
     class MotionSet1D {
@@ -477,44 +480,24 @@ namespace Render {
         }
 
         rotateAll(inImgs: Image[], A_Fpx: number, B_Fpx: number, AD_BC_Fpx2: number) {
-            //Derivation 1
-            // const xOut = A * (xIn + H - X0) + B * (yIn + V - Y0) + X0
-            // const yOut = C * (xIn + H - X0) + D * (yIn + V - Y0) + Y0
-            //Derivation 4
-            // let xIn = (-x * D + y * B + D * X0 - B * Y0) / AD_BC - (H - X0)
-            // let yIn = (-x * C + y * A + C * X0 - A * Y0) / AD_BC - (V - Y0)
+            A_Fpx >>= 1; B_Fpx >>= 1
+            const D_Fpx =  A_Fpx
+            const C_Fpx = -B_Fpx
 
-            const B_ADBC = (B_Fpx << fpx2) / AD_BC_Fpx2
-            const A_ADBC = (A_Fpx << fpx2) / AD_BC_Fpx2
-            const D_ADBC = A_ADBC
-            const C_ADBC = -B_ADBC
-
-            let xOut = (X0 - TileSize * Scale) + TileSize;
-            let xIn0_FX = ((D_ADBC * X0 - B_ADBC * Y0 >> fpx) + (X0 - H << fpx)) - (xOut - TileSize) * D_ADBC
-            let yIn0_FX = ((C_ADBC * X0 - A_ADBC * Y0 >> fpx) + (Y0 - V << fpx)) - (xOut - TileSize) * C_ADBC
-            const xIn_FXs = []
-            for (; xOut <= X0 + TileSize * Scale + TileSize; xOut++) {
-                let yOut = (Y0 - TileSize * Scale) + TileSize
-                let xIn_FX = xIn0_FX + (yOut - TileSize) * B_ADBC
-                let yIn_FX = yIn0_FX + (yOut - TileSize) * A_ADBC
-                for (; yOut <= (Y0 + TileSize) + TileSize; yOut++) { //
-                    let xIn = xIn_FX >> fpx
-                    let yIn = yIn_FX >> fpx
+            for (let xOut = 0; xOut < 32; xOut++) {
+                for (let yOut = 0; yOut < 32; yOut++) {
+                    const yIn = (C_Fpx * (xOut + H - X0) + D_Fpx * (yOut + V - Y0) >>fpx) + Y0
+                    const xIn = (A_Fpx * (xOut + H - X0) + B_Fpx * (yOut + V - Y0) >>fpx) + X0
                     if (0 <= xIn && xIn < TileSize && 0 <= yIn && yIn < TileSize) {
                         for (let i = 1; i < inImgs.length; i++) {
-                            const c = inImgs[i].getPixel(TileSize - xIn - 1, yIn)
+                            const c = inImgs[i].getPixel(xIn, yIn)
                             //stretch to 64x32
                             this.rotatedTiles[i].setPixel(xOut * Scale, yOut, c)
                             this.rotatedTiles[i].setPixel(xOut * Scale + 1, yOut, c)
-                            // this.rotatedTiles[i].drawLine(xOut * scale, yOut,
-                            //     xOut * scale + 1, yOut , c)
+                            // this.rotatedTiles[i].drawLine(xOut * scale, yOut, xOut * scale + 1, yOut , c)
                         }
                     }
-                    xIn_FX += B_ADBC
-                    yIn_FX += A_ADBC
                 }
-                xIn0_FX -= D_ADBC
-                yIn0_FX -= C_ADBC
             }
         }
 
@@ -586,7 +569,7 @@ namespace Render {
                 let ms: number
 
                 ms = control.benchmark(() => {
-                    this.rotateAll(this.map.getTileset(),A_Fpx, -B_Fpx, AD_BC_Fpx2)
+                    this.rotateAll(this.map.getTileset(),A_Fpx, B_Fpx, AD_BC_Fpx2)
                 }); info.setScore(ms) // this.tempScreen.print(ms.toString(), 0, 110)
 
                 // this.rotatedTiles.forEach((v, i) =>{
@@ -633,12 +616,13 @@ namespace Render {
             // const D =  B
 
             if(0){//debug tiles align with A B
+                this.tempScreen.fill(8)
                 const A = A_px_Fpx >> fpx
                 const B = B_px_Fpx >> (fpx)
                 const C = -B
                 const D = A
 
-                this.tempScreen.drawTransparentImage(this.rotatedTiles[1], 0, 32)
+                this.tempScreen.drawImage(this.rotatedTiles[1], 0, 32)
                 this.tempScreen.drawTransparentImage(this.rotatedTiles[3], 0 + A, 32 + B/2)
                 this.tempScreen.drawLine(16, 32, 16 + A, 32 + B/2, 2)
                 this.tempScreen.drawLine(16, 32, 16 + C, 32 + D/2, 2)
