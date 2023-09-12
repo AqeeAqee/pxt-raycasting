@@ -603,7 +603,8 @@ namespace Render {
 
                 const topCornerId= this.corners.reduce((tId, p, i) => { return p.y<this.corners[tId].y? i:tId }, 0)
                 this.corners.removeAt(topCornerId)
-                for (let i = 0; i < 3- topCornerId; i++) //reorder, keep original loop order, start from the next corner of toppest one to the last, then start from beginning
+                if(topCornerId) //not necessary if removed [0]
+                for (let i = 0; i < 3- topCornerId; i++) //rolling reorder, keep original loop order, start from the next corner of toppest one to the last, then start from beginning
                     this.corners.insertAt(0, this.corners.pop())
 
                 //shear doubled, manually, for reference
