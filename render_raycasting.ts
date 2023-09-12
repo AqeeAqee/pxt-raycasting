@@ -675,10 +675,7 @@ namespace Render {
                     const offsetY = offsetY_Fpx >> (fpx + 1)
                     if (offsetX > -TileSize * 4 && offsetX < screen.width + TileSize * 4 && offsetY > -TileSize * 2 && offsetY < screen.height + TileSize * 2) {
                         const t = this.map.getTile(j, i)
-                        if (iLayer == 0){ //floor
-                            this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
-                        }
-                        else if (this.map.isWall(j, i)) {
+                        if (this.map.isWall(j, i)) {
                             if (iLayer == 1){//wall
                                 if (offsetY+TileSize < 80)
                                     this.drawWall(offsetX, offsetY)
@@ -687,6 +684,9 @@ namespace Render {
                             }else if (iLayer == 3) { //roof
                                 this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY - WallHeight)
                             }
+                        }
+                        else if (iLayer == 0){ //floor
+                            this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
                         }
                     }
                     offsetX_Fpx+=A_px_Fpx
