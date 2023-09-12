@@ -29,11 +29,11 @@ namespace Render {
     let B_Fpx = 0
     const AD_BC_Fpx2 = 2 << fpx2 //= Math.SQRT2**2 == (A * D - B * C)   
     const WallHeight = TileSize * 2
-    function rotatePoint(xIn: number, yIn: number, A:number, B:number) {
-        const D=A, C=-B
-        const xOut = A * (xIn + H - X0) + B * (yIn + V - Y0) + X0
-        const yOut = C * (xIn + H - X0) + D * (yIn + V - Y0) + Y0
-        return { x: xOut*Scale, y: yOut }
+    function rotatePoint(xIn: number, yIn: number, A_Fpx:number, B_Fpx:number) {
+        // const D=A, C=-B
+        const xOut = ( A_Fpx * (xIn + H - X0) + B_Fpx * (yIn + V - Y0) >>fpx) + X0
+        const yOut = (-B_Fpx * (xIn + H - X0) + A_Fpx * (yIn + V - Y0) >>fpx) + Y0
+        return { x: xOut * Scale + TileSize, y: yOut + TileSize / 2}
     }
 
     class MotionSet1D {
@@ -534,9 +534,9 @@ namespace Render {
         }
 
         drawWall(offsetX: number, offsetY:number){
-                    const p0x = offsetX + TileSize + this.corners[0].x, p0y = offsetY + TileSize / 2 + this.corners[0].y
-                    const p1x = offsetX + TileSize + this.corners[1].x, p1y = offsetY + TileSize / 2 + this.corners[1].y
-                    const p3x = offsetX + TileSize + this.corners[3].x, p3y = offsetY + TileSize / 2 + this.corners[3].y
+                    const p0x = offsetX + this.corners[0].x, p0y = offsetY + this.corners[0].y
+                    const p1x = offsetX + this.corners[1].x, p1y = offsetY + this.corners[1].y
+                    const p3x = offsetX + this.corners[3].x, p3y = offsetY + this.corners[3].y
 
                     this.tempScreen.fillPolygon4(
                         p0x, p0y,
@@ -595,18 +595,17 @@ namespace Render {
                 //tile corners, for drawing wall
                 this.corners.splice(0,this.corners.length)
                 this.corners=[
-                    rotatePoint(0, 0,  A_Fpx / fpx_scale, -B_Fpx / fpx_scale),
-                    rotatePoint(0, 15, A_Fpx / fpx_scale, -B_Fpx / fpx_scale),
-                    rotatePoint(15, 0, A_Fpx / fpx_scale, -B_Fpx / fpx_scale),
-                    rotatePoint(15, 15,A_Fpx / fpx_scale, -B_Fpx / fpx_scale),
+                    rotatePoint(0, 0,  A_Fpx, -B_Fpx),
+                    rotatePoint(0, 15, A_Fpx, -B_Fpx),
+                    rotatePoint(15, 0, A_Fpx, -B_Fpx),
+                    rotatePoint(15, 15,A_Fpx, -B_Fpx),
                 ]
-                //sort by x, so 0 is left, 3 is right
+                //sort by x, so [0] is left, [3] is right
                 this.corners.sort((v1,v2)=> v1.x-v2.x)
-                //1 is bottom
-                if (this.corners[1].y < this.corners[2].y)
-                    this.corners[1] = this.corners[2]
+                //make [1] is bottom
+                if (this.corners[1].y < this.corners[2].y) this.corners[1] = this.corners[2]
 
-                this.corners.forEach((p,i)=>this.tempScreen.setPixel(p.x+TileSize, 64+p.y+TileSize/2,i+1))
+                // this.corners.forEach((p,i)=>this.tempScreen.setPixel(p.x, 64+p.y,i+1))
 
                 // return
 
