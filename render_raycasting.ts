@@ -653,8 +653,8 @@ namespace Render {
 
             let ms = control.benchmark(() => {
                 const bottomWalls=[]
-        //4 layer: floor,wall(up)&sprite&wall(bottom), roof
-        for (let iLayer = 0; iLayer < 4; iLayer++) {
+        
+        for (let iLayer = 0; iLayer < 4; iLayer++) { //4 layer: floor, wall(up), sprite&wall(bottom), roof
             if(iLayer==2){
                 //draw self Sprite
                 if (this.spriteAnimations[this.sprSelf.id].animations[0]) {
@@ -673,25 +673,22 @@ namespace Render {
                 offsetY_Fpx = (i + .5 - this.sprSelf.y / tilemapScale - 0) * D_px_Fpx + B_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) + top_CenterTile*2 * fpx_scale
                 for (let j = 0; j < this.map.height; j++) {
                     const offsetX = offsetX_Fpx >> fpx
-                    let offsetY = offsetY_Fpx >> (fpx + 1)
+                    const offsetY = offsetY_Fpx >> (fpx + 1)
                     if (offsetX > -TileSize * 4 && offsetX < screen.width + TileSize * 4 && offsetY > -TileSize * 2 && offsetY < screen.height + TileSize * 2) {
                         const t = this.map.getTile(j, i)
-                        if (this.map.isWall(j, i)) {
+                        if (iLayer == 0){ //floor
+                            this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
+                        }
+                        else if (this.map.isWall(j, i)) {
                             if (iLayer == 1){//wall
-                                if (offsetY < 80) {
+                                if (offsetY+TileSize < 80)
                                     this.drawWall(offsetX, offsetY)
-                                } else {
+                                else
                                     bottomWalls.push([offsetX, offsetY])
-                                }
-                            }
-                            if (iLayer == 3) { //roof
-                                offsetY -= WallHeight
-                                this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
+                            }else if (iLayer == 3) { //roof
+                                this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY - WallHeight)
                             }
                         }
-
-                        if (iLayer == 0) //floor
-                            this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
                     }
                     offsetX_Fpx+=A_px_Fpx
                     offsetY_Fpx+=B_px_Fpx
