@@ -481,14 +481,18 @@ namespace Render {
 
         rotateAll(inImgs: Image[], A_Fpx: number, B_Fpx: number, AD_BC_Fpx2: number) {
             A_Fpx >>= 1; B_Fpx >>= 1
-            const D_Fpx =  A_Fpx
+            const D_Fpx = A_Fpx
             const C_Fpx = -B_Fpx
-
+            const TileSize_Fpx = TileSize << fpx
+            let xIn0_FX = (A_Fpx * (H - X0)) + (B_Fpx * (V - Y0)) + (X0 << fpx)
+            let yIn0_FX = (C_Fpx * (H - X0)) + (D_Fpx * (V - Y0)) + (Y0 << fpx)
             for (let xOut = 0; xOut < 32; xOut++) {
+                let xIn_FX = xIn0_FX
+                let yIn_FX = yIn0_FX
                 for (let yOut = 0; yOut < 32; yOut++) {
-                    const yIn = (C_Fpx * (xOut + H - X0) + D_Fpx * (yOut + V - Y0) >>fpx) + Y0
-                    const xIn = (A_Fpx * (xOut + H - X0) + B_Fpx * (yOut + V - Y0) >>fpx) + X0
-                    if (0 <= xIn && xIn < TileSize && 0 <= yIn && yIn < TileSize) {
+                    if (0 <= xIn_FX && xIn_FX < TileSize_Fpx && 0 <= yIn_FX && yIn_FX < TileSize_Fpx) {
+                        const xIn = xIn_FX >> fpx
+                        const yIn = yIn_FX >> fpx
                         for (let i = 1; i < inImgs.length; i++) {
                             const c = inImgs[i].getPixel(xIn, yIn)
                             //stretch to 64x32
@@ -497,7 +501,11 @@ namespace Render {
                             // this.rotatedTiles[i].drawLine(xOut * scale, yOut, xOut * scale + 1, yOut , c)
                         }
                     }
+                    xIn_FX += B_Fpx
+                    yIn_FX += D_Fpx
                 }
+                xIn0_FX += A_Fpx
+                yIn0_FX += C_Fpx
             }
         }
 
