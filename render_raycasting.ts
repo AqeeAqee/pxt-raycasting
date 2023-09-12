@@ -536,7 +536,7 @@ namespace Render {
         drawWall(offsetX: number, offsetY:number){
                     const p0x = offsetX + this.corners[0].x, p0y = offsetY + this.corners[0].y
                     const p1x = offsetX + this.corners[1].x, p1y = offsetY + this.corners[1].y
-                    const p3x = offsetX + this.corners[3].x, p3y = offsetY + this.corners[3].y
+                    const p3x = offsetX + this.corners[2].x, p3y = offsetY + this.corners[2].y
 
                     this.tempScreen.fillPolygon4(
                         p0x, p0y,
@@ -596,18 +596,15 @@ namespace Render {
                 this.corners.splice(0,this.corners.length)
                 this.corners=[
                     rotatePoint(0, 0,  A_Fpx, -B_Fpx),
-                    rotatePoint(0, 15, A_Fpx, -B_Fpx),
                     rotatePoint(15, 0, A_Fpx, -B_Fpx),
                     rotatePoint(15, 15,A_Fpx, -B_Fpx),
+                    rotatePoint(0, 15, A_Fpx, -B_Fpx),
                 ]
-                //sort by x, so [0] is left, [3] is right
-                this.corners.sort((v1,v2)=> v1.x-v2.x)
-                //make [1] is bottom
-                if (this.corners[1].y < this.corners[2].y) this.corners[1] = this.corners[2]
 
-                // this.corners.forEach((p,i)=>this.tempScreen.setPixel(p.x, 64+p.y,i+1))
-
-                // return
+                const topCornerId= this.corners.reduce((tId, p, i) => { return p.y<this.corners[tId].y? i:tId }, 0)
+                this.corners.removeAt(topCornerId)
+                for (let i = 0; i < 3- topCornerId; i++) //reorder, keep original loop order, start from the next corner of toppest one to the last, then start from beginning
+                    this.corners.insertAt(0, this.corners.pop())
 
                 //shear doubled, manually, for reference
                 // this.tempScreen.drawImage(assets.image`shearDoubleX_reference`, 50, 0)
@@ -636,14 +633,25 @@ namespace Render {
 
             if(0){//debug tiles align with A B
                 const A = A_px_Fpx >> fpx
-                const B = B_px_Fpx >> (fpx+1)
+                const B = B_px_Fpx >> (fpx)
                 const C = -B
                 const D = A
 
-                this.tempScreen.drawTransparentImage(this.rotatedTiles[3], 0, 32)
-                this.tempScreen.drawTransparentImage(this.rotatedTiles[3], 0 + A, 32 + B)
-                this.tempScreen.drawLine(0, 32, 0 + A, 32 + B, 2)
-                this.tempScreen.drawLine(0, 32 - B, 0 + C, 32 - B + D/2, 2)
+                this.tempScreen.drawTransparentImage(this.rotatedTiles[1], 0, 32)
+                this.tempScreen.drawTransparentImage(this.rotatedTiles[3], 0 + A, 32 + B/2)
+                this.tempScreen.drawLine(16, 32, 16 + A, 32 + B/2, 2)
+                this.tempScreen.drawLine(16, 32, 16 + C, 32 + D/2, 2)
+                //debug
+                this.corners.forEach((p, i) => this.tempScreen.print(p.x + "," + p.y, 80, i * 10 + 30))
+                // info.player2.setScore(100 * this._angle * 180 / Math.PI)
+
+                this.corners.forEach((p, i) => { this.tempScreen.setPixel(p.x, 64 + p.y, i + 1) })
+
+                //debug
+                // this.corners.forEach((p, i) => this.tempScreen.print(p.x + "," + p.y, 0, i * 10 + 30))
+                // info.player2.setScore(this._angle*180/Math.PI)
+                // return
+
                 return
             }
 
@@ -695,7 +703,6 @@ namespace Render {
             }
         }
         }); this.tempScreen.print(ms.toString(), 0, 20)
-
 
             //debug info
             // const loc = this.sprSelf.tilemapLocation()
