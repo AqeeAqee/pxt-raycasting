@@ -627,8 +627,8 @@ namespace Render {
                 const C = -B
                 const D = A
 
-                this.tempScreen.drawImage(this.rotatedTiles[1], 0, 32)
                 this.tempScreen.drawTransparentImage(this.rotatedTiles[3], 0 + A, 32 + B/2)
+                this.tempScreen.drawTransparentImage(this.rotatedTiles[1], 0, 32)
                 this.tempScreen.drawLine(16, 32, 16 + A, 32 + B/2, 2)
                 this.tempScreen.drawLine(16, 32, 16 + C, 32 + D/2, 2)
                 //debug
