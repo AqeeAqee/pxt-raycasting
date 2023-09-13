@@ -24,19 +24,16 @@ namespace Render {
     const TileSize = 16 // Math.max(inImgs[0].width, inImgs[0].height)
     const H = -8, V = -8
     const X0 = TileSize >> 1, Y0 = TileSize >> 1
-    const Scale = 2, ScaleY = 1 //16x16 Rotate&Scale to 32x32, then stretch to 64x32
+    const Scale = 2, ScaleX = 2, ScaleY = 1 //16x16 Rotate&Scale to 32x32, then stretch to 64x32
     let A_Fpx = 0
     let B_Fpx = 0
-    const AD_BC_Fpx2 = 2 << fpx2 //= Math.SQRT2**2 == (A * D - B * C)   
+    const AD_BC_Fpx2 = (1/2) *fpx_scale <<fpx //= Math.SQRT2**2 == (A * D - B * C)   
     const WallHeight = TileSize * 2
     function rotatePoint(xIn: number, yIn: number, A_Fpx:number, B_Fpx:number) {
-        A_Fpx<<=1;B_Fpx<<=1
-        // const D=A, C=-B
-        // const xOut = ( A_Fpx * (xIn + H - X0) + B_Fpx * (yIn + V - Y0) >>fpx) + X0
-        // const yOut = (-B_Fpx * (xIn + H - X0) + A_Fpx * (yIn + V - Y0) >>fpx) + Y0
-        let xOut = (-xIn *  A_Fpx + yIn * B_Fpx + A_Fpx * X0 - B_Fpx * Y0 <<fpx) / AD_BC_Fpx2 - (H - X0)
-        let yOut = (-xIn * -B_Fpx + yIn * A_Fpx - B_Fpx * X0 - A_Fpx * Y0 <<fpx) / AD_BC_Fpx2 - (V - Y0)
-        return { x: xOut * Scale , y: yOut }
+        const D_Fpx = A_Fpx, C_Fpx = -B_Fpx
+        let xOut = (D_Fpx * (X0 - xIn) - B_Fpx * (Y0 - yIn) << fpx) / AD_BC_Fpx2 - (H - X0)
+        let yOut = (C_Fpx * (X0 - xIn) - A_Fpx * (Y0 - yIn) << fpx) / AD_BC_Fpx2 - (V - Y0)
+        return { x: xOut * Scale, y: yOut }
     }
 
     class MotionSet1D {
@@ -480,7 +477,7 @@ namespace Render {
         }
 
         rotateAll(inImgs: Image[], A_Fpx: number, B_Fpx: number, AD_BC_Fpx2: number) {
-            A_Fpx >>= 1; B_Fpx >>= 1
+            // A_Fpx >>= 1; B_Fpx >>= 1
             const D_Fpx = A_Fpx
             const C_Fpx = -B_Fpx
             const TileSize_Fpx = TileSize << fpx
@@ -562,8 +559,8 @@ namespace Render {
             if(this.lastRenderAngle!=this._angle || !this.rotatedTiles)
             {
 
-                A_Fpx = (Math.SQRT2 * Math.cos(angle) * fpx_scale) | 0
-                B_Fpx = (Math.SQRT2 * Math.sin(angle) * fpx_scale) | 0
+                A_Fpx = (Math.SQRT1_2 * Math.cos(angle) * fpx_scale) | 0
+                B_Fpx = (Math.SQRT1_2 * Math.sin(angle) * fpx_scale) | 0
 
                 if(this.rotatedTiles){
                     for (let i = 0; i < this.rotatedTiles.length; i++)
@@ -612,8 +609,8 @@ namespace Render {
                 this.lastRenderAngle=this._angle
             }
 
-            const A_px_Fpx = (Scale*TileSize -2) * A_Fpx // -2 is a workaround avoiding gaps between tiles 
-            const B_px_Fpx = (Scale*TileSize -2) * B_Fpx // -2 is a workaround avoiding gaps between tiles 
+            const A_px_Fpx = (TileSize * Scale * ScaleX -2) * A_Fpx  // -2 is a workaround avoiding gaps between tiles 
+            const B_px_Fpx = (TileSize * Scale * ScaleX -2) * B_Fpx  // -2 is a workaround avoiding gaps between tiles 
             const C_px_Fpx = -B_px_Fpx
             const D_px_Fpx = A_px_Fpx
 
@@ -625,8 +622,8 @@ namespace Render {
 
             if(0){//debug tiles align with A B
                 this.tempScreen.fill(8)
-                const A = A_px_Fpx >> fpx
-                const B = B_px_Fpx >> (fpx)
+                const A = A_px_Fpx / fpx_scale
+                const B = B_px_Fpx / fpx_scale
                 const C = -B
                 const D = A
 
