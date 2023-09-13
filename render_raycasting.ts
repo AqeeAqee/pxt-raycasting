@@ -22,17 +22,18 @@ namespace Render {
 
     //for Isometric
     const TileSize = 16 // Math.max(inImgs[0].width, inImgs[0].height)
-    const H = -8, V = -8
-    const X0 = TileSize >> 1, Y0 = TileSize >> 1
     const Scale = 2, ScaleX = 2, ScaleY = 1 //16x16 Rotate&Scale to 32x32, then stretch to 64x32
+    const X0 = TileSize >> 1, Y0 = TileSize >> 1
+    // const X0 = TileSize/2+1/Scale/ScaleX, Y0 = X0
+    const H = X0 - TileSize, V = Y0-TileSize
     let A_Fpx = 0
     let B_Fpx = 0
-    const AD_BC_Fpx2 = (1/2) *fpx_scale <<fpx //= Math.SQRT2**2 == (A * D - B * C)   
+    const AD_BC_Fpx2 = (1/2) *fpx_scale <<fpx //= Math.SQRT1_2**2 == (A * D - B * C)   
     const WallHeight = TileSize * 2
     function rotatePoint(xIn: number, yIn: number, A_Fpx:number, B_Fpx:number) {
         const D_Fpx = A_Fpx, C_Fpx = -B_Fpx
-        let xOut = (D_Fpx * (X0 - xIn) - B_Fpx * (Y0 - yIn) << fpx) / AD_BC_Fpx2 - (H - X0)
-        let yOut = (C_Fpx * (X0 - xIn) - A_Fpx * (Y0 - yIn) << fpx) / AD_BC_Fpx2 - (V - Y0)
+        let xOut = ((D_Fpx * (xIn - X0) - B_Fpx * (yIn - Y0)) << fpx) / AD_BC_Fpx2 - (H - X0)
+        let yOut = -((C_Fpx * (xIn - X0) - A_Fpx * (yIn - Y0)) << fpx) / AD_BC_Fpx2 - (V - Y0)
         return { x: xOut * Scale, y: yOut }
     }
 
@@ -477,13 +478,18 @@ namespace Render {
         }
 
         rotateAll(inImgs: Image[], A_Fpx: number, B_Fpx: number, AD_BC_Fpx2: number) {
-            // A_Fpx >>= 1; B_Fpx >>= 1
+            // let ms=0
+
+            // this.corners[0].x = 999
+            // this.corners[2].x = -999
+            // this.corners[1].y = -999
+
             const D_Fpx = A_Fpx
             const C_Fpx = -B_Fpx
             const TileSize_Fpx = TileSize << fpx
             let xIn0_FX = (A_Fpx * (H - X0)) + (B_Fpx * (V - Y0)) + (X0 << fpx)
             let yIn0_FX = (C_Fpx * (H - X0)) + (D_Fpx * (V - Y0)) + (Y0 << fpx)
-            for (let xOut = 0; xOut < 32; xOut++) {
+            for (let xOut = 0; xOut < 32 * Scale; xOut+=Scale) {
                 let xIn_FX = xIn0_FX
                 let yIn_FX = yIn0_FX
                 for (let yOut = 0; yOut < 32; yOut++) {
@@ -493,10 +499,21 @@ namespace Render {
                         for (let i = 1; i < inImgs.length; i++) {
                             const c = inImgs[i].getPixel(xIn, yIn)
                             //stretch to 64x32
-                            this.rotatedTiles[i].setPixel(xOut * Scale, yOut, c)
-                            this.rotatedTiles[i].setPixel(xOut * Scale + 1, yOut, c)
-                            // this.rotatedTiles[i].drawLine(xOut * scale, yOut, xOut * scale + 1, yOut , c)
+                            this.rotatedTiles[i].setPixel(xOut, yOut, c)
+                            this.rotatedTiles[i].setPixel(xOut + 1, yOut, c)
+                            // this.rotatedTiles[i].drawLine(xOut, yOut, xOut + 1, yOut , c)
                         }
+
+                        // ms+=control.benchmark(()=>{ //<3ms totally on Meowbit
+                        if (false && (0 === xIn || xIn === TileSize - 1) && (0 === yIn || yIn === TileSize - 1)){
+                            // console.log([xIn, yIn, xOut, yOut].join())
+                            if (xOut < this.corners[0].x) { this.corners[0].x = xOut; this.corners[0].y = yOut; }
+                            else if (xOut === this.corners[0].x && yOut > this.corners[0].y) { this.corners[0].y = yOut; }
+                            else if (xOut+1 > this.corners[2].x) {this.corners[2].x = xOut +1; this.corners[2].y = yOut; }
+                            else if (xOut+1 === this.corners[2].x && yOut > this.corners[2].y) { this.corners[2].y = yOut; }
+                            if (yOut > this.corners[1].y) { this.corners[1].x = xOut; this.corners[1].y = yOut; }
+                        }
+                        // }); 
                     }
                     xIn_FX += B_Fpx
                     yIn_FX += D_Fpx
@@ -504,6 +521,7 @@ namespace Render {
                 xIn0_FX += A_Fpx
                 yIn0_FX += C_Fpx
             }
+            // info.player2.setScore(ms)
         }
 
         shearDoubleX(inImg: Image, degree: number, i = 0){
@@ -544,7 +562,7 @@ namespace Render {
         rotatedTiles:Image[]
         lastRenderAngle=-1
         selfSprAniId=0
-        corners:{x:number,y:number}[]=[]
+        corners: { x: number, y: number }[] = [] //[{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }]
         render() {
             // isometricView, ref: https://forum.makecode.com/t/snes-mode-7-transformations/8530
 
@@ -561,6 +579,8 @@ namespace Render {
 
                 A_Fpx = (Math.SQRT1_2 * Math.cos(angle) * fpx_scale) | 0
                 B_Fpx = (Math.SQRT1_2 * Math.sin(angle) * fpx_scale) | 0
+                // A_Fpx = Math.sqrt(AD_BC_Fpx2 - B_Fpx * B_Fpx)
+                // B_Fpx = Math.sqrt(AD_BC_Fpx2 - A_Fpx * A_Fpx)
 
                 if(this.rotatedTiles){
                     for (let i = 0; i < this.rotatedTiles.length; i++)
@@ -581,19 +601,22 @@ namespace Render {
                 //     this.tempScreen.drawImage(v, (i % 3) * 64, 32+32*((i/3)|0))})
 
                 //tile corners, for drawing wall
-                this.corners.splice(0,this.corners.length)
-                this.corners=[
-                    rotatePoint(0, 0,  A_Fpx, -B_Fpx),
-                    rotatePoint(15, 0, A_Fpx, -B_Fpx),
-                    rotatePoint(15, 15,A_Fpx, -B_Fpx),
-                    rotatePoint(0, 15, A_Fpx, -B_Fpx),
-                ]
+                ms=control.benchmark(()=> {
+                    this.corners.splice(0, this.corners.length)
+                    this.corners = [
+                        rotatePoint(0, 0, A_Fpx, B_Fpx),
+                        rotatePoint(15.75, 0, A_Fpx, B_Fpx),
+                        rotatePoint(15.75, 15.5, A_Fpx, B_Fpx),
+                        rotatePoint(0, 15.5, A_Fpx, B_Fpx),
+                    ]
 
-                const topCornerId= this.corners.reduce((tId, p, i) => { return p.y<this.corners[tId].y? i:tId }, 0)
-                this.corners.removeAt(topCornerId)
-                if(topCornerId) //not necessary if removed [0]
-                for (let i = 0; i < 3- topCornerId; i++) //rolling reorder, keep original loop order, start from the next corner of toppest one to the last, then start from beginning
-                    this.corners.insertAt(0, this.corners.pop())
+                    const topCornerId = this.corners.reduce((tId, p, i) => { return p.y < this.corners[tId].y ? i : tId }, 0)
+                    this.corners.removeAt(topCornerId)
+                    if (topCornerId) //not necessary if removed [0]
+                        for (let i = 0; i < 3 - topCornerId; i++) //rolling reorder, keep original loop order, start from the next corner of toppest one to the last, then start from beginning
+                            this.corners.insertAt(0, this.corners.pop())
+                    this.corners[2].x += 1
+                }); info.player2.setScore(ms)
 
                 //shear doubled, manually, for reference
                 // this.tempScreen.drawImage(assets.image`shearDoubleX_reference`, 50, 0)
@@ -627,15 +650,17 @@ namespace Render {
                 const C = -B
                 const D = A
 
+                this.drawWall(0 + A, 32 + 32+B/2)
+                this.drawWall(0, 32 + 32)
                 this.tempScreen.drawTransparentImage(this.rotatedTiles[3], 0 + A, 32 + B/2)
                 this.tempScreen.drawTransparentImage(this.rotatedTiles[1], 0, 32)
-                this.tempScreen.drawLine(16, 32, 16 + A, 32 + B/2, 2)
-                this.tempScreen.drawLine(16, 32, 16 + C, 32 + D/2, 2)
+                this.tempScreen.drawLine(32, 32+16, 32 + A, 32+16 + B/2, 2)
+                this.tempScreen.drawLine(32, 32+16, 32 + C, 32+16 + D/2, 2)
                 //debug
                 this.corners.forEach((p, i) => this.tempScreen.print(p.x + "," + p.y, 80, i * 10 + 30))
                 // info.player2.setScore(100 * this._angle * 180 / Math.PI)
 
-                this.corners.forEach((p, i) => { this.tempScreen.setPixel(p.x, 64 + p.y, i + 1) })
+                this.corners.forEach((p, i) => { this.tempScreen.setPixel(p.x, 32 + p.y, i + 2) })
 
                 //debug
                 // this.corners.forEach((p, i) => this.tempScreen.print(p.x + "," + p.y, 0, i * 10 + 30))
