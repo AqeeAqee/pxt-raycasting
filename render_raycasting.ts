@@ -684,49 +684,46 @@ namespace Render {
             const top_CenterTile = ScreenCenterY - (TileSize * TileImgScaleY >>1 )
 
             let ms = control.benchmark(() => {
-                const bottomWalls=[]
+                const upWalls = []
+                const bottomWalls = []
         
-        for (let iLayer = 0; iLayer < 4; iLayer++) { //4 layer: floor, wall(up), sprite&wall(bottom), roof
-            if(iLayer==2){
-                //draw self Sprite
-                if (this.spriteAnimations[this.sprSelf.id].animations[0]) {
-                    const widthSelf = this.sprSelf.width  * TileImgScaleX
-                    const heightSelf = this.sprSelf.height * TileImgScaleX
-                    this.tempScreen.blit(ScreenCenterX - (widthSelf >> 1), ScreenCenterY - heightSelf, widthSelf, heightSelf,
-                        this.spriteAnimations[this.sprSelf.id].animations[0][(this.selfSprAniId++ / 10) | 0], 0, 0, 16, 16, true, false)
-                    this.selfSprAniId %= (this.spriteAnimations[this.sprSelf.id].animations[0].length * 10)
-                }
-                bottomWalls.forEach(v=>this.drawWall(v[0],v[1]))
-                continue
-            }
             let offsetX_Fpx = 0, offsetY_Fpx = 0
             for (let i = 0; i < this.map.width; i++) {
-                offsetX_Fpx = (i + .5 - this.sprSelf.y / tilemapScale - 0) * C_px_Fpx + A_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) + left_CenterTile  * fpx_scale
-                offsetY_Fpx = (i + .5 - this.sprSelf.y / tilemapScale - 0) * D_px_Fpx + B_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) + top_CenterTile*2 * fpx_scale
+                offsetX_Fpx = (( (i + .5 - this.sprSelf.y / tilemapScale - 0) * C_px_Fpx + A_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) )|0) + left_CenterTile  * fpx_scale
+                offsetY_Fpx = (( (i + .5 - this.sprSelf.y / tilemapScale - 0) * D_px_Fpx + B_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) )|0) + top_CenterTile*2 * fpx_scale
                 for (let j = 0; j < this.map.height; j++) {
                     const offsetX = offsetX_Fpx >> fpx
                     const offsetY = offsetY_Fpx >> (fpx + 1)
                     if (offsetX > -TileSize * 4 && offsetX < screen.width + TileSize * 4 && offsetY > -TileSize * 2 && offsetY < screen.height + TileSize * 2) {
                         const t = this.map.getTile(j, i)
                         if (this.map.isWall(j, i)) {
-                            if (iLayer == 1){//wall
-                                if (offsetY+TileSize < ScreenCenterY)
-                                    this.drawWall(offsetX, offsetY)
-                                else
-                                    bottomWalls.push([offsetX, offsetY])
-                            }else if (iLayer == 3) { //roof
-                                this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY - WallHeight)
-                            }
-                        }
-                        else if (iLayer == 0){ //floor
+                            if (offsetY+TileSize < ScreenCenterY)
+                                upWalls.push([offsetX, offsetY,t])
+                            else
+                                bottomWalls.push([offsetX, offsetY,t])
+                        }else //floor
                             this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
-                        }
                     }
                     offsetX_Fpx+=A_px_Fpx
                     offsetY_Fpx+=B_px_Fpx
                 }
             }
-        }
+
+            upWalls.forEach(v => this.drawWall(v[0], v[1]))
+            upWalls.forEach(v => this.tempScreen.drawTransparentImage(this.rotatedTiles[v[2]], v[0], v[1] - WallHeight))
+
+           //draw self Sprite
+            if (this.spriteAnimations[this.sprSelf.id].animations[0]) {
+                const widthSelf = this.sprSelf.width * TileImgScaleX
+                const heightSelf = this.sprSelf.height * TileImgScaleX
+                this.tempScreen.blit(ScreenCenterX - (widthSelf >> 1), ScreenCenterY - heightSelf, widthSelf, heightSelf,
+                    this.spriteAnimations[this.sprSelf.id].animations[0][(this.selfSprAniId++ / 10) | 0], 0, 0, 16, 16, true, false)
+                this.selfSprAniId %= (this.spriteAnimations[this.sprSelf.id].animations[0].length * 10)
+            }
+
+            bottomWalls.forEach(v => this.drawWall(v[0], v[1]))
+            bottomWalls.forEach(v => this.tempScreen.drawTransparentImage(this.rotatedTiles[v[2]], v[0], v[1] - WallHeight))
+
         }); this.tempScreen.print(ms.toString(), 0, 20)
 
             //debug info
