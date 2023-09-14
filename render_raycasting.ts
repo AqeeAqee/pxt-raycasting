@@ -1,3 +1,8 @@
+namespace userconfig {
+    export const ARCADE_SCREEN_WIDTH = 320
+    export const ARCADE_SCREEN_HEIGHT = 240
+}
+
 //% shim=pxt::updateScreen
 function updateScreen(img: Image) { }
 
@@ -21,6 +26,7 @@ namespace Render {
     const FPX_MAX = (1 << fpx) - 1
 
     //for Isometric
+    const ScreenCenterX = screen.width >> 1, ScreenCenterY = screen.height * 3 >> 2
     const TileSize = 16
     const TileImgScale = 4, HalfTileImgScale = TileImgScale >> 1
     const TileImgScaleX = TileImgScale, TileImgScaleY = TileImgScale >> 1 //16x16 Rotate&Scale to 64x64, then shrink to 64x32
@@ -567,6 +573,7 @@ namespace Render {
         render() {
             // isometricView, ref: https://forum.makecode.com/t/snes-mode-7-transformations/8530
 
+
             this.viewXFpx = this.xFpx
             this.viewYFpx = this.yFpx
             this.viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2<<fpx) + this.cameraOffsetZ_fpx
@@ -596,7 +603,10 @@ namespace Render {
 
                 ms = control.benchmark(() => {
                     this.rotateAll(this.map.getTileset(), A_Fpx, B_Fpx)
+                    //a workaround avoiding gaps between tiles
+                    this.rotatedTiles.forEach((t)=> t.drawTransparentImage(t, -1, -1))
                 }); info.setLife(ms) // this.tempScreen.print(ms.toString(), 0, 110)
+
 
                 // this.rotatedTiles.forEach((v, i) =>{
                 //     this.tempScreen.drawImage(v, (i % 3) * 64, 32+32*((i/3)|0))})
@@ -633,8 +643,8 @@ namespace Render {
                 this.lastRenderAngle=this._angle
             }
 
-            const A_px_Fpx = (TileSize * Scale_Square -2) * A_Fpx  // -2 is a workaround avoiding gaps between tiles 
-            const B_px_Fpx = (TileSize * Scale_Square -2) * B_Fpx  // -2 is a workaround avoiding gaps between tiles 
+            const A_px_Fpx = (TileSize * Scale_Square -1) * A_Fpx  // -2 is a workaround avoiding gaps between tiles 
+            const B_px_Fpx = (TileSize * Scale_Square -1) * B_Fpx  // -2 is a workaround avoiding gaps between tiles 
             const C_px_Fpx = -B_px_Fpx
             const D_px_Fpx = A_px_Fpx
 
@@ -670,8 +680,8 @@ namespace Render {
                 return
             }
 
-            const left_CenterTile = 80 - (TileSize * TileImgScaleX >>1 )
-            const top_CenterTile  = 80 - (TileSize * TileImgScaleY >>1 )
+            const left_CenterTile = ScreenCenterX - (TileSize * TileImgScaleX >>1 )
+            const top_CenterTile = ScreenCenterY - (TileSize * TileImgScaleY >>1 )
 
             let ms = control.benchmark(() => {
                 const bottomWalls=[]
@@ -682,7 +692,7 @@ namespace Render {
                 if (this.spriteAnimations[this.sprSelf.id].animations[0]) {
                     const widthSelf = this.sprSelf.width  * TileImgScaleX
                     const heightSelf = this.sprSelf.height * TileImgScaleX
-                    this.tempScreen.blit(80 - (widthSelf >> 1), 80 - heightSelf, widthSelf, heightSelf,
+                    this.tempScreen.blit(ScreenCenterX - (widthSelf >> 1), ScreenCenterY - heightSelf, widthSelf, heightSelf,
                         this.spriteAnimations[this.sprSelf.id].animations[0][(this.selfSprAniId++ / 10) | 0], 0, 0, 16, 16, true, false)
                     this.selfSprAniId %= (this.spriteAnimations[this.sprSelf.id].animations[0].length * 10)
                 }
@@ -700,7 +710,7 @@ namespace Render {
                         const t = this.map.getTile(j, i)
                         if (this.map.isWall(j, i)) {
                             if (iLayer == 1){//wall
-                                if (offsetY+TileSize < 80)
+                                if (offsetY+TileSize < ScreenCenterY)
                                     this.drawWall(offsetX, offsetY)
                                 else
                                     bottomWalls.push([offsetX, offsetY])
