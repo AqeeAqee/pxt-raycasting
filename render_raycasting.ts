@@ -719,10 +719,9 @@ namespace Render {
             .forEach((v)=>{
                 if(v[0]===0){ //spr
                     const spr = (v[3] == this.sprSelf.id ? this.sprSelf : this.sprites.find((spr) => spr.id === v[3]))
-                    if (!spr) game.splash(v[3]) //return //
                     const widthSpr =  spr.width  * Scale
                     const heightSpr = spr.height * Scale 
-                    this.tempScreen.blit(v[1] - (widthSpr >> 1), v[2] - heightSpr, widthSpr, heightSpr,
+                    helpers.imageBlit( this.tempScreen, v[1] - (widthSpr >> 1), v[2] - heightSpr, widthSpr, heightSpr,
                         spr.image, 0, 0, spr.image.width, spr.image.height, true, false)
                 }else if(v[0]===1){ //wall
                     this.drawWall(v[1], v[2])
