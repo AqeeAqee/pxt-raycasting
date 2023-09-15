@@ -699,7 +699,10 @@ namespace Render {
                     if (offsetX > -TileSize * 4 && offsetX < screen.width + TileSize * 4 && offsetY > -TileSize * 2 && offsetY < screen.height + TileSize * 2) {
                         const t = this.map.getTile(j, i)
                         if (this.map.isWall(j, i)) {
-                            Walls.push([1,offsetX, offsetY,t])
+                            Walls.push([1, offsetX, offsetY, t, 
+                                (D_px_Fpx > 0 ? i : this.map.width - 1 - i) * this.map.width +
+                                (B_px_Fpx > 0 ? j : this.map.height - 1 - j)
+                            ])
                         }else //floor
                             this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
                     }
@@ -714,10 +717,14 @@ namespace Render {
             .map((spr)=>{
                 offsetX_Fpx = (((spr.y- this.sprSelf.y) / tilemapScale * C_px_Fpx + A_px_Fpx * (spr.x- this.sprSelf.x )/ tilemapScale ) | 0) + ScreenCenterX  * fpx_scale
                 offsetY_Fpx = (((spr.y- this.sprSelf.y) / tilemapScale * D_px_Fpx + B_px_Fpx * (spr.x- this.sprSelf.x )/ tilemapScale ) | 0)/2 + ScreenCenterY * fpx_scale
-                return [0, offsetX_Fpx>>fpx, offsetY_Fpx>>fpx, spr.id]
+                const j=(spr.x/TileSize)|0, i=(spr.y/TileSize)|0
+                return [0, offsetX_Fpx>>fpx, offsetY_Fpx>>fpx, spr.id,
+                    (D_px_Fpx > 0 ? i : this.map.width - 1 - i) * this.map.width +
+                    (B_px_Fpx > 0 ? j : this.map.height - 1 - j)
+                ]
             })
-            .concat(Walls) // [0/1:spr/wall, offsetX, offsetY,sprID/wallTex]
-            .sort((v1, v2) => v1[2] - v2[2]) //todo: compare centers // from far to near
+            .concat(Walls) // [0/1:spr/wall, offsetX, offsetY,sprID/wallTex, drawing order index of row&col]
+            .sort((v1, v2) => v1[4] - v2[4]) //todo: compare centers // from far to near
             .forEach((v)=>{
                 if(v[0]===0){ //spr 
                     const spr = (v[3] == this.sprSelf.id ? this.sprSelf : this.sprites.find((spr) => spr.id === v[3]))
@@ -731,6 +738,8 @@ namespace Render {
                     this.drawWall(v[1], v[2])
                     this.tempScreen.drawTransparentImage(this.rotatedTiles[v[3]], v[1], v[2] - WallHeight)
                 }
+                //debug
+                // this.tempScreen.print(v[4]+"", v[1] + TileSize*2, v[2], 2)
             })
         }); this.tempScreen.print(ms.toString(), 0, 20)
 
