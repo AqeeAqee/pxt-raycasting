@@ -18,28 +18,36 @@
 
 
 //simplest, just one static image, looks the same in all angle of view
+//% whenUsed
 const texturesDonut = [[sprites.food.smallDonut]]
+//% whenUsed
 const texturesBigCake = [[sprites.food.bigCake]]
 
 //1-direction, with ani, looks the same Ani in all angle of view
+//% whenUsed
 const texturesCoin = [[sprites.builtin.coin0, sprites.builtin.coin1, sprites.builtin.coin2, sprites.builtin.coin3, sprites.builtin.coin4, sprites.builtin.coin5]]
 
+//% whenUsed
 const texturesDog = [[sprites.builtin.dog0, sprites.builtin.dog1, sprites.builtin.dog2]]
+//% whenUsed
 const texturesDuck = [[sprites.duck.duck1, sprites.duck.duck2, sprites.duck.duck3, sprites.duck.duck4, sprites.duck.duck5, sprites.duck.duck6],
     [sprites.duck.duck1, sprites.duck.duck2, sprites.duck.duck3, sprites.duck.duck4, sprites.duck.duck5, sprites.duck.duck6]]
 imagesFlipX(texturesDuck[0])
 
 //2-direction, with ani, looks difference from left or right side
+//% whenUsed
 const texturesPlane = [[sprites.vehicle.plane0, sprites.vehicle.plane1, sprites.vehicle.plane2, sprites.vehicle.plane3, sprites.vehicle.plane4, sprites.vehicle.plane5],
 [sprites.vehicle.plane0, sprites.vehicle.plane1, sprites.vehicle.plane2, sprites.vehicle.plane3, sprites.vehicle.plane4, sprites.vehicle.plane5]]
 //no right side ani images builtin, so make them from lefts, and then flipX
 imagesFlipX(texturesPlane[1])
 
+//% whenUsed
 const texturesFish = [[sprites.builtin.angelFish0, sprites.builtin.angelFish1, sprites.builtin.angelFish2, sprites.builtin.angelFish3],
 [sprites.builtin.angelFish0, sprites.builtin.angelFish1, sprites.builtin.angelFish2, sprites.builtin.angelFish3]]
 imagesFlipX(texturesFish[1])
 
 //4-direction
+//% whenUsed
 const texturesHero = [
     [sprites.castle.heroWalkSideLeft1, sprites.castle.heroWalkSideLeft2, sprites.castle.heroWalkSideLeft3, sprites.castle.heroWalkSideLeft4],
     [sprites.castle.heroWalkFront1, sprites.castle.heroWalkFront2, sprites.castle.heroWalkFront3, sprites.castle.heroWalkFront4],
@@ -47,6 +55,7 @@ const texturesHero = [
     [sprites.castle.heroWalkBack1, sprites.castle.heroWalkBack2, sprites.castle.heroWalkBack3, sprites.castle.heroWalkBack4],
 ]
 
+//% whenUsed
 const texturesPrincess2 = [
     [sprites.castle.princess2Left1, sprites.castle.princess2Left2],
     [sprites.castle.princess2WalkFront1, sprites.castle.princess2WalkFront2, sprites.castle.princess2WalkFront3, sprites.castle.princess2WalkFront2],
@@ -55,6 +64,7 @@ const texturesPrincess2 = [
 ]
 
 //4-direction, but back side has only 1 image, so no ani when looking from back
+//% whenUsed
 const texturesSkelly = [
     [sprites.castle.skellyWalkLeft1, sprites.castle.skellyWalkLeft2],
     [sprites.castle.skellyWalkFront1, sprites.castle.skellyWalkFront2, sprites.castle.skellyWalkFront3],
@@ -87,6 +97,7 @@ const texturesSkelly = [
 	    `],
 ]
 
+//% whenUsed
 const texturesPrincess = [
     [sprites.castle.princessLeft0, sprites.castle.princessLeft1, sprites.castle.princessLeft0, sprites.castle.princessLeft2],
     [sprites.castle.princessFront0, sprites.castle.princessFront1, sprites.castle.princessFront0, sprites.castle.princessFront2],
