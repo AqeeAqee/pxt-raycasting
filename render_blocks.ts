@@ -29,6 +29,7 @@ namespace Render {
             if (control.millis() - this.msLast > this.frameInterval) {
                 this.msLast = control.millis()
                 this.index++
+                while(dir<0) dir+=1 //make sure dir>0
                 this.iAnimation = Math.round((dir * this.animations.length)) % this.animations.length
                 if (this.index >= this.animations[this.iAnimation].length)
                     this.index = 0

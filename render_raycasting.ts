@@ -580,8 +580,9 @@ namespace Render {
             this.viewYFpx = this.yFpx
             this.viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2<<fpx) + this.cameraOffsetZ_fpx
 
+            while(this._angle<0) this._angle+=Math.PI*2
+            info.player2.setScore(this._angle*180/Math.PI)
             const angle = -this._angle - Math.PI / 2
-            // info.setScore((this._angle*180/Math.PI)%360)
 
             //update tiles and parameters
             if(this.lastRenderAngle!=this._angle || !this.rotatedTiles)
@@ -722,7 +723,7 @@ namespace Render {
                     const spr = (v[3] == this.sprSelf.id ? this.sprSelf : this.sprites.find((spr) => spr.id === v[3]))
                     const widthSpr =  spr.width  * Scale
                     const heightSpr = spr.height * Scale
-                    const dir = (Math.atan2(spr._vx as any as number, spr._vy as any as number) + this._angle) / Math.PI / 2 + 2 + 2 - .5
+                    const dir = (Math.atan2(spr._vx as any as number, spr._vy as any as number) + this._angle) / Math.PI / 2  + .5
                     const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(dir)
                     helpers.imageBlit( this.tempScreen, v[1] - (widthSpr >> 1), v[2] - heightSpr, widthSpr, heightSpr,
                         texSpr, 0, 0, spr.image.width, spr.image.height, true, false)

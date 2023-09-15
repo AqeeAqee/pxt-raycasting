@@ -130,9 +130,9 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSpr
     music.baDing.play()
     info.changeScoreBy(1)
 
-    tiles.placeOnRandomTile(otherSprite, sprites.skillmap.islandTile4)
-    otherSprite.setVelocity(Math.randomRange(4, 10), Math.randomRange(4, 10))
-    // otherSprite.destroy()
+    // tiles.placeOnRandomTile(otherSprite, sprites.skillmap.islandTile4)
+    // otherSprite.setVelocity(Math.randomRange(4, 10), Math.randomRange(4, 10))
+    otherSprite.destroy()
 })
 
 controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
