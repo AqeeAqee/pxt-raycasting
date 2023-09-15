@@ -1,7 +1,7 @@
-namespace userconfig {
-    export const ARCADE_SCREEN_WIDTH = 320
-    export const ARCADE_SCREEN_HEIGHT = 240
-}
+// namespace userconfig {
+//     export const ARCADE_SCREEN_WIDTH = 320
+//     export const ARCADE_SCREEN_HEIGHT = 240
+// }
 
 //% shim=pxt::updateScreen
 function updateScreen(img: Image) { }
@@ -167,7 +167,7 @@ namespace Render {
         set viewAngle(angle: number) {
             this._angle = angle
             this.setVectors()
-            this.updateSelfImage()
+            // this.updateSelfImage()
         }
 
         get wallZScale(): number {
@@ -367,11 +367,13 @@ namespace Render {
 
             //self sprite
             this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)
+            this.sprSelf.setImage(sprites.castle.heroWalkBack1)
+            this.sprSelf.scale=0.5
             this.takeoverSceneSprites()
-            this.sprites.removeElement(this.sprSelf)
+            // this.sprites.removeElement(this.sprSelf)
             this.updateViewZPos()
             scene.cameraFollowSprite(this.sprSelf)
-            this.updateSelfImage()
+            // this.updateSelfImage()
 
             game.onUpdate(function () {
                 this.updateControls()
@@ -681,12 +683,11 @@ namespace Render {
             }
 
             const left_CenterTile = ScreenCenterX - (TileSize * TileImgScaleX >>1 )
-            const top_CenterTile = ScreenCenterY - (TileSize * TileImgScaleY >>1 )
+            const top_CenterTile =  ScreenCenterY - (TileSize * TileImgScaleY >>1 )
 
-            let ms = control.benchmark(() => {
-                const upWalls = []
-                const bottomWalls = []
-        
+        let ms = control.benchmark(() => {
+            const Walls = []
+
             let offsetX_Fpx = 0, offsetY_Fpx = 0
             for (let i = 0; i < this.map.width; i++) {
                 offsetX_Fpx = (( (i + .5 - this.sprSelf.y / tilemapScale - 0) * C_px_Fpx + A_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) )|0) + left_CenterTile  * fpx_scale
@@ -697,10 +698,7 @@ namespace Render {
                     if (offsetX > -TileSize * 4 && offsetX < screen.width + TileSize * 4 && offsetY > -TileSize * 2 && offsetY < screen.height + TileSize * 2) {
                         const t = this.map.getTile(j, i)
                         if (this.map.isWall(j, i)) {
-                            if (offsetY+TileSize < ScreenCenterY)
-                                upWalls.push([offsetX, offsetY,t])
-                            else
-                                bottomWalls.push([offsetX, offsetY,t])
+                            Walls.push([1,offsetX, offsetY,t])
                         }else //floor
                             this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
                     }
@@ -709,61 +707,32 @@ namespace Render {
                 }
             }
 
-            upWalls.forEach(v => this.drawWall(v[0], v[1]))
-            upWalls.forEach(v => this.tempScreen.drawTransparentImage(this.rotatedTiles[v[2]], v[0], v[1] - WallHeight))
-
-           //draw self Sprite
-            if (this.spriteAnimations[this.sprSelf.id].animations[0]) {
-                const widthSelf = this.sprSelf.width * TileImgScaleX
-                const heightSelf = this.sprSelf.height * TileImgScaleX
-                this.tempScreen.blit(ScreenCenterX - (widthSelf >> 1), ScreenCenterY - heightSelf, widthSelf, heightSelf,
-                    this.spriteAnimations[this.sprSelf.id].animations[0][(this.selfSprAniId++ / 10) | 0], 0, 0, 16, 16, true, false)
-                this.selfSprAniId %= (this.spriteAnimations[this.sprSelf.id].animations[0].length * 10)
-            }
-
-            bottomWalls.forEach(v => this.drawWall(v[0], v[1]))
-            bottomWalls.forEach(v => this.tempScreen.drawTransparentImage(this.rotatedTiles[v[2]], v[0], v[1] - WallHeight))
-
+            //draw Sprite and wall by order of distance
+            this.sprites
+            .map((spr)=>{
+                offsetX_Fpx = (((spr.y- this.sprSelf.y) / tilemapScale * C_px_Fpx + A_px_Fpx * (spr.x- this.sprSelf.x )/ tilemapScale ) | 0) + ScreenCenterX  * fpx_scale
+                offsetY_Fpx = (((spr.y- this.sprSelf.y) / tilemapScale * D_px_Fpx + B_px_Fpx * (spr.x- this.sprSelf.x )/ tilemapScale ) | 0)/2 + ScreenCenterY * fpx_scale
+                return [0, offsetX_Fpx>>fpx, offsetY_Fpx>>fpx, spr.id]
+            })
+            .concat(Walls) // [0/1:spr/wall, offsetX, offsetY,sprID/wallTex]
+            .sort((v1, v2) => v1[2] - v2[2]) //todo: compare centers // from far to near
+            .forEach((v)=>{
+                if(v[0]===0){ //spr
+                    const spr = (v[3] == this.sprSelf.id ? this.sprSelf : this.sprites.find((spr) => spr.id === v[3]))
+                    if (!spr) game.splash(v[3]) //return //
+                    const widthSpr =  spr.width  * spr.scale * TileImgScaleX
+                    const heightSpr = spr.height * spr.scale * TileImgScaleX
+                    this.tempScreen.blit(v[1] - (widthSpr >> 1), v[2] - heightSpr, widthSpr, heightSpr,
+                        spr.image, 0, 0, spr.image.width, spr.image.height, true, false)
+                }else if(v[0]===1){ //wall
+                    this.drawWall(v[1], v[2])
+                    this.tempScreen.drawTransparentImage(this.rotatedTiles[v[3]], v[1], v[2] - WallHeight)
+                }
+            })
         }); this.tempScreen.print(ms.toString(), 0, 20)
 
-            //debug info
-            // const loc = this.sprSelf.tilemapLocation()
-            // this.tempScreen.print(loc.row + "," + loc.col, 0, 100)
-            // this.tempScreen.print(this.sprSelf.x + "," + this.sprSelf.y, 0, 90)
-
-
-
-            //debug
-            // info.setScore(control.millis()-ms)
-            // this.tempScreen.print(lastPerpWallDist.toString(), 0,0,7 )
-
-            this.drawSprites()
         }
         
-        drawSprites(){
-            //debug
-            // let msSprs=control.millis()
-            /////////////////// sprites ///////////////////
-
-            //for sprite
-            const invDet = one2 / (this.planeX * this.dirYFpx - this.dirXFpx * this.planeY); //required for correct matrix multiplication
-
-            this.sprites
-               .sort((spr1, spr2) => {   // far to near
-                   return (spr2.x -spr1.x)
-               })
-                .forEach((spr, index) => {
-                    //debug
-                    // this.tempScreen.print([spr.id,Math.roundWithPrecision(angle[spr.id],3)].join(), 0, index * 10 + 10,9)
-                    // this.drawSprite(spr, index)
-                })
-
-            //debug
-            // info.setLife(control.millis() - msSprs+1)
-            // this.tempScreen.print([Math.roundWithPrecision(angle0,3)].join(), 20,  0)
-
-        }
-
         registerOnSpriteDirectionUpdate(handler: (spr: Sprite, dir: number) => void) {
             this.onSpriteDirectionUpdateHandler = handler
         }
