@@ -725,7 +725,7 @@ namespace Render {
                     const heightSpr = spr.height * Scale
                     const dir = (Math.atan2(spr._vx as any as number, spr._vy as any as number) + this._angle) / Math.PI / 2  + .5
                     const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(dir)
-                    helpers.imageBlit( this.tempScreen, v[1] - (widthSpr >> 1), v[2] - heightSpr, widthSpr, heightSpr,
+                    helpers.imageBlit(this.tempScreen, v[1] - (widthSpr >> 1), v[2] - heightSpr - (this.spriteMotionZ[spr.id].p >> fpx), widthSpr, heightSpr,
                         texSpr, 0, 0, spr.image.width, spr.image.height, true, false)
                 }else if(v[0]===1){ //wall
                     this.drawWall(v[1], v[2])
