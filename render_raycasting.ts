@@ -743,7 +743,7 @@ namespace Render {
             })
 
             drawingSprites.forEach((v) => this.drawSprite_SayText(this.sprites[v[3]], v[1], v[2]))
-        }); this.tempScreen.print(ms.toString(), 0, 20)
+        });info.setScore(ms) // this.tempScreen.print(ms.toString(), 0, 20)
 
         }
         

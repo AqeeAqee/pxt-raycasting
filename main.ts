@@ -11,22 +11,26 @@ const tm = tiles.createTilemap(hex`100010000304050607010201020102010201020101020
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
+    . . . 2 2 2 2 . . 2 2 2 2 . . .
+    . . . 2 . . . . . . . . 2 . . .
+    . . . 2 . . . . . . . . 2 . . .
+    . . . 2 . . . . . . . . 2 . . .
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
+    . . . 2 . . . . . . . . 2 . . .
+    . . . 2 . . . . . . . . 2 . . .
+    . . . 2 . . . . . . . . 2 . . .
+    . . . 2 2 2 2 . . 2 2 2 2 . . .
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
 `, [myTiles.transparency16,myTiles.tile3,myTiles.tile4,sprites.castle.tileGrass2,sprites.castle.tilePath5,sprites.vehicle.roadVertical,sprites.vehicle.roadHorizontal,sprites.dungeon.chestClosed], TileScale.Sixteen);
-// tm.scale =2// TileScale.Eight
+// tiles.setCurrentTilemap(tm)
+// const spawnTile = myTiles.tile4
+
 tiles.setCurrentTilemap(tilemap`level1`)
+const spawnTile = sprites.castle.tileDarkGrass3
+
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
 rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
@@ -58,21 +62,21 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
 // createSprite(8, 7, 6, 10, texturesDuck, SpriteKind.Enemy)
 // createSprite(6, 7, 6, 10, texturesDonut, SpriteKind.Enemy)
 // createSprite(5, 8, 6, 10, texturesDog, SpriteKind.Enemy)
-// let sprPriness2 = createSprite(11, 8, 6, 10, texturesPrincess2, SpriteKind.Enemy)
+let sprPriness2 = createSprite(11, 8, 6, 10, texturesPrincess2, SpriteKind.Enemy)
 // let sprHero = createSprite(10, 8, 6, 10, texturesHero, SpriteKind.Enemy)
 let sprSkelly = createSprite(9, 9, 6, 10, texturesSkelly, SpriteKind.Enemy)
 let sprPriness = createSprite(10, 7, 6, 10, texturesPrincess, SpriteKind.Enemy)
 let sprPlane = createSprite(9, 7, 6, 10, texturesPlane, SpriteKind.Enemy)
-let cake = createSprite(2, 2, 4, 2, texturesBigCake, SpriteKind.Enemy)
+// let cake = createSprite(2, 2, 4, 2, texturesBigCake, SpriteKind.Enemy)
 let fish = createSprite(7, 9, 0, 0, texturesFish, SpriteKind.Enemy)
 
 Render.setSpriteAttribute(sprSkelly, RCSpriteAttribute.ZOffset, 4)
 Render.setSpriteAttribute(sprPlane, RCSpriteAttribute.ZOffset, 16)
-Render.setSpriteAttribute(cake, RCSpriteAttribute.ZOffset, 4)
+// Render.setSpriteAttribute(cake, RCSpriteAttribute.ZOffset, 4)
 Render.setSpriteAttribute(fish, RCSpriteAttribute.ZOffset, 8)
 function createCoin(){
     let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
-    tiles.placeOnRandomTile(spr, sprites.skillmap.islandTile4)
+    tiles.placeOnRandomTile(spr, spawnTile)
     rcRender.setZOffset(spr,.25)
 }
 
@@ -102,7 +106,7 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
     // sprite.setImage(sprites.builtin.coin0)
     sprite.setScale(.5)
     // sprite.startEffect(effects.fire, 1000)
-    tiles.placeOnRandomTile(sprite,sprites.skillmap.islandTile4)
+    tiles.placeOnRandomTile(sprite, spawnTile)
     sprite.setVelocity(Math.randomRange(4,10), Math.randomRange(4,10))
     createCoin()
     // game.showLongText(sprite.id+" "+otherSprite.id, DialogLayout.Bottom)
@@ -148,7 +152,7 @@ controller.anyButton.onEvent(ControllerButtonEvent.Pressed, () => {
             Render.moveWithController(0, 0)
             isAdjusting = true
         } else {
-            rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale, 500)
+            rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale*2, 1000)
         }
     }
 })
