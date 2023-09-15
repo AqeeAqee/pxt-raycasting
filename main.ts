@@ -70,11 +70,11 @@ Render.setSpriteAttribute(sprSkelly, RCSpriteAttribute.ZOffset, 4)
 Render.setSpriteAttribute(sprPlane, RCSpriteAttribute.ZOffset, 16)
 Render.setSpriteAttribute(cake, RCSpriteAttribute.ZOffset, 4)
 Render.setSpriteAttribute(fish, RCSpriteAttribute.ZOffset, 8)
-// for(let i=0;i<10;i++){
-//     let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
-//     tiles.placeOnRandomTile(spr, trans16)
-//     rcRender.setZOffset(spr,.25)
-// }
+function createCoin(){
+    let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
+    tiles.placeOnRandomTile(spr, sprites.skillmap.islandTile4)
+    rcRender.setZOffset(spr,.25)
+}
 
 //test for RelativeToCamera
 // game.onUpdateInterval(3000, ()=>{
@@ -97,14 +97,15 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
     // rcRender.setZOffset(sprite, 0)
     music.baDing.play()
     // sprite.setKind(SpriteKind.Food)
-    info.changeScoreBy(1)
     otherSprite.destroy()
     // Render.setSpriteAnimations(sprite, new Render.Animations(120, texturesCoin))
     // sprite.setImage(sprites.builtin.coin0)
     sprite.setScale(.5)
-    sprite.startEffect(effects.fire, 5000)
-
-    game.showLongText(sprite.id+" "+otherSprite.id, DialogLayout.Bottom)
+    // sprite.startEffect(effects.fire, 1000)
+    tiles.placeOnRandomTile(sprite,sprites.skillmap.islandTile4)
+    sprite.setVelocity(Math.randomRange(4,10), Math.randomRange(4,10))
+    createCoin()
+    // game.showLongText(sprite.id+" "+otherSprite.id, DialogLayout.Bottom)
 })
 
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Food, function (sprite, otherSprite) {
@@ -127,8 +128,11 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSpr
     if (!rcRender.isOverlapZ(sprite, otherSprite)) return
 
     music.baDing.play()
-    info.changeLifeBy(1)
-    otherSprite.destroy()
+    info.changeScoreBy(1)
+
+    tiles.placeOnRandomTile(otherSprite, sprites.skillmap.islandTile4)
+    otherSprite.setVelocity(Math.randomRange(4, 10), Math.randomRange(4, 10))
+    // otherSprite.destroy()
 })
 
 controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
@@ -193,7 +197,7 @@ game.onUpdate(() => {
 //         character.loopFrames(spr, textures[Math.floor(i * textures.length / characterAniDirs.length)], 150, character.rule(dir))
 //     })
 // }
-info.setScore(999)
+// info.setScore(0)
 info.setLife(3)
 // let mySprite = sprites.create(sprites.builtin.computer1, SpriteKind.Player)
 // mySprite.setPosition(80,10)

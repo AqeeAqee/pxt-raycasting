@@ -1,7 +1,7 @@
-// namespace userconfig {
-//     export const ARCADE_SCREEN_WIDTH = 320
-//     export const ARCADE_SCREEN_HEIGHT = 240
-// }
+namespace userconfig {
+    export const ARCADE_SCREEN_WIDTH = 320
+    export const ARCADE_SCREEN_HEIGHT = 240
+}
 
 //% shim=pxt::updateScreen
 function updateScreen(img: Image) { }
@@ -581,7 +581,7 @@ namespace Render {
             this.viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2<<fpx) + this.cameraOffsetZ_fpx
 
             const angle = -this._angle - Math.PI / 2
-            info.setScore((this._angle*180/Math.PI)%360)
+            // info.setScore((this._angle*180/Math.PI)%360)
 
             //update tiles and parameters
             if(this.lastRenderAngle!=this._angle || !this.rotatedTiles)
@@ -707,6 +707,7 @@ namespace Render {
                 }
             }
 
+            let tempIndex=0
             //draw Sprite and wall by order of distance
             this.sprites
             .map((spr)=>{
@@ -717,12 +718,14 @@ namespace Render {
             .concat(Walls) // [0/1:spr/wall, offsetX, offsetY,sprID/wallTex]
             .sort((v1, v2) => v1[2] - v2[2]) //todo: compare centers // from far to near
             .forEach((v)=>{
-                if(v[0]===0){ //spr
+                if(v[0]===0){ //spr 
                     const spr = (v[3] == this.sprSelf.id ? this.sprSelf : this.sprites.find((spr) => spr.id === v[3]))
                     const widthSpr =  spr.width  * Scale
-                    const heightSpr = spr.height * Scale 
+                    const heightSpr = spr.height * Scale
+                    const dir = (Math.atan2(spr._vx as any as number, spr._vy as any as number) + this._angle) / Math.PI / 2 + 2 + 2 - .5
+                    const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(dir)
                     helpers.imageBlit( this.tempScreen, v[1] - (widthSpr >> 1), v[2] - heightSpr, widthSpr, heightSpr,
-                        spr.image, 0, 0, spr.image.width, spr.image.height, true, false)
+                        texSpr, 0, 0, spr.image.width, spr.image.height, true, false)
                 }else if(v[0]===1){ //wall
                     this.drawWall(v[1], v[2])
                     this.tempScreen.drawTransparentImage(this.rotatedTiles[v[3]], v[1], v[2] - WallHeight)
