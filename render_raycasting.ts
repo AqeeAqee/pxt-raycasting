@@ -689,10 +689,11 @@ namespace Render {
         let ms = control.benchmark(() => {
             const Walls = []
 
-            let offsetX_Fpx = 0, offsetY_Fpx = 0
+            let offsetX0_Fpx = (( (0 - this.sprSelf.y / tilemapScale + .5) * C_px_Fpx + A_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) )|0) + left_CenterTile  * fpx_scale
+            let offsetY0_Fpx = (( (0 - this.sprSelf.y / tilemapScale + .5) * D_px_Fpx + B_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) )|0) + (top_CenterTile<<1) * fpx_scale
             for (let i = 0; i < this.map.width; i++) {
-                offsetX_Fpx = (( (i + .5 - this.sprSelf.y / tilemapScale - 0) * C_px_Fpx + A_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) )|0) + left_CenterTile  * fpx_scale
-                offsetY_Fpx = (( (i + .5 - this.sprSelf.y / tilemapScale - 0) * D_px_Fpx + B_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) )|0) + top_CenterTile*2 * fpx_scale
+                let offsetX_Fpx = offsetX0_Fpx
+                let offsetY_Fpx = offsetY0_Fpx
                 for (let j = 0; j < this.map.height; j++) {
                     const offsetX = offsetX_Fpx >> fpx
                     const offsetY = offsetY_Fpx >> (fpx + 1)
@@ -709,14 +710,16 @@ namespace Render {
                     offsetX_Fpx+=A_px_Fpx
                     offsetY_Fpx+=B_px_Fpx
                 }
+                offsetX0_Fpx += C_px_Fpx
+                offsetY0_Fpx += D_px_Fpx
             }
 
             let tempIndex=0
             //draw Sprite and wall by order of distance
             this.sprites
             .map((spr)=>{
-                offsetX_Fpx = (((spr.y- this.sprSelf.y) / tilemapScale * C_px_Fpx + A_px_Fpx * (spr.x- this.sprSelf.x )/ tilemapScale ) | 0) + ScreenCenterX  * fpx_scale
-                offsetY_Fpx = (((spr.y- this.sprSelf.y) / tilemapScale * D_px_Fpx + B_px_Fpx * (spr.x- this.sprSelf.x )/ tilemapScale ) | 0)/2 + ScreenCenterY * fpx_scale
+                const offsetX_Fpx = (((spr.y- this.sprSelf.y) / tilemapScale * C_px_Fpx + A_px_Fpx * (spr.x- this.sprSelf.x )/ tilemapScale ) | 0) + ScreenCenterX  * fpx_scale
+                const offsetY_Fpx = (((spr.y- this.sprSelf.y) / tilemapScale * D_px_Fpx + B_px_Fpx * (spr.x- this.sprSelf.x )/ tilemapScale ) | 0)/2 + ScreenCenterY * fpx_scale
                 const j=(spr.x/TileSize)|0, i=(spr.y/TileSize)|0
                 return [0, offsetX_Fpx>>fpx, offsetY_Fpx>>fpx, spr.id,
                     (D_px_Fpx > 0 ? i : this.map.width - 1 - i) * this.map.width +
@@ -724,7 +727,7 @@ namespace Render {
                 ]
             })
             .concat(Walls) // [0/1:spr/wall, offsetX, offsetY,sprID/wallTex, drawing order index of row&col]
-            .sort((v1, v2) => v1[4] - v2[4]) //todo: compare centers // from far to near
+            .sort((v1, v2) => v1[4] - v2[4]) // from far to near
             .forEach((v)=>{
                 if(v[0]===0){ //spr 
                     const spr = (v[3] == this.sprSelf.id ? this.sprSelf : this.sprites.find((spr) => spr.id === v[3]))
