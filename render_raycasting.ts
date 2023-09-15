@@ -716,27 +716,24 @@ namespace Render {
 
             let tempIndex=0
             //draw Sprite and wall by order of distance
+            const drawingSprites=
             this.sprites
-            .map((spr)=>{
+            .map((spr,index)=>{
                 const offsetX_Fpx = (((spr.y- this.sprSelf.y) / tilemapScale * C_px_Fpx + A_px_Fpx * (spr.x- this.sprSelf.x )/ tilemapScale ) | 0) + ScreenCenterX  * fpx_scale
                 const offsetY_Fpx = (((spr.y- this.sprSelf.y) / tilemapScale * D_px_Fpx + B_px_Fpx * (spr.x- this.sprSelf.x )/ tilemapScale ) | 0)/2 + ScreenCenterY * fpx_scale
                 const j=(spr.x/TileSize)|0, i=(spr.y/TileSize)|0
-                return [0, offsetX_Fpx>>fpx, offsetY_Fpx>>fpx, spr.id,
+                return [0, offsetX_Fpx >> fpx, offsetY_Fpx >> fpx, index,
                     (D_px_Fpx > 0 ? i : this.map.width - 1 - i) * this.map.width +
                     (B_px_Fpx > 0 ? j : this.map.height - 1 - j)
                 ]
             })
+
+            drawingSprites
             .concat(Walls) // [0/1:spr/wall, offsetX, offsetY,sprID/wallTex, drawing order index of row&col]
             .sort((v1, v2) => v1[4] - v2[4]) // from far to near
             .forEach((v)=>{
                 if(v[0]===0){ //spr 
-                    const spr = (v[3] == this.sprSelf.id ? this.sprSelf : this.sprites.find((spr) => spr.id === v[3]))
-                    const widthSpr =  spr.width  * Scale
-                    const heightSpr = spr.height * Scale
-                    const dir = (Math.atan2(spr._vx as any as number, spr._vy as any as number) + this._angle) / Math.PI / 2  + .5
-                    const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(dir)
-                    helpers.imageBlit(this.tempScreen, v[1] - (widthSpr >> 1), v[2] - heightSpr - (this.spriteMotionZ[spr.id].p >> fpx), widthSpr, heightSpr,
-                        texSpr, 0, 0, spr.image.width, spr.image.height, true, false)
+                    this.drawSprite(this.sprites[v[3]], v[1], v[2])
                 }else if(v[0]===1){ //wall
                     this.drawWall(v[1], v[2])
                     this.tempScreen.drawTransparentImage(this.rotatedTiles[v[3]], v[1], v[2] - WallHeight)
@@ -744,6 +741,8 @@ namespace Render {
                 //debug
                 // this.tempScreen.print(v[4]+"", v[1] + TileSize*2, v[2], 2)
             })
+
+            drawingSprites.forEach((v) => this.drawSprite_SayText(this.sprites[v[3]], v[1], v[2]))
         }); this.tempScreen.print(ms.toString(), 0, 20)
 
         }
@@ -752,52 +751,35 @@ namespace Render {
             this.onSpriteDirectionUpdateHandler = handler
         }
 
-/*
-        drawSprite(spr: Sprite, index: number) {
-            const myAngle=0 //temp, should be view angle
+        drawSprite(spr: Sprite, x: number, y: number) {
+            const widthSpr = spr.width * Scale
+            const heightSpr = spr.height * Scale
+            const dir = (Math.atan2(spr._vx as any as number, spr._vy as any as number) + this._angle) / Math.PI / 2 + .5
+            const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(dir)
+            helpers.imageBlit(this.tempScreen, x - (widthSpr >> 1), y - heightSpr - (this.spriteMotionZ[spr.id].p >> fpx), widthSpr, heightSpr,
+                texSpr, 0, 0, spr.image.width, spr.image.height, true, false)
+        }
 
-            //for textures=image[][], abandoned
-            //    const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
-            //for deal in user code
-            if (this.onSpriteDirectionUpdateHandler)
-                this.onSpriteDirectionUpdateHandler(spr, ((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
-            //for CharacterAnimation ext.
-            //     const iTexture = Math.floor(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25) * 4 + .5) % 4
-            //     const characterAniDirs = [Predicate.MovingLeft,Predicate.MovingDown, Predicate.MovingRight, Predicate.MovingUp]
-            //     character.setCharacterState(spr, character.rule(characterAniDirs[iTexture]))
-            //for this.spriteAnimations
-            const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
-            
-
-                helpers.imageBlit(
-                this.tempScreen,
-                blitXSpr,
-                drawStart,
-                blitWidthSpr,
-                lineHeight * spr.height / this.tilemapScaleSize,
-                texSpr,
-                (blitXSpr - (spriteScreenX - spriteScreenHalfWidth)) * sprTexRatio
-                ,
-                0,
-                blitWidthSpr * sprTexRatio, texSpr.height, true, false)
-
+        //sayText
+        drawSprite_SayText(spr: Sprite, x: number, y: number){
             const sayRender = this.sayRederers[spr.id]
+            if (sayRender) {
+                const heightSpr = spr.height * Scale
+                if (this.sayEndTimes[spr.id] && control.millis() > this.sayEndTimes[spr.id]) {
+                    this.sayRederers[spr.id] = undefined
+                } else {
+                    this.tempSprite.x = x
+                    this.tempSprite.y = y - heightSpr - (this.spriteMotionZ[spr.id].p >> fpx) -2
+                    this.camera.drawOffsetX = 0
+                    this.camera.drawOffsetY = 0
+                    sayRender.draw(this.tempScreen, this.camera, this.tempSprite)
+                }
+            }
+/*
             const particle = this.spriteParticles[spr.id]
             const sayOrParticle = !!sayRender || !!particle
             if (sayOrParticle) {
                 screen.fill(0)
-                //sayText
-                if (sayRender) {
-                    if (this.sayEndTimes[spr.id] && control.millis() > this.sayEndTimes[spr.id]) {
-                        this.sayRederers[spr.id] = undefined
-                    } else {
-                        this.tempSprite.x = SWHalf
-                        this.tempSprite.y = SHHalf + 2
-                        this.camera.drawOffsetX = 0
-                        this.camera.drawOffsetY = 0
-                        sayRender.draw(screen, this.camera, this.tempSprite)
-                    }
-                }
                 //particle
                 if (particle) {
                     if (particle.lifespan) {
@@ -834,8 +816,8 @@ namespace Render {
             }
             // const ms = control.benchmark(() => {
             // }); this.tempScreen.print(ms.toString(), 0, 30 + index * 10, 15)
-        }
 */
+        }
 
     }
 
