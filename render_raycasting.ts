@@ -285,6 +285,7 @@ namespace Render {
                         if(this.sprites.indexOf(spr)>=0){
                             this.spriteParticles[spr.id]=particle
                             particle.anchor= {x:0,y:0}
+                            game.currentScene().particleSources.removeElement(particle)
                         }
                     }
                 } else {
@@ -744,6 +745,8 @@ namespace Render {
             })
 
             drawingSprites.forEach((v) => this.drawSprite_SayText(this.sprites[v[3]], v[1], v[2]))
+
+            game.currentScene().particleSources.forEach((p)=>p.__draw(game.currentScene().camera))
 
             // this.tempScreen.print(this.spriteParticles.map((s, i) => (i+":" +((!!s &&!!s.anchor)?(s.anchor as Sprite).id.toString():""))).join(),0,30)
         });info.setScore(ms) // this.tempScreen.print(ms.toString(), 0, 20)

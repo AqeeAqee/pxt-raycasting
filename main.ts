@@ -31,9 +31,10 @@ const tm = tiles.createTilemap(hex`100010000304050607010201020102010201020101020
 tiles.setCurrentTilemap(tilemap`level1`)
 const spawnTile = sprites.castle.tileDarkGrass3
 
-
 const tilemapScale = 1 << game.currentScene().tileMap.scale
 rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
+
+effects.blizzard.startScreenEffect(99999999, 99)
 
 let count = 0
 function createSprite(x: number, y: number, vx: number, vy: number, textures: Image[][], kind: number) {
@@ -76,6 +77,7 @@ Render.setSpriteAttribute(sprSkelly, RCSpriteAttribute.ZOffset, 4)
 Render.setSpriteAttribute(sprPlane, RCSpriteAttribute.ZOffset, 16)
 // Render.setSpriteAttribute(cake, RCSpriteAttribute.ZOffset, 4)
 Render.setSpriteAttribute(fish, RCSpriteAttribute.ZOffset, 8)
+
 function createCoin(){
     let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
     tiles.placeOnRandomTile(spr, spawnTile)
