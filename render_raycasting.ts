@@ -1,7 +1,7 @@
-namespace userconfig {
-    export const ARCADE_SCREEN_WIDTH = 320
-    export const ARCADE_SCREEN_HEIGHT = 240
-}
+// namespace userconfig {
+//     export const ARCADE_SCREEN_WIDTH = 640
+//     export const ARCADE_SCREEN_HEIGHT = 480
+// }
 
 //% shim=pxt::updateScreen
 function updateScreen(img: Image) { }
@@ -57,7 +57,7 @@ namespace Render {
 
     export class RayCastingRender{
 
-        private tempScreen: Image = image.create(SW, SH)
+        private tempScreen: Image = screen // image.create(SW, SH)
         private tempBackground: scene.BackgroundLayer //for "see through" when scene popped out
 
         velocityAngle: number = 2
@@ -284,7 +284,7 @@ namespace Render {
                         const spr = (particle.anchor as Sprite)
                         if(this.sprites.indexOf(spr)>=0){
                             this.spriteParticles[spr.id]=particle
-                            particle.anchor=this.tempSprite
+                            particle.anchor= {x:0,y:0}
                         }
                     }
                 } else {
@@ -331,10 +331,10 @@ namespace Render {
                     if (!this.tempBackground) {
                         this.tempScreen.drawImage(game.currentScene().background.image, 0, 0)
                         this.render()
-                        screen.fill(0)
+                        // screen.fill(0)
                         this.sprites2D.forEach(spr => spr.__draw(sc.camera))
                         this.spriteLikes.forEach(spr => spr.__draw(sc.camera))
-                        this.tempScreen.drawTransparentImage(screen, 0, 0)
+                        // this.tempScreen.drawTransparentImage(screen, 0, 0)
                     }
                 } else {
                     screen.drawImage(game.currentScene().background.image, 0, 0)
@@ -398,18 +398,19 @@ namespace Render {
             })
 
 
-            game.onUpdateInterval(25, () => {
-                if(this.cameraSway&&this.isWalking){
-                    this.cameraOffsetX = (Math.sin(control.millis() / 150) * this.cameraSway * 3)|0
-                    this.cameraOffsetZ_fpx = tofpx(Math.cos(control.millis() / 75) * this.cameraSway)|0
-                }
-            });
-            control.__screen.setupUpdate(() => {
-                if(this.viewMode==ViewMode.isometricView)
-                    updateScreen(this.tempScreen)
-                else
-                    updateScreen(screen)
-            })
+//            game.onUpdateInterval(25, () => {
+//                if(this.cameraSway&&this.isWalking){
+//                    this.cameraOffsetX = (Math.sin(control.millis() / 150) * this.cameraSway * 3)|0
+//                    this.cameraOffsetZ_fpx = tofpx(Math.cos(control.millis() / 75) * this.cameraSway)|0
+//                }
+//            });
+
+//            control.__screen.setupUpdate(() => {
+//                if(this.viewMode==ViewMode.isometricView)
+//                    updateScreen(this.tempScreen)
+//                else
+//                    updateScreen(screen)
+//            })
 
             game.addScenePushHandler((oldScene) => {
                 this.tempBackground = oldScene.background.addLayer(this.tempScreen, 0, BackgroundAlignment.Center)
@@ -743,6 +744,8 @@ namespace Render {
             })
 
             drawingSprites.forEach((v) => this.drawSprite_SayText(this.sprites[v[3]], v[1], v[2]))
+
+            // this.tempScreen.print(this.spriteParticles.map((s, i) => (i+":" +((!!s &&!!s.anchor)?(s.anchor as Sprite).id.toString():""))).join(),0,30)
         });info.setScore(ms) // this.tempScreen.print(ms.toString(), 0, 20)
 
         }
@@ -758,6 +761,17 @@ namespace Render {
             const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(dir)
             helpers.imageBlit(this.tempScreen, x - (widthSpr >> 1), y - heightSpr - (this.spriteMotionZ[spr.id].p >> fpx), widthSpr, heightSpr,
                 texSpr, 0, 0, spr.image.width, spr.image.height, true, false)
+                
+            const particle = this.spriteParticles[spr.id]
+            if (particle) {
+                if (particle.lifespan) {
+                    this.camera.drawOffsetX = -x
+                    this.camera.drawOffsetY = -(y - (spr.height * Scale >> 1) - (this.spriteMotionZ[spr.id].p >> fpx))
+                    particle.__draw(this.camera)
+                } else {
+                    this.spriteParticles[spr.id] = undefined
+                }
+            }
         }
 
         //sayText
@@ -775,25 +789,12 @@ namespace Render {
                     sayRender.draw(this.tempScreen, this.camera, this.tempSprite)
                 }
             }
+
 /*
-            const particle = this.spriteParticles[spr.id]
             const sayOrParticle = !!sayRender || !!particle
             if (sayOrParticle) {
                 screen.fill(0)
                 //particle
-                if (particle) {
-                    if (particle.lifespan) {
-                        //debug
-                        // this.tempScreen.print([spr.id].join(), 0,index*10+10)
-                        this.tempSprite.x = SWHalf
-                        this.tempSprite.y = SHHalf + spr.height
-                        this.camera.drawOffsetX = 0//spr.x-SWHalf
-                        this.camera.drawOffsetY = 0//spr.y-SH
-                        particle.__draw(this.camera)
-                    } else {
-                        this.spriteParticles[spr.id] = undefined
-                    }
-                }
                 //update screen for this spr
                 const fpx_div_transformy = Math.roundWithPrecision(transformY / 4 / fpx_scale, 2)
                 const height = (SH / fpx_div_transformy)
