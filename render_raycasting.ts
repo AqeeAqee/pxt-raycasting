@@ -726,7 +726,6 @@ namespace Render {
             const Walls = []
             let offsetX0_Fpx = (( (HalfTileSize - this.sprSelf.y) * C_px_Fpx + A_px_Fpx * (HalfTileSize - this.sprSelf.x) ) >>TileMapScale ) + (left_CenterTile<<fpx)
             let offsetY0_Fpx = (( (HalfTileSize - this.sprSelf.y) * D_px_Fpx + B_px_Fpx * (HalfTileSize - this.sprSelf.x) ) >>TileMapScale ) + (top_CenterTile<<(fpx+1))
-            info.player3.setScore(offsetX0_Fpx)
             for (let i = 0; i < this.map.width; i++) {
                 let offsetX_Fpx = offsetX0_Fpx
                 let offsetY_Fpx = offsetY0_Fpx
