@@ -732,7 +732,7 @@ namespace Render {
                 for (let j = 0; j < this.map.height; j++) {
                     const offsetX = offsetX_Fpx >> fpx
                     const offsetY = offsetY_Fpx >> (fpx + 1)
-                    if (offsetX > -TileSize * 4 && offsetX < screen.width + TileSize * 4 && offsetY > -TileSize * 2 && offsetY < screen.height + TileSize * 2) {
+                    if (offsetX > -TileSize * TileImgScaleX && offsetX < screen.width && offsetY > -TileSize * TileImgScaleY && offsetY < screen.height + TileSize * TileImgScaleY) {
                         const t = this.map.getTile(j, i)
                         if (this.map.isWall(j, i)) {
                             Walls.push([1, offsetX, offsetY, t, 
@@ -749,31 +749,29 @@ namespace Render {
                 offsetY0_Fpx += D_px_Fpx
             }
 
-            let tempIndex=0
             //draw Sprite and wall by order of distance
-            const drawingSprites=
-            this.sprites
-            .map((spr,index)=>{
-                const offsetX_Fpx = (((spr.y- this.sprSelf.y) / tilemapScale * C_px_Fpx + A_px_Fpx * (spr.x- this.sprSelf.x )/ tilemapScale ) | 0) + ScreenCenterX  * fpx_scale
-                const offsetY_Fpx = (((spr.y- this.sprSelf.y) / tilemapScale * D_px_Fpx + B_px_Fpx * (spr.x- this.sprSelf.x )/ tilemapScale ) | 0)/2 + ScreenCenterY * fpx_scale
-                const j=(spr.x/TileSize)|0, i=(spr.y/TileSize)|0
-                return [0, offsetX_Fpx >> fpx, offsetY_Fpx >> fpx, index,
+            const drawingSprites = this.sprites
+            .map((spr, index) => {
+                const offsetX = ((C_px_Fpx * (spr.y - this.sprSelf.y) + A_px_Fpx * (spr.x - this.sprSelf.x)) / tilemapScale >>fpx ) + ScreenCenterX 
+                const offsetY = ((D_px_Fpx * (spr.y - this.sprSelf.y) + B_px_Fpx * (spr.x - this.sprSelf.x)) / tilemapScale >>(fpx+1) ) + ScreenCenterY
+                const j = (spr.x / TileSize) | 0, i = (spr.y / TileSize) | 0
+                return [0, offsetX, offsetY, index,
                     (D_px_Fpx > 0 ? i : this.map.width - 1 - i) * this.map.width +
                     (B_px_Fpx > 0 ? j : this.map.height - 1 - j)
-                ]
+                    ]
             })
-
+            .filter((v,i) =>{
+                const spr= this.sprites[i]
+                return (v[2] > 0 && v[1] >= -(spr.width * Scale >> 1) && v[1] < screen.width + (spr.width * Scale >> 1) && v[2] < screen.height + spr.height * Scale + (this.spriteMotionZ[spr.id].p >> fpx))
+            })
             drawingSprites
-            .concat(Walls) // [0/1:spr/wall, offsetX, offsetY,sprID/wallTex, drawing order index of row&col]
-            .sort((v1, v2) => v1[4] - v2[4]) // from far to near
-            .forEach((v)=>{
-                if(v[0]===0){ //spr 
-                    this.drawSprite(this.sprites[v[3]], v[1], v[2])
-                }else if(v[0]===1){ //wall
-                    this.drawWall(v[1], v[2], v[3])
-                }
-                //debug
-                // this.tempScreen.print(v[4]+"", v[1] + TileSize*2, v[2], 2)
+                .concat(Walls) // [0/1:spr/wall, offsetX, offsetY,sprID/wallTex, drawing order index of row&col]
+                .sort((v1, v2) => v1[4] - v2[4]) // from far to near
+                .forEach((v) => {
+                    if (v[0] === 0) 
+                        this.drawSprite(this.sprites[v[3]], v[1], v[2])
+                    else if (v[0] === 1)
+                        this.drawWall(v[1], v[2], v[3])
             })
 
             drawingSprites.forEach((v) => this.drawSprite_SayText(this.sprites[v[3]], v[1], v[2]))
@@ -782,9 +780,7 @@ namespace Render {
                 if(this.spriteParticles.indexOf(p)<0)p.__draw(game.currentScene().camera)
             })
 
-            // this.tempScreen.print(this.spriteParticles.map((s, i) => (i+":" +((!!s &&!!s.anchor)?(s.anchor as Sprite).id.toString():""))).join(),0,30)
         });info.setScore(ms) // this.tempScreen.print(ms.toString(), 0, 20)
-
         }
         
         registerOnSpriteDirectionUpdate(handler: (spr: Sprite, dir: number) => void) {
