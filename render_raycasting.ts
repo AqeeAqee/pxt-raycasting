@@ -28,15 +28,15 @@ namespace Render {
     //for Isometric
     const ScreenCenterX = screen.width >> 1, ScreenCenterY = screen.height * 3 >> 2
     const TileMapScale = 4, TileSize = 1 << TileMapScale, HalfTileSize = TileSize>>1
-    const TileImgScale = 4, HalfTileImgScale = TileImgScale >> 1
-    const TileImgScaleX = TileImgScale, TileImgScaleY = TileImgScale >> 1 //16x16 Rotate&Scale to 64x64, then shrink to 64x32
-    const Scale = TileImgScale / Math.SQRT2, Scale_Square = 8 // = Scale**2
+    const TileImgScale = 3, HalfTileImgScale = TileImgScale /2 ///>> 1
+    const TileImgScaleX = TileImgScale, TileImgScaleY = TileImgScale /2 //>> 1 //16x16 Rotate&Scale to 64x64, then shrink to 64x32
+    const Scale = TileImgScale / Math.SQRT2, Scale_Square = TileImgScale**2 /2 // = Scale**2 //8 // =
     const X0 = TileSize >> 1, Y0 = X0
     const H = X0 - TileSize * HalfTileImgScale, V = Y0 - TileSize * HalfTileImgScale
     let A_Fpx = 0
     let B_Fpx = 0
-    const AD_BC_Fpx2 = one2 / Scale_Square //= (Math.SQRT1_2/2)**2 == (A * D - B * C)
-    const WallHeight = TileSize << 1
+    const AD_BC_Fpx2 = (one2 / Scale_Square)|0 //= (Math.SQRT1_2/2)**2 == (A * D - B * C)
+    const WallHeight = TileSize * HalfTileImgScale
     function rotatePoint(xIn: number, yIn: number, A_Fpx:number, B_Fpx:number) {
         const D_Fpx = A_Fpx, C_Fpx = -B_Fpx
         let xOut = ((D_Fpx * (xIn - X0) - B_Fpx * (yIn - Y0)) << fpx) / AD_BC_Fpx2 - (H - X0)
@@ -610,7 +610,6 @@ namespace Render {
         render() {
             // isometricView, ref: https://forum.makecode.com/t/snes-mode-7-transformations/8530
 
-
             this.viewXFpx = this.xFpx
             this.viewYFpx = this.yFpx
             this.viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2<<fpx) + this.cameraOffsetZ_fpx
@@ -772,6 +771,7 @@ namespace Render {
                         this.drawSprite(this.sprites[v[3]], v[1], v[2])
                     else if (v[0] === 1)
                         this.drawWall(v[1], v[2], v[3])
+                    // this.tempScreen.print(v[4] + "", v[1] + TileSize * 2, v[2], 2)
             })
 
             drawingSprites.forEach((v) => this.drawSprite_SayText(this.sprites[v[3]], v[1], v[2]))
