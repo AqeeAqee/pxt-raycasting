@@ -1,7 +1,7 @@
-// namespace userconfig {
-//     export const ARCADE_SCREEN_WIDTH = 640
-//     export const ARCADE_SCREEN_HEIGHT = 480
-// }
+namespace userconfig {
+    export const ARCADE_SCREEN_WIDTH = 640
+    export const ARCADE_SCREEN_HEIGHT = 480
+}
 
 //% shim=pxt::updateScreen
 function updateScreen(img: Image) { }
@@ -285,7 +285,6 @@ namespace Render {
                         if(this.sprites.indexOf(spr)>=0){
                             this.spriteParticles[spr.id]=particle
                             particle.anchor= {x:0,y:0}
-                            game.currentScene().particleSources.removeElement(particle)
                         }
                     }
                 } else {
@@ -373,7 +372,7 @@ namespace Render {
             this.takeoverSceneSprites()
             // this.sprites.removeElement(this.sprSelf)
             this.updateViewZPos()
-            scene.cameraFollowSprite(this.sprSelf)
+            scene.cameraFollowSprite(this.sprSelf) //prevent projectiles from AutoDestroy 
             // this.updateSelfImage()
 
             game.onUpdate(function () {
@@ -610,7 +609,7 @@ namespace Render {
                     this.rotateAll(this.map.getTileset(), A_Fpx, B_Fpx)
                     //a workaround avoiding gaps between tiles
                     this.rotatedTiles.forEach((t)=> t.drawTransparentImage(t, -1, -1))
-                }); info.setLife(ms) // this.tempScreen.print(ms.toString(), 0, 110)
+                }); info.setLife(ms/this.rotatedTiles.length) // this.tempScreen.print(ms.toString(), 0, 110)
 
 
                 // this.rotatedTiles.forEach((v, i) =>{
@@ -746,7 +745,9 @@ namespace Render {
 
             drawingSprites.forEach((v) => this.drawSprite_SayText(this.sprites[v[3]], v[1], v[2]))
 
-            game.currentScene().particleSources.forEach((p)=>p.__draw(game.currentScene().camera))
+            game.currentScene().particleSources.forEach((p)=>{
+                if(this.spriteParticles.indexOf(p)<0)p.__draw(game.currentScene().camera)
+            })
 
             // this.tempScreen.print(this.spriteParticles.map((s, i) => (i+":" +((!!s &&!!s.anchor)?(s.anchor as Sprite).id.toString():""))).join(),0,30)
         });info.setScore(ms) // this.tempScreen.print(ms.toString(), 0, 20)
