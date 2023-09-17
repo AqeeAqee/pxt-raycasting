@@ -27,7 +27,7 @@ namespace Render {
 
     //for Isometric
     const ScreenCenterX = screen.width >> 1, ScreenCenterY = screen.height * 3 >> 2
-    const TileSize = 16
+    const TileMapScale = 4, TileSize = 1 << TileMapScale, HalfTileSize = TileSize>>1
     const TileImgScale = 4, HalfTileImgScale = TileImgScale >> 1
     const TileImgScaleX = TileImgScale, TileImgScaleY = TileImgScale >> 1 //16x16 Rotate&Scale to 64x64, then shrink to 64x32
     const Scale = TileImgScale / Math.SQRT2, Scale_Square = 8 // = Scale**2
@@ -87,6 +87,7 @@ namespace Render {
         protected sayEndTimes: number[] = []
 
         //reference
+        protected tilemapScale = TileScale.Sixteen
         protected tilemapScaleSize = 1 << TileScale.Sixteen
         map: tiles.TileMapData
         mapData:Array<number>
@@ -723,9 +724,9 @@ namespace Render {
 
         let ms = control.benchmark(() => {
             const Walls = []
-
-            let offsetX0_Fpx = (( (0 - this.sprSelf.y / tilemapScale + .5) * C_px_Fpx + A_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) )|0) + left_CenterTile  * fpx_scale
-            let offsetY0_Fpx = (( (0 - this.sprSelf.y / tilemapScale + .5) * D_px_Fpx + B_px_Fpx * (0 - this.sprSelf.x / tilemapScale + .5) )|0) + (top_CenterTile<<1) * fpx_scale
+            let offsetX0_Fpx = (( (HalfTileSize - this.sprSelf.y) * C_px_Fpx + A_px_Fpx * (HalfTileSize - this.sprSelf.x) ) >>TileMapScale ) + (left_CenterTile<<fpx)
+            let offsetY0_Fpx = (( (HalfTileSize - this.sprSelf.y) * D_px_Fpx + B_px_Fpx * (HalfTileSize - this.sprSelf.x) ) >>TileMapScale ) + (top_CenterTile<<(fpx+1))
+            info.player3.setScore(offsetX0_Fpx)
             for (let i = 0; i < this.map.width; i++) {
                 let offsetX_Fpx = offsetX0_Fpx
                 let offsetY_Fpx = offsetY0_Fpx
@@ -752,8 +753,8 @@ namespace Render {
             //draw Sprite and wall by order of distance
             const drawingSprites = this.sprites
             .map((spr, index) => {
-                const offsetX = ((C_px_Fpx * (spr.y - this.sprSelf.y) + A_px_Fpx * (spr.x - this.sprSelf.x)) / tilemapScale >>fpx ) + ScreenCenterX 
-                const offsetY = ((D_px_Fpx * (spr.y - this.sprSelf.y) + B_px_Fpx * (spr.x - this.sprSelf.x)) / tilemapScale >>(fpx+1) ) + ScreenCenterY
+                const offsetX = ScreenCenterX + ((C_px_Fpx * (spr.y - this.sprSelf.y) + A_px_Fpx * (spr.x - this.sprSelf.x)) >> (TileMapScale + fpx))
+                const offsetY = ScreenCenterY + ((D_px_Fpx * (spr.y - this.sprSelf.y) + B_px_Fpx * (spr.x - this.sprSelf.x)) >> (TileMapScale + fpx + 1))
                 const j = (spr.x / TileSize) | 0, i = (spr.y / TileSize) | 0
                 return [0, offsetX, offsetY, index,
                     (D_px_Fpx > 0 ? i : this.map.width - 1 - i) * this.map.width +
