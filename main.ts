@@ -34,7 +34,7 @@ const spawnTile = sprites.castle.tileDarkGrass3
 const tilemapScale = 1 << game.currentScene().tileMap.scale
 rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
 
-effects.blizzard.startScreenEffect(99999999, 99)
+// effects.blizzard.startScreenEffect(99999999, 99)
 
 let count = 0
 function createSprite(x: number, y: number, vx: number, vy: number, textures: Image[][], kind: number) {

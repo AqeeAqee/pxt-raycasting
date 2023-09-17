@@ -549,7 +549,7 @@ namespace Render {
             return outImg
         }
 
-        drawWall(offsetX: number, offsetY:number){
+        drawWallSide_Solid(offsetX: number, offsetY:number){
                     const p0x = offsetX + this.corners[0].x, p0y = offsetY + this.corners[0].y
                     const p1x = offsetX + this.corners[1].x, p1y = offsetY + this.corners[1].y
                     const p3x = offsetX + this.corners[2].x, p3y = offsetY + this.corners[2].y
@@ -569,23 +569,37 @@ namespace Render {
                         12)
         }
 
-        drawTexWall(offsetX: number, offsetY: number, tex: Image, startCornerIndex: number) {
-            // let ms = control.benchmark(() => {
-                const p0x = offsetX + this.corners[startCornerIndex].x, p0y = offsetY + this.corners[startCornerIndex].y
-                const p1x = offsetX + this.corners[startCornerIndex + 1].x, p1y = offsetY + this.corners[startCornerIndex + 1].y
-                let y = (p0y - WallHeight + 1) << fpx
-                const diffX0_1 = p1x - p0x
-                let texX = 0
-                const texXStep = Math.idiv((TileSize << fpx), diffX0_1)
-                const yStep = Math.idiv((p1y - p0y) << fpx, diffX0_1)
-                for (let x = 0; x <= diffX0_1; x++) {
-                    // this.tempScreen.print(y+"", 100,60+x*10)
-                    helpers.imageBlitRow(screen, x + p0x, y >> fpx,
-                        tex, texX >> fpx, WallHeight)
-                    texX += texXStep
-                    y += yStep
-                }
-            // }); info.player4.setLife(ms) // this.tempScreen.print(ms.toString(), 0, 110)
+        drawWallSide_Tex(targetImg: Image, offsetX: number, offsetY: number, tex: Image, startCornerIndex: number) {
+            const p0x = offsetX + this.corners[startCornerIndex].x, p0y = offsetY + this.corners[startCornerIndex].y
+            const p1x = offsetX + this.corners[startCornerIndex + 1].x, p1y = offsetY + this.corners[startCornerIndex + 1].y
+            let y = (p0y - WallHeight + 1) << fpx
+            const diffX0_1 = p1x - p0x
+            let texX = 0
+            const texXStep = Math.idiv((TileSize << fpx), diffX0_1)
+            const yStep = Math.idiv((p1y - p0y) << fpx, diffX0_1)
+            for (let x = 0; x <= diffX0_1; x++) {
+                // this.tempScreen.print(y+"", 100,60+x*10)
+                helpers.imageBlitRow(targetImg, x + p0x, y >> fpx,
+                    tex, texX >> fpx, WallHeight)
+                texX += texXStep
+                y += yStep
+            }
+        }
+
+        rotatedTexWalls: Image[] = []
+        drawWall(offsetX: number, offsetY: number, tileIndex: number) {
+            // this.drawWall(offsetX, offsetY)
+            let texWall = this.rotatedTexWalls[tileIndex]
+            if (!texWall) {
+                // let ms = control.benchmark(() => {
+                    texWall = image.create(TileSize * TileImgScaleX, TileSize * TileImgScaleY + WallHeight)
+                    this.drawWallSide_Tex(texWall, 0, WallHeight, this.map.getTileset()[tileIndex], 0)
+                    this.drawWallSide_Tex(texWall, 0, WallHeight, this.map.getTileset()[tileIndex], 1)
+                    texWall.drawTransparentImage(this.rotatedTiles[tileIndex], 0, 0)
+                    this.rotatedTexWalls[tileIndex] = texWall
+                // }); info.player4.setLife(ms) // this.tempScreen.print(ms.toString(), 0, 110)
+            }
+            this.tempScreen.drawTransparentImage(texWall, offsetX, offsetY - WallHeight)
         }
 
         rotatedTiles:Image[]
@@ -628,6 +642,7 @@ namespace Render {
                     this.rotateAll(this.map.getTileset(), A_Fpx, B_Fpx)
                     //a workaround avoiding gaps between tiles
                     this.rotatedTiles.forEach((t)=> t.drawTransparentImage(t, -1, -1))
+                    this.rotatedTexWalls.splice(0, this.rotatedTexWalls.length)
                 }); info.setLife(ms/this.rotatedTiles.length) // this.tempScreen.print(ms.toString(), 0, 110)
 
 
@@ -687,17 +702,10 @@ namespace Render {
                 const baseX=0, baseY=64
                 const centerX= baseX+(TileSize*TileImgScaleX>>1), centerY=baseY+TileSize*TileImgScaleY/2
 
-                // this.drawWall(baseX - A, baseY-B/2)
-                // this.drawWall(baseX, baseY)
-
-                // this.drawTexWall(baseX - A, baseY - B / 2, this.map.getTileset()[3],0)
-                // this.drawTexWall(baseX - A, baseY - B / 2, this.map.getTileset()[3],1)
-                // this.tempScreen.drawTransparentImage(this.rotatedTiles[3], baseX - A, baseY - WallHeight - B/2)
+                this.drawWall(baseX - A, baseY-B/2, 3)
                 
                 // this.rotatedTiles[1].replace(0,6)
-                this.tempScreen.drawTransparentImage(this.rotatedTiles[1], baseX, baseY - WallHeight)
-                this.drawTexWall(baseX, baseY, this.map.getTileset()[1],0)
-                this.drawTexWall(baseX, baseY, this.map.getTileset()[1],1)
+                this.drawWall(baseX, baseY, 1)
                 
                 this.tempScreen.drawLine(centerX, centerY - WallHeight, centerX + A, centerY - WallHeight + B/2, 2)
                 this.tempScreen.drawLine(centerX, centerY - WallHeight, centerX + C, centerY - WallHeight + D/2, 2)
@@ -762,10 +770,7 @@ namespace Render {
                 if(v[0]===0){ //spr 
                     this.drawSprite(this.sprites[v[3]], v[1], v[2])
                 }else if(v[0]===1){ //wall
-                    // this.drawWall(v[1], v[2])
-                    this.drawTexWall(v[1], v[2], this.map.getTileset()[v[3]], 0)
-                    this.drawTexWall(v[1], v[2], this.map.getTileset()[v[3]], 1)
-                    this.tempScreen.drawTransparentImage(this.rotatedTiles[v[3]], v[1], v[2] - WallHeight)
+                    this.drawWall(v[1], v[2], v[3])
                 }
                 //debug
                 // this.tempScreen.print(v[4]+"", v[1] + TileSize*2, v[2], 2)
