@@ -1,6 +1,6 @@
 namespace userconfig {
-    export const ARCADE_SCREEN_WIDTH = 640
-    export const ARCADE_SCREEN_HEIGHT = 480
+    export const ARCADE_SCREEN_WIDTH =  320
+    export const ARCADE_SCREEN_HEIGHT = 240
 }
 
 //% shim=pxt::updateScreen
@@ -569,6 +569,25 @@ namespace Render {
                         12)
         }
 
+        drawTexWall(offsetX: number, offsetY: number, tex: Image, startCornerIndex: number) {
+            // let ms = control.benchmark(() => {
+                const p0x = offsetX + this.corners[startCornerIndex].x, p0y = offsetY + this.corners[startCornerIndex].y
+                const p1x = offsetX + this.corners[startCornerIndex + 1].x, p1y = offsetY + this.corners[startCornerIndex + 1].y
+                let y = (p0y - WallHeight + 1) << fpx
+                const diffX0_1 = p1x - p0x
+                let texX = 0
+                const texXStep = Math.idiv((TileSize << fpx), diffX0_1)
+                const yStep = Math.idiv((p1y - p0y) << fpx, diffX0_1)
+                for (let x = 0; x <= diffX0_1; x++) {
+                    // this.tempScreen.print(y+"", 100,60+x*10)
+                    helpers.imageBlitRow(screen, x + p0x, y >> fpx,
+                        tex, texX >> fpx, WallHeight)
+                    texX += texXStep
+                    y += yStep
+                }
+            // }); info.player4.setLife(ms) // this.tempScreen.print(ms.toString(), 0, 110)
+        }
+
         rotatedTiles:Image[]
         lastRenderAngle=-1
         selfSprAniId=0
@@ -620,9 +639,9 @@ namespace Render {
                     this.corners.splice(0, this.corners.length)
                     this.corners = [
                         rotatePoint(0, 0, A_Fpx, B_Fpx),
-                        rotatePoint(15.99, 0, A_Fpx, B_Fpx),
-                        rotatePoint(15.99, 15.99, A_Fpx, B_Fpx),
                         rotatePoint(0, 15.99, A_Fpx, B_Fpx),
+                        rotatePoint(15.99, 15.99, A_Fpx, B_Fpx),
+                        rotatePoint(15.99, 0, A_Fpx, B_Fpx),
                     ]
 
                     const topCornerId = this.corners.reduce((tId, p, i) => { return p.y < this.corners[tId].y ? i : tId }, 0)
@@ -630,7 +649,7 @@ namespace Render {
                     if (topCornerId) //not necessary if removed [0]
                         for (let i = 0; i < 3 - topCornerId; i++) //rolling reorder, keep original loop order, start from the next corner of toppest one to the last, then start from beginning
                             this.corners.insertAt(0, this.corners.pop())
-                    this.corners[2].x += 1
+                    // this.corners[1].x -= 1
                 // }); info.player2.setScore(ms)
 
                 //shear doubled, manually, for reference
@@ -669,17 +688,24 @@ namespace Render {
                 const centerX= baseX+(TileSize*TileImgScaleX>>1), centerY=baseY+TileSize*TileImgScaleY/2
 
                 // this.drawWall(baseX - A, baseY-B/2)
-                this.drawWall(baseX, baseY)
+                // this.drawWall(baseX, baseY)
+
+                // this.drawTexWall(baseX - A, baseY - B / 2, this.map.getTileset()[3],0)
+                // this.drawTexWall(baseX - A, baseY - B / 2, this.map.getTileset()[3],1)
+                // this.tempScreen.drawTransparentImage(this.rotatedTiles[3], baseX - A, baseY - WallHeight - B/2)
+                
                 // this.rotatedTiles[1].replace(0,6)
-                this.tempScreen.drawTransparentImage(this.rotatedTiles[3], baseX - A, baseY - WallHeight - B/2)
                 this.tempScreen.drawTransparentImage(this.rotatedTiles[1], baseX, baseY - WallHeight)
+                this.drawTexWall(baseX, baseY, this.map.getTileset()[1],0)
+                this.drawTexWall(baseX, baseY, this.map.getTileset()[1],1)
+                
                 this.tempScreen.drawLine(centerX, centerY - WallHeight, centerX + A, centerY - WallHeight + B/2, 2)
                 this.tempScreen.drawLine(centerX, centerY - WallHeight, centerX + C, centerY - WallHeight + D/2, 2)
                 //debug
-                this.corners.forEach((p, i) => this.tempScreen.print(p.x + "," + p.y, 110, i * 10 + 30))
+                this.corners.forEach((p, i) => this.tempScreen.print(p.x + "," + p.y, 70, i * 10 + 30))
                 // info.player2.setScore(100 * this._angle * 180 / Math.PI)
 
-                // this.corners.forEach((p, i) => { this.tempScreen.setPixel(baseX+p.x, baseY - WallHeight + p.y, i + 2) })
+                this.corners.forEach((p, i) => { this.tempScreen.setPixel(baseX+p.x, baseY - WallHeight + p.y, i + 2) })
 
                 return
             }
@@ -736,7 +762,9 @@ namespace Render {
                 if(v[0]===0){ //spr 
                     this.drawSprite(this.sprites[v[3]], v[1], v[2])
                 }else if(v[0]===1){ //wall
-                    this.drawWall(v[1], v[2])
+                    // this.drawWall(v[1], v[2])
+                    this.drawTexWall(v[1], v[2], this.map.getTileset()[v[3]], 0)
+                    this.drawTexWall(v[1], v[2], this.map.getTileset()[v[3]], 1)
                     this.tempScreen.drawTransparentImage(this.rotatedTiles[v[3]], v[1], v[2] - WallHeight)
                 }
                 //debug
