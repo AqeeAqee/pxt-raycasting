@@ -41,7 +41,7 @@ namespace Render {
         const D_Fpx = A_Fpx, C_Fpx = -B_Fpx
         let xOut = ((D_Fpx * (xIn - X0) - B_Fpx * (yIn - Y0)) << fpx) / AD_BC_Fpx2 - (H - X0)
         let yOut = -((C_Fpx * (xIn - X0) - A_Fpx * (yIn - Y0)) << fpx) / AD_BC_Fpx2 - (V - Y0)
-        return { x: (xOut|0), y: yOut>>1 }
+        return { x: (xOut | 0), y: yOut / (TileImgScaleX / TileImgScaleY) }
     }
 
     class MotionSet1D {
@@ -499,8 +499,10 @@ namespace Render {
             let C_Fpx = -B_Fpx
             let xIn0_FX = (A_Fpx * (H - X0)) + (B_Fpx * (V - Y0)) + (X0 << fpx)
             let yIn0_FX = (C_Fpx * (H - X0)) + (D_Fpx * (V - Y0)) + (Y0 << fpx)
-            B_Fpx <<=1 // skip 1 every 1, shrink to 64x32
-            D_Fpx <<=1 // ...
+            // B_Fpx <<= 1 // skip 1 every 1, shrink to 64x32
+            // D_Fpx <<= 1 // ...
+            B_Fpx *= (TileImgScaleX/TileImgScaleY) // skip 1 every 1, shrink to 64x32
+            D_Fpx *= (TileImgScaleX/TileImgScaleY) // ...
             const TileSize_Fpx = TileSize << fpx
 
             for (let xOut = 0; xOut < TileSize * TileImgScaleX; xOut++) {
@@ -702,13 +704,13 @@ namespace Render {
                 const baseX=0, baseY=64
                 const centerX= baseX+(TileSize*TileImgScaleX>>1), centerY=baseY+TileSize*TileImgScaleY/2
 
-                this.drawWall(baseX - A, baseY-B/2, 3)
+                this.drawWall(baseX - A, baseY - B / (TileImgScaleX / TileImgScaleY), 3)
                 
                 // this.rotatedTiles[1].replace(0,6)
                 this.drawWall(baseX, baseY, 1)
                 
-                this.tempScreen.drawLine(centerX, centerY - WallHeight, centerX + A, centerY - WallHeight + B/2, 2)
-                this.tempScreen.drawLine(centerX, centerY - WallHeight, centerX + C, centerY - WallHeight + D/2, 2)
+                this.tempScreen.drawLine(centerX, centerY - WallHeight, centerX + A, centerY - WallHeight + B/(TileImgScaleX/TileImgScaleY), 2)
+                this.tempScreen.drawLine(centerX, centerY - WallHeight, centerX + C, centerY - WallHeight + D/(TileImgScaleX/TileImgScaleY), 2)
                 //debug
                 this.corners.forEach((p, i) => this.tempScreen.print(p.x + "," + p.y, 70, i * 10 + 30))
                 // info.player2.setScore(100 * this._angle * 180 / Math.PI)
@@ -724,13 +726,13 @@ namespace Render {
         let ms = control.benchmark(() => {
             const Walls = []
             let offsetX0_Fpx = (( (HalfTileSize - this.sprSelf.y) * C_px_Fpx + A_px_Fpx * (HalfTileSize - this.sprSelf.x) ) >>TileMapScale ) + (left_CenterTile<<fpx)
-            let offsetY0_Fpx = (( (HalfTileSize - this.sprSelf.y) * D_px_Fpx + B_px_Fpx * (HalfTileSize - this.sprSelf.x) ) >>TileMapScale ) + (top_CenterTile<<(fpx+1))
+            let offsetY0_Fpx = (((HalfTileSize - this.sprSelf.y) * D_px_Fpx + B_px_Fpx * (HalfTileSize - this.sprSelf.x)) >> TileMapScale) + (top_CenterTile << fpx) * (TileImgScaleX / TileImgScaleY)
             for (let i = 0; i < this.map.width; i++) {
                 let offsetX_Fpx = offsetX0_Fpx
                 let offsetY_Fpx = offsetY0_Fpx
                 for (let j = 0; j < this.map.height; j++) {
                     const offsetX = offsetX_Fpx >> fpx
-                    const offsetY = offsetY_Fpx >> (fpx + 1)
+                    const offsetY = (offsetY_Fpx >> (fpx))/(TileImgScaleX / TileImgScaleY)
                     if (offsetX > -TileSize * TileImgScaleX && offsetX < screen.width && offsetY > -TileSize * TileImgScaleY && offsetY < screen.height + TileSize * TileImgScaleY) {
                         const t = this.map.getTile(j, i)
                         if (this.map.isWall(j, i)) {
@@ -752,7 +754,7 @@ namespace Render {
             const drawingSprites = this.sprites
             .map((spr, index) => {
                 const offsetX = ScreenCenterX + ((C_px_Fpx * (spr.y - this.sprSelf.y) + A_px_Fpx * (spr.x - this.sprSelf.x)) >> (TileMapScale + fpx))
-                const offsetY = ScreenCenterY + ((D_px_Fpx * (spr.y - this.sprSelf.y) + B_px_Fpx * (spr.x - this.sprSelf.x)) >> (TileMapScale + fpx + 1))
+                const offsetY = ScreenCenterY + (((D_px_Fpx * (spr.y - this.sprSelf.y) + B_px_Fpx * (spr.x - this.sprSelf.x)) >> (TileMapScale + fpx))/(TileImgScaleX/TileImgScaleY))
                 const j = (spr.x / TileSize) | 0, i = (spr.y / TileSize) | 0
                 return [0, offsetX, offsetY, index,
                     (D_px_Fpx > 0 ? i : this.map.width - 1 - i) * this.map.width +
