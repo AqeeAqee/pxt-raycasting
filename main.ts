@@ -147,6 +147,8 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
     Render.toggleViewMode()
 })
 
+
+
 controller.B.repeatDelay = 0
 
 let isAdjusting = false
@@ -169,13 +171,31 @@ controller.A.onEvent(ControllerButtonEvent.Released, () => {
     Render.moveWithController(1.5, 2)
 })
 
+controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
+    if (isAdjusting)
+    Render.changeScaleY(1)
+})
+controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
+    if (isAdjusting)
+    Render.changeScaleY(-1)
+})
+controller.left.onEvent(ControllerButtonEvent.Pressed, () => {
+    if (isAdjusting)
+    Render.changeScale(-1)
+})
+controller.right.onEvent(ControllerButtonEvent.Pressed, () => {
+    if (isAdjusting)
+    Render.changeScale(1)
+})
+
+
 rcRender.wallZScale = 2
 
 let zOffset = 3// tilemapScale / 2
-rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
+// rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
 let fov = Render.defaultFov
 game.onUpdate(() => {
-    if (isAdjusting) {
+    if (false&&isAdjusting) {
         // zOffset -= controller.dy(10)
         // rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
         fov -= controller.dy(1)
