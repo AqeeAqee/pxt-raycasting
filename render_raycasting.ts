@@ -261,7 +261,11 @@ namespace Render {
 
         jump(spr: Sprite, v: number, a: number) {
             const motionZ = this.getMotionZ(spr)
-            if (motionZ.p != motionZ.offset)
+            let floorHeight = motionZ.offset
+            if (tiles.tileAtLocationIsWall(spr.tilemapLocation()))
+                floorHeight += TileSize << fpx
+
+            if (motionZ.p != floorHeight)
                 return
 
             motionZ.v = tofpx(v)
@@ -270,7 +274,11 @@ namespace Render {
 
         jumpWithHeightAndDuration(spr: Sprite, height: number, duration: number) {
             const motionZ = this.getMotionZ(spr)
-            if (motionZ.p != motionZ.offset)
+            let floorHeight = motionZ.offset
+            if (tiles.tileAtLocationIsWall(spr.tilemapLocation()))
+                floorHeight += TileSize << fpx
+
+            if (motionZ.p != floorHeight)
                 return
 
             // height= -v*v/a/2
@@ -513,15 +521,22 @@ namespace Render {
             const motionZ = this.spriteMotionZ[spr.id]
             //if (!motionZ) continue
 
-            if (motionZ.v != 0 || motionZ.p != motionZ.offset) {
+            let floorHeight = motionZ.offset
+            if(tiles.tileAtLocationIsWall(spr.tilemapLocation()))
+                floorHeight += TileSize <<fpx
+            if (motionZ.v != 0 || motionZ.p != floorHeight) {
                 motionZ.v += motionZ.a * dt, motionZ.p += motionZ.v * dt
                 //landing
-                if ((motionZ.a >= 0 && motionZ.v > 0 && motionZ.p > motionZ.offset) ||
-                    (motionZ.a <= 0 && motionZ.v < 0 && motionZ.p < motionZ.offset)) { motionZ.p = motionZ.offset, motionZ.v = 0 }
+                if ((motionZ.a >= 0 && motionZ.v > 0 && motionZ.p >= floorHeight) ||
+                    (motionZ.a <= 0 && motionZ.v < 0 && motionZ.p <= floorHeight)) { motionZ.p = floorHeight, motionZ.v = 0 }
                 if(spr===this.sprSelf)
                     this.updateViewZPos()
             }
-
+            if (spr === this.sprSelf){
+                const isLevel2 = motionZ.p >= (TileSize << fpx)
+                spr.setFlag(SpriteFlag.Ghost, isLevel2)
+                spr.layer = isLevel2 ? 2 : 1
+            }
         }
 
         rotateAll(inImgs: Image[], A_Fpx: number, B_Fpx: number) {
@@ -794,7 +809,8 @@ namespace Render {
                 const j = (spr.x / TileSize) | 0, i = (spr.y / TileSize) | 0
                 return [0, offsetX, offsetY, index,
                     (D_px_Fpx > 0 ? i : this.map.width - 1 - i) * this.map.width +
-                    (B_px_Fpx > 0 ? j : this.map.height - 1 - j)
+                    (B_px_Fpx > 0 ? j : this.map.height - 1 - j) +
+                    ((spr.layer-1)<<10)
                     ]
             })
             .filter((v,i) =>{
