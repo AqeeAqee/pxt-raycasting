@@ -411,6 +411,7 @@ namespace Render {
 
             game.onUpdate(function () {
                 this.updateControls()
+                this.updateSprite()
             })
 
             game.onUpdateInterval(400, ()=>{
@@ -498,14 +499,17 @@ namespace Render {
                     this.isWalking =false
                 }
             }
-            for (const spr of this.sprites) {
-                this.updateMotionZ(spr)
-            }
-            this.updateMotionZ(this.sprSelf)
         }
 
-        updateMotionZ(spr:Sprite){
+        updateSprite(){
             const dt = game.eventContext().deltaTime
+            for (const spr of this.sprites) {
+                this.updateMotionZ(spr, dt)
+            }
+            this.updateMotionZ(this.sprSelf, dt)
+        }
+
+        updateMotionZ(spr:Sprite, dt:number){
             const motionZ = this.spriteMotionZ[spr.id]
             //if (!motionZ) continue
 
