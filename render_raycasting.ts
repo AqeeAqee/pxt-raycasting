@@ -54,7 +54,7 @@ namespace Render {
         HalfTileImgScale = TileImgScale / 2 ///>> 1
         TileImgScaleX = TileImgScale
         Scale = TileImgScale / Math.SQRT2, Scale_Square = TileImgScale ** 2 / 2
-        WallHeight = TileSize * HalfTileImgScale
+        WallScale = HalfTileImgScale, WallHeight = TileSize * WallScale
         H = X0 - TileSize * HalfTileImgScale, V = Y0 - TileSize * HalfTileImgScale
         AD_BC_Fpx2 = (one2 / Scale_Square) | 0
         raycastingRender.lastRenderAngle=-1 // force refresh
