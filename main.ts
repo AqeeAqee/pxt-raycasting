@@ -1,7 +1,7 @@
 
 game.stats = true
 const rcRender = Render.raycastingRender
-// Render.moveWithController(1.5,2,1)
+Render.moveWithController(5, 2, 0)
 
 // let trans16 = image.create(16, 16)
 
@@ -24,7 +24,7 @@ const tm = tiles.createTilemap(hex`100010000304050607010201020102010201020101020
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
-`, [myTiles.transparency16,myTiles.tile3,myTiles.tile4,sprites.castle.tileGrass2,sprites.castle.tilePath5,sprites.vehicle.roadVertical,sprites.vehicle.roadHorizontal,sprites.dungeon.chestClosed], TileScale.Sixteen);
+`, [myTiles.transparency16, myTiles.tile3, myTiles.tile4, sprites.castle.tileGrass2, sprites.castle.tilePath5, sprites.vehicle.roadVertical, sprites.vehicle.roadHorizontal, sprites.dungeon.chestClosed], TileScale.Sixteen);
 // tiles.setCurrentTilemap(tm)
 // const spawnTile = myTiles.tile4
 
@@ -78,10 +78,10 @@ Render.setSpriteAttribute(sprPlane, RCSpriteAttribute.ZOffset, 16)
 // Render.setSpriteAttribute(cake, RCSpriteAttribute.ZOffset, 4)
 Render.setSpriteAttribute(fish, RCSpriteAttribute.ZOffset, 8)
 
-function createCoin(){
-    let spr=createSprite(4, 7, Math.randomRange(5,10), Math.randomRange(3,10), texturesCoin, SpriteKind.Food)
+function createCoin() {
+    let spr = createSprite(4, 7, Math.randomRange(5, 10), Math.randomRange(3, 10), texturesCoin, SpriteKind.Food)
     tiles.placeOnRandomTile(spr, spawnTile)
-    rcRender.setZOffset(spr,.25)
+    rcRender.setZOffset(spr, .25)
 }
 
 //test for RelativeToCamera
@@ -94,6 +94,12 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
     s.setScale(0.25)
     rcRender.setZOffset(s, rcRender.getMotionZPosition(rcRender.sprSelf) + 2)  //todo, use VP height
+
+    const onTheWall = tiles.tileAtLocationIsWall(rcRender.sprSelf.tilemapLocation())
+    info.player4.setScore(onTheWall ? 999 : 0)
+    if (onTheWall) {
+        s.flags |= sprites.Flag.IsClipping;
+    }
 })
 
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
@@ -158,34 +164,34 @@ controller.anyButton.onEvent(ControllerButtonEvent.Pressed, () => {
             Render.moveWithController(0, 0)
             isAdjusting = true
         } else {
-            rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale*2, 1000)
+            rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale * 2.5, 1000)
         }
     }
 })
 controller.B.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
-    Render.moveWithController(1.5, 2)
+    Render.moveWithController(5, 2)
 })
 controller.A.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
-    Render.moveWithController(1.5, 2)
+    Render.moveWithController(5, 2)
 })
 
 controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
     if (isAdjusting)
-    Render.changeScaleY(1)
+        Render.changeScaleY(1)
 })
 controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
     if (isAdjusting)
-    Render.changeScaleY(-1)
+        Render.changeScaleY(-1)
 })
 controller.left.onEvent(ControllerButtonEvent.Pressed, () => {
     if (isAdjusting)
-    Render.changeScale(-1)
+        Render.changeScale(-1)
 })
 controller.right.onEvent(ControllerButtonEvent.Pressed, () => {
     if (isAdjusting)
-    Render.changeScale(1)
+        Render.changeScale(1)
 })
 
 
@@ -195,7 +201,7 @@ let zOffset = 3// tilemapScale / 2
 // rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
 let fov = Render.defaultFov
 game.onUpdate(() => {
-    if (false&&isAdjusting) {
+    if (false && isAdjusting) {
         // zOffset -= controller.dy(10)
         // rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
         fov -= controller.dy(1)
