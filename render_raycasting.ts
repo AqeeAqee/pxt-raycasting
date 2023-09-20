@@ -633,8 +633,8 @@ namespace Render {
             const yStep = Math.idiv((p1y - p0y) << fpx, diffX0_1)
             for (let x = 0; x <= diffX0_1; x++) {
                 // this.tempScreen.print(y+"", 100,60+x*10)
-                helpers.imageBlitRow(targetImg, x + p0x, y >> fpx,
-                    tex, texX >> fpx, WallHeight)
+                helpers.imageBlitRow(targetImg, x + p0x, (y >> fpx) - 1, // "y-1" a workaround of gap between roof and wallside
+                    tex, texX >> fpx, WallHeight + 1) // "WallHeight+1" a workaround of gap between roof and wallside
                 texX += texXStep
                 y += yStep
             }
