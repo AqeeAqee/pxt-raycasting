@@ -628,9 +628,10 @@ namespace Render {
             const p1x = offsetX + this.corners[startCornerIndex + 1].x, p1y = offsetY + this.corners[startCornerIndex + 1].y
             let y = (p0y - WallHeight + 1) << fpx
             const diffX0_1 = p1x - p0x
+            if (diffX0_1 <= 0) return
             let texX = 0
-            const texXStep = Math.idiv((TileSize << fpx), diffX0_1)
-            const yStep = Math.idiv((p1y - p0y) << fpx, diffX0_1)
+            const texXStep = Math.idiv(((TileSize) << fpx) - 1, diffX0_1)
+            const yStep = Math.idiv((p1y - p0y) * fpx_scale, diffX0_1)
             for (let x = 0; x <= diffX0_1; x++) {
                 // this.tempScreen.print(y+"", 100,60+x*10)
                 helpers.imageBlitRow(targetImg, x + p0x, (y >> fpx) - 1, // "y-1" a workaround of gap between roof and wallside
@@ -757,7 +758,6 @@ namespace Render {
 
                 this.drawWall(baseX - A, baseY - B / (TileImgScaleX / TileImgScaleY), 3)
                 
-                // this.rotatedTiles[1].replace(0,6)
                 this.drawWall(baseX, baseY, 1)
                 
                 this.tempScreen.drawLine(centerX, centerY - WallHeight, centerX + A, centerY - WallHeight + B/(TileImgScaleX/TileImgScaleY), 2)
