@@ -1,6 +1,3 @@
-//% shim=pxt::updateScreen
-function updateScreen(img: Image) { }
-
 enum ViewMode {
     //% block="TileMap Mode"
     tilemapView,
@@ -30,8 +27,6 @@ namespace Render {
     export const defaultFov = SW / SH / 2  //Wall just fill screen height when standing 1 tile away
 
     export class RayCastingRender {
-        private tempScreen: Image = image.create(SW, SH)
-
         velocityAngle: number = 2
         velocity: number = 3
         protected _viewMode=ViewMode.raycastingView
@@ -42,16 +37,11 @@ namespace Render {
         protected _angle: number
         protected _fov: number
         protected _wallZScale: number = 1
-        cameraSway = 0
-        protected isWalking=false
-        protected cameraOffsetX = 0
-        protected cameraOffsetZ_fpx = 0
 
         //sprites & accessories
         sprSelf: Sprite
         sprites: Sprite[] = []
         sprites2D: Sprite[] = []
-        spriteParticles: particles.ParticleSource[] = []
         spriteLikes: SpriteLike[] = []
         spriteAnimations: Animations[] = []
         protected spriteMotionZ: MotionSet1D[] = []
@@ -72,13 +62,14 @@ namespace Render {
         protected dist: number[] = []
         //render perf const
         cameraRangeAngle:number
-        viewZPos:number
+        ViewZPos:number
         selfXFpx:number
         selfYFpx:number
 
         //for drawing sprites
         protected invDet: number //required for correct matrix multiplication
         camera: scene.Camera
+        tempScreen: Image = image.create(SW, SH)
         tempSprite: Sprite = sprites.create(img`0`)
         protected transformX: number[] = []
         protected transformY: number[] = []
@@ -234,7 +225,7 @@ namespace Render {
         }
 
         updateViewZPos() {
-            this.viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2 << fpx)
+            this.ViewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2 << fpx)
         }
 
         takeoverSceneSprites() {
@@ -255,12 +246,6 @@ namespace Render {
                                 sayRenderer.destroy()
                             }
                         })
-                    }
-                } else if(spr instanceof particles.ParticleSource){
-                    const particle = (spr as particles.ParticleSource)
-                    if (this.spriteParticles.indexOf(particle) < 0) {
-                        this.spriteParticles[(particle.anchor as Sprite).id]=particle
-                        particle.anchor=this.tempSprite
                     }
                 } else {
                     if (this.spriteLikes.indexOf(spr) < 0)
@@ -301,23 +286,23 @@ namespace Render {
             })
 
             let frameCallback_draw = sc.eventContext.registerFrameHandler(scene.RENDER_SPRITES_PRIORITY + 1, () => {
+                screen.drawImage(sc.background.image, 0, 0)
                 if (this._viewMode == ViewMode.tilemapView) {
-                    screen.drawImage(sc.background.image, 0, 0)
                     this.oldRender.__drawCore(sc.camera)
                     this.sprites.forEach(spr => spr.__draw(sc.camera))
                     this.sprSelf.__draw(sc.camera)
                 } else {
-                    this.tempScreen.drawImage(sc.background.image, 0, 0)
                     //debug
                     // const ms=control.micros()
                     this.render()
+                    this.drawSprites()
+
                     // info.setScore(control.micros()-ms)
-                    screen.fill(0)
                 }
-                this.sprites2D.forEach(spr => spr.__draw(sc.camera))
+                this.sprites2D.forEach(spr => {
+                    spr.__draw(sc.camera)
+                    })
                 this.spriteLikes.forEach(spr => spr.__draw(sc.camera))
-                if (this._viewMode == ViewMode.raycastingView) 
-                    this.tempScreen.drawTransparentImage(screen,0,0)
             })
 
             sc.tileMap.addEventListener(tiles.TileMapEvent.Unloaded, data => {
@@ -374,32 +359,6 @@ namespace Render {
                 }
                 this.takeoverSceneSprites() // in case some one new
             })
-
-
-            game.onUpdateInterval(25, () => {
-                if(this.cameraSway&&this.isWalking){
-                    this.cameraOffsetX = (Math.sin(control.millis() / 150) * this.cameraSway * 3)|0
-                    this.cameraOffsetZ_fpx = tofpx(Math.cos(control.millis() / 75) * this.cameraSway)|0
-                }
-            });
-            control.__screen.setupUpdate(() => {
-                if(this.viewMode==ViewMode.raycastingView)
-                    updateScreen(this.tempScreen)
-                else
-                    updateScreen(screen)
-            })
-
-            game.addScenePushHandler((oldScene) => {
-                control.__screen.setupUpdate(() => { updateScreen(screen) })
-            })
-            game.addScenePopHandler((oldScene) => {
-                control.__screen.setupUpdate(() => {
-                    if (this.viewMode == ViewMode.raycastingView)
-                        updateScreen(this.tempScreen)
-                    else
-                        updateScreen(screen)
-                })
-            })
         }
 
         private setVectors() {
@@ -428,14 +387,11 @@ namespace Render {
                 }
             }
             if (this.velocity !== 0) {
-                this.isWalking=true
                 const dy = controller.dy(this.velocity)
                 if (dy) {
                     const nx = this.xFpx - Math.round(this.dirXFpx * dy)
                     const ny = this.yFpx - Math.round(this.dirYFpx * dy)
                     this.sprSelf.setPosition((nx * this.tilemapScaleSize / fpx_scale), (ny * this.tilemapScaleSize / fpx_scale))
-                }else{
-                    this.isWalking =false
                 }
             }
 
@@ -461,6 +417,9 @@ namespace Render {
 
         }
 
+        r1:Result
+        newAlgorithm=true
+        wallXs:number[]=[]
         render() {
             // based on https://lodev.org/cgtutor/raycasting.html
 
@@ -469,13 +428,131 @@ namespace Render {
 
             let drawStart = 0
             let drawHeight = 0
-            let lastDist = -1, lastTexX = -1, lastMapX = -1, lastMapY = -1
-            this.viewZPos = this.spriteMotionZ[this.sprSelf.id].p + (this.sprSelf._height as any as number) - (2<<fpx) + this.cameraOffsetZ_fpx
-            let cameraRangeAngle = Math.atan(this.fov)+.1 //tolerance for spr center just out of camera
-            //debug
-            // const ms=control.millis()
+            let lastDist = -1, lastTexX = -1
+            let lastMapXY = -1
+
+        //debug 
+        // const ms=control.millis()
+        if (this.newAlgorithm){
+            this.r1=this.raycast(0)
+            this.bisearch(this.r1, this.raycast(SW-1))
+            
+            let curResult = this.r1
+            let startResult = this.r1
+            // info.setLife(control.millis() - ms + 1)
+            // const ms2 = control.millis()
+            // console.log("----------")
+            while (curResult) {
+                if (!curResult.next || startResult.mapXY!=curResult.next.mapXY){
+                    const tex = this.textures[startResult.color]
+                    if (!tex) break
+
+                    let texX = (startResult.wallX * tex.width); // /fpx_scale
+                    
+                    let perpWallDist = startResult.perpWallDist
+                    // const lineHeight = Math.idiv(this.wallHeightInView , perpWallDist)
+                    // const drawEnd = lineHeight * this.ViewZPos / this.tilemapScaleSize / fpx_scale;
+                    drawHeight = Math.idiv(tofpx(this.wallHeightInView * this._wallZScale), perpWallDist) // (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1)
+                    let drawStart = tofpx(SHHalf + Math.idiv(this.wallHeightInView * this.ViewZPos / this.tilemapScaleSize / fpx_scale, perpWallDist) + 1) - drawHeight;
+
+                    const deltaX = (curResult.x - startResult.x + 1)
+                    const texXDelta = ((curResult.wallX - startResult.wallX) / deltaX * tex.width)|0 // /fpx_scale
+                    const wallDistDelta = (curResult.perpWallDist - startResult.perpWallDist) / deltaX |0
+                    const oneDivWallDistDelta = (one/curResult.perpWallDist-one/startResult.perpWallDist)/deltaX 
+                    const drawHeightDelta = this.wallHeightInView * this._wallZScale* oneDivWallDistDelta |0
+                    const drawStartDelta = this.wallHeightInView * (this.ViewZPos / this.tilemapScaleSize / fpx_scale) * oneDivWallDistDelta - drawHeightDelta |0
+                    // console.log([texXDelta,wallDistDelta,drawHeightDelta, drawStartDelta, oneDivWallDistDelta])
+                    for (let x = startResult.x; x <= curResult.x
+                        ; x++,
+                        texX += texXDelta,
+                        drawStart += drawStartDelta ,
+                        drawHeight += drawHeightDelta ,
+                        perpWallDist += wallDistDelta
+                        ) {
+                        screen.blitRow(x, drawStart >> fpx, tex, texX>>fpx, drawHeight>>fpx)
+                        this.dist[x] = perpWallDist
+                        //debug
+                        // screen.drawLine(x,SHHalf,x,SHHalf+(texX>>fpx),15)
+                    }
+                    if (curResult.next)
+                        startResult = curResult.next
+                    else
+                        break
+                } 
+                curResult=curResult.next
+            }
+            // console.log("===========")
+        }
+        else
+        {
             for (let x = 0; x < SW; x++) {
-                const cameraX: number = one - Math.idiv(((x+this.cameraOffsetX) << fpx) << 1, SW)
+                const result =this.raycast(x)
+                //[mapXY, perpWallDist, wallX, color]
+                // const mapXY = result[0],  perpWallDist = result[1], wallX = result[2], color = result[3]
+
+                const tex = this.textures[result.color]
+                if (!tex)
+                    continue
+
+                let texX = (result.wallX * tex.width) >> fpx;
+                // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
+                //     texX = tex.width - texX - 1;
+
+                if (result.perpWallDist !== lastDist && (texX !== lastTexX || result.mapXY !== lastMapXY)) {//neighbor line of tex share same parameters
+                    const lineHeight = (this.wallHeightInView / result.perpWallDist)
+                    const drawEnd = lineHeight * this.ViewZPos / this.tilemapScaleSize / fpx_scale;
+                    drawStart = drawEnd - lineHeight * (this._wallZScale) + 1;
+                    drawHeight = (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1)
+                    drawStart += SHHalf
+
+                    lastDist = result.perpWallDist
+                    lastTexX = texX
+                    lastMapXY = result.mapXY
+                }
+                //fix start&end points to avoid regmatic between lines
+                screen.blitRow(x, drawStart, tex, texX, drawHeight)
+
+                this.dist[x] = result.perpWallDist
+                this.wallXs[x] = result.wallX
+                //debug
+                screen.drawLine(x, SHHalf, x, SHHalf + texX, result.mapXY > 10000 ? 3:15)
+            }
+
+            // screen.print(lastPerpWallDist.toString(), 0,0,7 )
+
+        }
+        //debug
+        // info.setScore(control.millis() - ms + 1)
+
+        }
+
+        bisearch(r1:Result, r2:Result){
+            // console.log("bisearch: " + r1.x+"("+r1.mapXY+") " + "," + r2.x+"("+r2.mapXY+") ")
+            if (r2.x - r1.x > 1) {
+                const x3=(r2.x+r1.x)>>1
+                const r3=this.raycast(x3)
+                // console.log("bisearch r3: " + r3.x+"("+r3.mapXY+") ")
+                if (r3.mapXY != r1.mapXY)
+                    this.bisearch(r1, r3)
+                else{
+                    // console.log("bisearch r1->r3:" + r1.x+"("+r1.mapXY+") " + "," + r3.x+"("+r3.mapXY+") ")
+                    r1.next=r3
+                }
+                if (r3.mapXY != r2.mapXY)
+                    this.bisearch(r3, r2)
+                else{
+                    // console.log("bisearch r3->r2:" + r3.x+"("+r3.mapXY+") " + "," + r2.x+"("+r2.mapXY+") ")
+                    r3.next=r2
+                }
+
+            } else if (r2.x - r1.x==1){
+                r1.next=r2
+                // console.log("bisearch r1->r2:" + r1.x+"("+r1.mapXY+") " + "," + r2.x+"("+r2.mapXY+") ")
+            }
+        }
+        
+        raycast(x:number){
+                const cameraX: number = one - Math.idiv((x << fpx) << 1, SW)
                 let rayDirX = this.dirXFpx + (this.planeX * cameraX >> fpx)
                 let rayDirY = this.dirYFpx + (this.planeY * cameraX >> fpx)
 
@@ -528,61 +605,39 @@ namespace Render {
                     }
 
                     if (this.map.isOutsideMap(mapX, mapY))
-                        break
+                        return null
                     color = this.map.getTile(mapX, mapY)
                     if (color)
                         break; // hit!
                 }
 
-                if (this.map.isOutsideMap(mapX, mapY))
-                    continue
+                // if (this.map.isOutsideMap(mapX, mapY))
+                //     return null
 
                 let perpWallDist = 0
                 let wallX = 0
                 if (!sideWallHit) {
-                    perpWallDist = Math.idiv(((mapX << fpx) - this.selfXFpx + (1 - mapStepX << fpx - 1)) << fpx, rayDirX)
+                    // perpWallDist = Math.idiv(((mapX << fpx) - this.selfXFpx + (1 - mapStepX << fpx - 1)) << fpx, rayDirX)
+                    perpWallDist = (sideDistX - deltaDistX);
                     wallX = this.selfYFpx + (perpWallDist * rayDirY >> fpx);
+                    mapY = wallX>>fpx
                 } else {
-                    perpWallDist = Math.idiv(((mapY << fpx) - this.selfYFpx + (1 - mapStepY << fpx - 1)) << fpx, rayDirY)
+                    // perpWallDist = Math.idiv(((mapY << fpx) - this.selfYFpx + (1 - mapStepY << fpx - 1)) << fpx, rayDirY)
+                    perpWallDist = (sideDistY - deltaDistY)
                     wallX = this.selfXFpx + (perpWallDist * rayDirX >> fpx);
+                    mapX = wallX >> fpx
                 }
+                // wallX-=1
                 wallX &= FPX_MAX
 
                 // color = (color - 1) * 2
                 // if (sideWallHit) color++
 
-                const tex = this.textures[color]
-                if (!tex)
-                    continue
-
-                let texX = (wallX * tex.width) >> fpx;
-                // if ((!sideWallHit && rayDirX > 0) || (sideWallHit && rayDirY < 0))
-                //     texX = tex.width - texX - 1;
-
-                if (perpWallDist !== lastDist && (texX !== lastTexX || mapX !== lastMapX || mapY !== lastMapY)) {//neighbor line of tex share same parameters
-                    const lineHeight = (this.wallHeightInView / perpWallDist)
-                    const drawEnd = lineHeight * this.viewZPos / this.tilemapScaleSize / fpx_scale;
-                    drawStart = drawEnd - lineHeight * (this._wallZScale) + 1;
-                    drawHeight = (Math.ceil(drawEnd) - Math.ceil(drawStart) + 1)
-                    drawStart += (SH >> 1) 
-                    
-                    lastDist = perpWallDist
-                    lastTexX = texX
-                    lastMapX = mapX
-                    lastMapY = mapY
-                }
-                //fix start&end points to avoid regmatic between lines
-                this.tempScreen.blitRow(x, drawStart, tex, texX, drawHeight)
-
-                this.dist[x] = perpWallDist
-            }
-            //debug
-            // info.setScore(control.millis()-ms)
-            // this.tempScreen.print(lastPerpWallDist.toString(), 0,0,7 )
-
-            this.drawSprites()
+                // return [mapX+mapY*this.map.width, perpWallDist, wallX, color]
+            return new Result(x, mapX + mapY * this.map.width +( sideWallHit?100000:0), perpWallDist, wallX, color)
         }
-        
+
+
         drawSprites(){
             //debug
             // let msSprs=control.millis()
@@ -604,22 +659,21 @@ namespace Render {
                     return (this.transformY[spr2.id] - this.transformY[spr1.id])
                 }).forEach((spr, index) => {
                     //debug
-                    // this.tempScreen.print([spr.id,Math.roundWithPrecision(angle[spr.id],3)].join(), 0, index * 10 + 10,9)
+                    // screen.print([spr.id,Math.roundWithPrecision(angle[spr.id],3)].join(), 0, index * 10 + 10,9)
                     this.drawSprite(spr, index, this.transformX[spr.id], this.transformY[spr.id], this.angleSelfToSpr[spr.id])
                 })
 
             //debug
             // info.setLife(control.millis() - msSprs+1)
-            // this.tempScreen.print([Math.roundWithPrecision(angle0,3)].join(), 20,  0)
+            // screen.print([Math.roundWithPrecision(angle0,3)].join(), 20,  0)
 
         }
 
         registerOnSpriteDirectionUpdate(handler: (spr: Sprite, dir: number) => void) {
             this.onSpriteDirectionUpdateHandler = handler
         }
-      
         drawSprite(spr: Sprite, index: number, transformX: number, transformY: number, myAngle:number) {
-            const spriteScreenX = Math.ceil((SWHalf) * (1 - transformX / transformY))-this.cameraOffsetX;
+            const spriteScreenX = Math.ceil((SWHalf) * (1 - transformX / transformY));
             const spriteScreenHalfWidth = Math.idiv((spr._width as any as number) / this.tilemapScaleSize / 2 * this.wallWidthInView, transformY)  //origin: (texSpr.width / 2 << fpx) / transformY / this.fov / 3 * 2 * 4
             const spriteScreenLeft = spriteScreenX - spriteScreenHalfWidth
             const spriteScreenRight = spriteScreenX + spriteScreenHalfWidth
@@ -639,14 +693,14 @@ namespace Render {
                         blitX = 0, blitWidth = 0;
                 }
             }
-            // this.tempScreen.print([this.getxFx8(spr), this.getyFx8(spr)].join(), 0,index*10+10)
+            // screen.print([this.getxFx8(spr), this.getyFx8(spr)].join(), 0,index*10+10)
             const blitXSpr = Math.max(blitX, spriteScreenLeft)
             const blitWidthSpr = Math.min(blitX + blitWidth, spriteScreenRight) - blitXSpr
             if (blitWidthSpr <= 0)
                 return
 
             const lineHeight = Math.idiv(this.wallHeightInView, transformY)
-            const drawStart = SHHalf + (lineHeight * ((this.viewZPos - this.spriteMotionZ[spr.id].p - (spr._height as any as number)) / this.tilemapScaleSize) >> fpx)
+            const drawStart = SHHalf + (lineHeight * ((this.ViewZPos - this.spriteMotionZ[spr.id].p - (spr._height as any as number)) / this.tilemapScaleSize) >> fpx)
 
             //for textures=image[][], abandoned
             //    const texSpr = spr.getTexture(Math.floor(((Math.atan2(spr.vxFx8, spr.vyFx8) - myAngle) / Math.PI / 2 + 2-.25) * spr.textures.length +.5) % spr.textures.length)
@@ -659,10 +713,9 @@ namespace Render {
             //     character.setCharacterState(spr, character.rule(characterAniDirs[iTexture]))
             //for this.spriteAnimations
             const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(((Math.atan2(spr._vx as any as number, spr._vy as any as number) - myAngle) / Math.PI / 2 + 2 - .25))
-            
             const sprTexRatio = texSpr.width / spriteScreenHalfWidth / 2
             helpers.imageBlit(
-                this.tempScreen,
+                screen,
                 blitXSpr,
                 drawStart,
                 blitWidthSpr,
@@ -673,60 +726,48 @@ namespace Render {
                 0,
                 blitWidthSpr * sprTexRatio, texSpr.height, true, false)
 
-            screen.fill(0)
-            const fpx_div_transformy = Math.roundWithPrecision(transformY / 4 / fpx_scale, 2)
-            const height = (SH / fpx_div_transformy)
-            const blitXSaySrc = ((blitX - spriteScreenX) * fpx_div_transformy) + SWHalf
-            const blitWidthSaySrc = (blitWidth * fpx_div_transformy)
-
-            //sprite
-            // screen.drawImage(texSpr, SWHalf-texSpr.width/2, SHHalf)
             //sayText
-            const sayRender = this.sayRederers[spr.id]
-            if (sayRender) {
+            const anchor = this.sayRederers[spr.id]
+            if (anchor) {
                 if (this.sayEndTimes[spr.id] && control.millis() > this.sayEndTimes[spr.id]) {
                     this.sayRederers[spr.id] = undefined
                 } else {
                     this.tempSprite.x = SWHalf
-                    this.tempSprite.y = SHHalf+2
+                    this.tempSprite.y = SH+2
                     this.camera.drawOffsetX = 0
                     this.camera.drawOffsetY = 0
-                    sayRender.draw(screen, this.camera, this.tempSprite)
+                    this.tempScreen.fill(0)
+                    anchor.draw(this.tempScreen, this.camera, this.tempSprite)
+                    const sayTransformY = transformY/2
+                    const height = SH * fpx_scale / sayTransformY
+                    const blitXSaySrc = (blitX - spriteScreenX) * sayTransformY / fpx_scale + SWHalf
+                    const blitWidthSaySrc = blitWidth * sayTransformY / fpx_scale
+                    if (blitXSaySrc < 0) { //imageBlit considers negative value as 0
+                        helpers.imageBlit(
+                            screen,
+                            spriteScreenX - SWHalf * fpx_scale / sayTransformY, drawStart - height, (blitWidthSaySrc + blitXSaySrc) * fpx_scale / sayTransformY, height,
+                            this.tempScreen,
+                            0, 0, blitWidthSaySrc + blitXSaySrc, SH, true, false)
+                    } else
+                        helpers.imageBlit(
+                            screen,
+                            blitX, drawStart - height, blitWidth, height,
+                            this.tempScreen,
+                            blitXSaySrc, 0, blitWidthSaySrc, SH, true, false)
                 }
             }
-            //particle
-            const particle=this.spriteParticles[spr.id]
-            if (particle) {
-                if(particle.lifespan){
-                    //debug
-                    // this.tempScreen.print([spr.id].join(), 0,index*10+10)
-                    this.tempSprite.x=SWHalf
-                    this.tempSprite.y=SHHalf+spr.height
-                    this.camera.drawOffsetX =  0//spr.x-SWHalf
-                    this.camera.drawOffsetY =  0//spr.y-SH
-                    particle.__draw(this.camera)
-                }else{
-                    this.spriteParticles[spr.id]=undefined
-                }
-            }
-            //update screen for this spr
-            // const sayTransformY = 
-                if (blitXSaySrc <= 0) { //imageBlit considers negative value as 0
-                    helpers.imageBlit(
-                        this.tempScreen,
-                        spriteScreenX - SWHalf / fpx_div_transformy, drawStart - height / 2, (blitWidthSaySrc + blitXSaySrc) / fpx_div_transformy, height,
-                        screen,
-                        0, 0, blitWidthSaySrc + blitXSaySrc, SH, true, false)
-                } else{
-                    helpers.imageBlit(
-                        this.tempScreen,
-                        // blitX, drawStart - height / 2 , blitWidth, height,
-                        blitX, drawStart - height / 2, blitWidth, height,
-                        screen,
-                        blitXSaySrc, 0, blitWidthSaySrc, SH,
-                        true, false)
-                }
         }
+    }
+
+    class Result {
+        public next: Result
+        constructor(
+            public x:number,
+            public mapXY: number,
+            public perpWallDist: number,
+            public wallX: number,
+            public color: number,
+            ){}
     }
 
     //%fixedinstance
