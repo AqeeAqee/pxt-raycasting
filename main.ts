@@ -1,13 +1,15 @@
 
 game.stats = true
 const rcRender = Render.raycastingRender
-Render.moveWithController(5, 2, 0)
+Render.moveWithController(0, 0, 0)
+
+controller.moveSprite(rcRender.sprSelf, 66, 0)
 
 // let trans16 = image.create(16, 16)
 
 Render.setSpriteAnimations(rcRender.sprSelf, Render.createAnimations(150, assets.animation`heroWalk`))
 
-const tm = tiles.createTilemap(hex`1000100003040506070102010201020102010201010201020102010201020102010201020201020102010201020102010201020101020102010201020102010201020102020102010201020102010201020102010102010201020102010201020102010202010201020102010201020102010201010201020102010201020102010201020201020102010201020102010201020101020102010201020102010201020102020102010201020102010201020102010102010201020102010201020102010202010201020102010201020102010201010201020102010201020102010201020201020102010201020102010201020101020102010201020102010201020102`, img`
+const tm = tiles.createTilemap(hex`1000100003040506070102010201020102010201010201020102010201020102010201020201020102010201020102010201020101020102010201020102000201020102020102010201020102010201020102010102010201020102010201020102010202010201020102010201020102010201010201020102010201020102010201020201020102010201020102010201020101020102010201020102010201020102020102010201020102010201020102010102010201020102010201020102010202010201020102010201020102010201010201020102010201020102010201020201020102010201020102010201020101020102010201020102010201020102`, img`
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
@@ -24,15 +26,24 @@ const tm = tiles.createTilemap(hex`100010000304050607010201020102010201020101020
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
-`, [myTiles.transparency16, myTiles.tile3, myTiles.tile4, sprites.castle.tileGrass2, sprites.castle.tilePath5, sprites.vehicle.roadVertical, sprites.vehicle.roadHorizontal, sprites.dungeon.chestClosed], TileScale.Sixteen);
+`, [myTiles.transparency16,myTiles.tile3,myTiles.tile4,sprites.castle.tileGrass2,sprites.castle.tilePath5,sprites.vehicle.roadVertical,sprites.vehicle.roadHorizontal,sprites.dungeon.chestClosed], TileScale.Sixteen);
 // tiles.setCurrentTilemap(tm)
 // const spawnTile = myTiles.tile4
 
-tiles.setCurrentTilemap(tilemap`level1`)
-const spawnTile = sprites.castle.tileDarkGrass3
+// tiles.setCurrentTilemap(tilemap`level1`)
+// const spawnTile = sprites.castle.tileDarkGrass3
+
+tiles.setCurrentTilemap(tilemap`level0`)
+const spawnTile = sprites.castle.tileDarkGrass2
+Render.setViewAngleInDegree(-45)
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
-rcRender.sprSelf.setPosition(8 * tilemapScale, 8 * tilemapScale)
+rcRender.sprSelf.setPosition(1 * tilemapScale, 8 * tilemapScale)
+rcRender.sprSelf.ay=500
+
+let angle = -45
+Render.setViewAngleInDegree(angle)
+
 
 // effects.blizzard.startScreenEffect(99999999, 99)
 
@@ -43,7 +54,7 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     const tilemapScale = 1 << game.currentScene().tileMap.scale
     spr.setPosition(x * tilemapScale, y * tilemapScale)
     spr.setVelocity(vx, vy)
-    spr.setBounceOnWall(true)
+    // spr.setBounceOnWall(true)
     spr.setScale(0.5)
     // setCharacterAnimationForSprite(spr, textures)
     Render.setSpriteAnimations(spr, Render.createAnimations(150, textures[0], textures[1], textures[2], textures[3]))
@@ -51,6 +62,11 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
     //     tiles.placeOnRandomTile(spr, trans16)
     spr.sayText(spr.id + " test\n test", 9999)
     // spr.startEffect(effects.fountain,9999)
+
+    //isometric side View
+    spr.setBounceOnWall(false)
+    spr.ay = 500
+
 
     return spr
 }
@@ -91,7 +107,7 @@ function createCoin() {
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     music.pewPew.play()
-    let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, rcRender.dirX * 55, rcRender.dirY * 55)
+    let s = sprites.createProjectileFromSprite(sprites.projectile.bubble1, rcRender.sprSelf, 55, 0)
     s.setScale(0.25)
     rcRender.setZOffset(s, rcRender.getMotionZPosition(rcRender.sprSelf) + 2)  //todo, use VP height
 
@@ -161,37 +177,36 @@ let isAdjusting = false
 controller.anyButton.onEvent(ControllerButtonEvent.Pressed, () => {
     if (controller.B.isPressed()) {
         if (controller.A.isPressed()) {
-            Render.moveWithController(0, 0)
             isAdjusting = true
         } else {
-            rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale * 2.5, 1000)
+            if(tiles.tileAtLocationIsWall(rcRender.sprSelf.tilemapLocation().getNeighboringLocation(CollisionDirection.Bottom)))
+                rcRender.sprSelf.vy= -200
+            // rcRender.jumpWithHeightAndDuration(rcRender.sprSelf, tilemapScale * 2.5, 1000)
         }
     }
 })
 controller.B.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
-    Render.moveWithController(5, 2)
 })
 controller.A.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
-    Render.moveWithController(5, 2)
 })
 
 controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
-    if (isAdjusting)
-        Render.changeScaleY(1)
+    // if (isAdjusting)
+        // Render.changeScaleY(1)
 })
 controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
-    if (isAdjusting)
-        Render.changeScaleY(-1)
+    // if (isAdjusting)
+        // Render.changeScaleY(-1)
 })
 controller.left.onEvent(ControllerButtonEvent.Pressed, () => {
-    if (isAdjusting)
-        Render.changeScale(-1)
+    // if (isAdjusting)
+    //     Render.changeScale(-1)
 })
 controller.right.onEvent(ControllerButtonEvent.Pressed, () => {
-    if (isAdjusting)
-        Render.changeScale(1)
+    // if (isAdjusting)
+    //     Render.changeScale(1)
 })
 
 
@@ -201,6 +216,12 @@ let zOffset = 3// tilemapScale / 2
 // rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)
 let fov = Render.defaultFov
 game.onUpdate(() => {
+    if (controller.up.isPressed())
+        Render.setViewAngleInDegree(--angle)
+    if (controller.down.isPressed())
+        Render.setViewAngleInDegree(++angle)
+
+
     if (false && isAdjusting) {
         // zOffset -= controller.dy(10)
         // rcRender.setZOffset(rcRender.sprSelf, zOffset, 0)

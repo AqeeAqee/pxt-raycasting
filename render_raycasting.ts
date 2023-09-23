@@ -1,6 +1,15 @@
 namespace userconfig {
-    export const ARCADE_SCREEN_WIDTH =  320
-    export const ARCADE_SCREEN_HEIGHT = 240
+    //dimensions
+    export const DISPLAY_WIDTH = 320; //D0
+    export const DISPLAY_HEIGHT = 240; //98
+    //search: 20 B4 A0 20 78 21
+
+    //for sim, accordantly
+    export const ARCADE_SCREEN_WIDTH = DISPLAY_WIDTH
+    export const ARCADE_SCREEN_HEIGHT = DISPLAY_HEIGHT
+
+    //other defines
+    // export const SPEAKER_VOLUME=99
 }
 
 //% shim=pxt::updateScreen
@@ -773,49 +782,52 @@ namespace Render {
 
             const left_CenterTile = ScreenCenterX - (TileSize * TileImgScaleX >>1 )
             const top_CenterTile =  ScreenCenterY - (TileSize * TileImgScaleY >>1 )
+            const rowXStep = 0 //C_px_Fpx
+            const rowYStep = WallHeight << (fpx + 1) //D_px_Fpx
 
         let ms = control.benchmark(() => {
             const Walls = []
-            let offsetX0_Fpx = (( (HalfTileSize - this.sprSelf.y) * C_px_Fpx + A_px_Fpx * (HalfTileSize - this.sprSelf.x) ) >>TileMapScale ) + (left_CenterTile<<fpx)
-            let offsetY0_Fpx = (((HalfTileSize - this.sprSelf.y) * D_px_Fpx + B_px_Fpx * (HalfTileSize - this.sprSelf.x)) >> TileMapScale) + (top_CenterTile << fpx) * (TileImgScaleX / TileImgScaleY)
-            for (let i = 0; i < this.map.width; i++) {
+            let offsetX0_Fpx = (((HalfTileSize - this.sprSelf.y) * rowXStep + A_px_Fpx * (HalfTileSize - this.sprSelf.x) ) >>TileMapScale ) + (left_CenterTile<<fpx)
+            let offsetY0_Fpx = (((HalfTileSize - this.sprSelf.y) * rowYStep + B_px_Fpx * (HalfTileSize - this.sprSelf.x)) >> TileMapScale) + (top_CenterTile << fpx) * (TileImgScaleX / TileImgScaleY)
+            for (let i = 0; i < this.map.height; i++) {
                 let offsetX_Fpx = offsetX0_Fpx
                 let offsetY_Fpx = offsetY0_Fpx
-                for (let j = 0; j < this.map.height; j++) {
+                for (let j = 0; j < this.map.width; j++) {
                     const offsetX = offsetX_Fpx >> fpx
                     const offsetY = (offsetY_Fpx >> (fpx))/(TileImgScaleX / TileImgScaleY)
                     if (offsetX > -TileSize * TileImgScaleX && offsetX < screen.width && offsetY > -TileSize * TileImgScaleY && offsetY < screen.height + TileSize * TileImgScaleY) {
                         const t = this.map.getTile(j, i)
                         if (this.map.isWall(j, i)) {
-                            Walls.push([1, offsetX, offsetY, t, 
-                                (D_px_Fpx > 0 ? i : this.map.width - 1 - i) * this.map.width +
-                                (B_px_Fpx > 0 ? j : this.map.height - 1 - j)
+                            Walls.push([1, offsetX, offsetY, t,
+                                (D_px_Fpx < 0 ? i : this.map.height - 1 - i) * this.map.height +
+                                (B_px_Fpx > 0 ? j : this.map.width - 1 - j)
                             ])
-                        }else //floor
-                            this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
+                        }else //wall sides
+                            this.drawWallSide_Tex(this.tempScreen, offsetX + (B_px_Fpx >> fpx), offsetY - (A_px_Fpx >> fpx)+ WallHeight/2, this.map.getTileset()[t], B_Fpx>=0? 0:1)
+                            // roof
+                            // this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
                     }
                     offsetX_Fpx+=A_px_Fpx
                     offsetY_Fpx+=B_px_Fpx
                 }
-                offsetX0_Fpx += C_px_Fpx
-                offsetY0_Fpx += D_px_Fpx
+                offsetX0_Fpx += rowXStep
+                offsetY0_Fpx += rowYStep
             }
-
             //draw Sprite and wall by order of distance
             const drawingSprites = this.sprites
             .map((spr, index) => {
-                const offsetX = ScreenCenterX + ((C_px_Fpx * (spr.y - this.sprSelf.y) + A_px_Fpx * (spr.x - this.sprSelf.x)) >> (TileMapScale + fpx))
-                const offsetY = ScreenCenterY + (((D_px_Fpx * (spr.y - this.sprSelf.y) + B_px_Fpx * (spr.x - this.sprSelf.x)) >> (TileMapScale + fpx))/(TileImgScaleX/TileImgScaleY))
+                const offsetX = ScreenCenterX + ((rowXStep * (spr.y - this.sprSelf.y) + A_px_Fpx * (spr.x - this.sprSelf.x)) >> (TileMapScale + fpx))
+                const offsetY = ScreenCenterY + ((rowYStep * (spr.y - this.sprSelf.y) + B_px_Fpx * (spr.x - this.sprSelf.x)) >> (TileMapScale + fpx))/(TileImgScaleX/TileImgScaleY)
                 const j = (spr.x / TileSize) | 0, i = (spr.y / TileSize) | 0
                 return [0, offsetX, offsetY, index,
-                    (D_px_Fpx > 0 ? i : this.map.width - 1 - i) * this.map.width +
-                    (B_px_Fpx > 0 ? j : this.map.height - 1 - j) +
-                    ((spr.layer-1)<<10)
+                    (D_px_Fpx < 0 ? i : this.map.height - 1 - i) * this.map.height +
+                    (B_px_Fpx > 0 ? j : this.map.width - 1 - j) 
+                    // + ((spr.layer-1)<<10)
                     ]
             })
             .filter((v,i) =>{
                 const spr= this.sprites[i]
-                return (v[2] > 0 && v[1] >= -(spr.width * Scale >> 1) && v[1] < screen.width + (spr.width * Scale >> 1) && v[2] < screen.height + spr.height * Scale + (this.spriteMotionZ[spr.id].p * WallScale >> fpx))
+                return (v[2] > 0 && v[1] >= -(spr.width * Scale >> 1) && v[1] < screen.width + (spr.width * Scale >> 1) && v[2] < screen.height + spr.height * Scale )
             })
             drawingSprites
                 .concat(Walls) // [0/1:spr/wall, offsetX, offsetY,sprID/wallTex, drawing order index of row&col]
@@ -825,7 +837,7 @@ namespace Render {
                         this.drawSprite(this.sprites[v[3]], v[1], v[2])
                     else if (v[0] === 1)
                         this.drawWall(v[1], v[2], v[3])
-                    // this.tempScreen.print(v[4] + "", v[1] + TileSize * 2, v[2], 2)
+                    this.tempScreen.print(v[4] + "", v[1] + TileSize * 1, v[2], 2)
             })
 
             drawingSprites.forEach((v) => this.drawSprite_SayText(this.sprites[v[3]], v[1], v[2]))
@@ -846,14 +858,14 @@ namespace Render {
             const heightSpr = spr.height * Scale
             const dir = (Math.atan2(spr._vx as any as number, spr._vy as any as number) + this._angle) / Math.PI / 2 + .5
             const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(dir)
-            helpers.imageBlit(this.tempScreen, x - (widthSpr >> 1), y - heightSpr - (this.spriteMotionZ[spr.id].p * WallScale >> fpx), widthSpr, heightSpr,
+            helpers.imageBlit(this.tempScreen, x - (widthSpr >> 1), y - heightSpr , widthSpr, heightSpr,
                 texSpr, 0, 0, spr.image.width, spr.image.height, true, false)
                 
             const particle = this.spriteParticles[spr.id]
             if (particle) {
                 if (particle.lifespan) {
                     this.camera.drawOffsetX = -x
-                    this.camera.drawOffsetY = -(y - (spr.height * Scale >> 1) - (this.spriteMotionZ[spr.id].p * WallScale >> fpx))
+                    this.camera.drawOffsetY = -(y - (spr.height * Scale >> 1) )
                     particle.__draw(this.camera)
                 } else {
                     this.spriteParticles[spr.id] = undefined
@@ -870,7 +882,7 @@ namespace Render {
                     this.sayRederers[spr.id] = undefined
                 } else {
                     this.tempSprite.x = x
-                    this.tempSprite.y = y - heightSpr - (this.spriteMotionZ[spr.id].p * WallScale >> fpx) -2
+                    this.tempSprite.y = y - heightSpr  -2
                     this.camera.drawOffsetX = 0
                     this.camera.drawOffsetY = 0
                     sayRender.draw(this.tempScreen, this.camera, this.tempSprite)
