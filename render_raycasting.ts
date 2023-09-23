@@ -704,7 +704,7 @@ namespace Render {
                 ms = control.benchmark(() => {
                     this.rotateAll(this.map.getTileset(), A_Fpx, B_Fpx)
                     //a workaround avoiding gaps between tiles
-                    this.rotatedTiles.forEach((t)=> t.drawTransparentImage(t, -1, -1))
+                    // this.rotatedTiles.forEach((t)=> t.drawTransparentImage(t, -1, -1))
                     this.rotatedTexWalls.splice(0, this.rotatedTexWalls.length)
                 }); info.setLife(ms/this.rotatedTiles.length) // this.tempScreen.print(ms.toString(), 0, 110)
 
@@ -765,25 +765,28 @@ namespace Render {
                 const baseX=0, baseY=64
                 const centerX= baseX+(TileSize*TileImgScaleX>>1), centerY=baseY+TileSize*TileImgScaleY/2
 
-                this.drawWall(baseX - A, baseY - B / (TileImgScaleX / TileImgScaleY), 3)
+                this.drawWall(baseX - A, baseY - B / (TileImgScaleX / TileImgScaleY), 1)
                 
                 this.drawWall(baseX, baseY, 1)
                 
                 this.tempScreen.drawLine(centerX, centerY - WallHeight, centerX + A, centerY - WallHeight + B/(TileImgScaleX/TileImgScaleY), 2)
                 this.tempScreen.drawLine(centerX, centerY - WallHeight, centerX + C, centerY - WallHeight + D/(TileImgScaleX/TileImgScaleY), 2)
                 //debug
-                this.corners.forEach((p, i) => this.tempScreen.print(p.x + "," + p.y, 70, i * 10 + 30))
+                this.corners.forEach((p, i) => this.tempScreen.print(p.x + "," + p.y, 90, i * 10 + 30))
                 // info.player2.setScore(100 * this._angle * 180 / Math.PI)
 
                 this.corners.forEach((p, i) => { this.tempScreen.setPixel(baseX+p.x, baseY - WallHeight + p.y, i + 2) })
 
+                this.tempScreen.print(Math.roundWithPrecision(A, 3) + "", 90, 70)
+                this.tempScreen.print(Math.roundWithPrecision(B/2, 3) + "", 90, 80)
+
                 return
             }
 
-            const left_CenterTile = ScreenCenterX - (TileSize * TileImgScaleX >>1 )
-            const top_CenterTile =  ScreenCenterY - (TileSize * TileImgScaleY >>1 )
+            const left_CenterTile = ScreenCenterX - (HalfTileSize * TileImgScaleX)
+            const top_CenterTile =  ScreenCenterY - (HalfTileSize * TileImgScaleY)
             const rowXStep = 0 //C_px_Fpx
-            const rowYStep = WallHeight << (fpx + 1) //D_px_Fpx
+            const rowYStep = (WallHeight << fpx) * (TileImgScaleX / TileImgScaleY)  //D_px_Fpx
 
         let ms = control.benchmark(() => {
             const Walls = []
@@ -795,7 +798,7 @@ namespace Render {
                 for (let j = 0; j < this.map.width; j++) {
                     const offsetX = offsetX_Fpx >> fpx
                     const offsetY = (offsetY_Fpx >> (fpx))/(TileImgScaleX / TileImgScaleY)
-                    if (offsetX > -TileSize * TileImgScaleX && offsetX < screen.width && offsetY > -TileSize * TileImgScaleY && offsetY < screen.height + TileSize * TileImgScaleY) {
+                    if (offsetX > -TileSize * TileImgScaleX && offsetX < screen.width && offsetY > -TileSize * TileImgScaleY && offsetY < screen.height + TileSize * TileImgScaleY + WallHeight) {
                         const t = this.map.getTile(j, i)
                         if (this.map.isWall(j, i)) {
                             Walls.push([1, offsetX, offsetY, t,
@@ -803,7 +806,7 @@ namespace Render {
                                 (B_px_Fpx > 0 ? j : this.map.width - 1 - j)
                             ])
                         }else //wall sides
-                            this.drawWallSide_Tex(this.tempScreen, offsetX + (B_px_Fpx >> fpx), offsetY - (A_px_Fpx >> fpx)+ WallHeight/2, this.map.getTileset()[t], B_Fpx>=0? 0:1)
+                            this.drawWallSide_Tex(this.tempScreen, offsetX + (B_px_Fpx >> fpx), offsetY - (A_px_Fpx >> fpx) / (TileImgScaleX / TileImgScaleY) + 1 , this.map.getTileset()[t], B_Fpx*A_Fpx>=0? 0:1)
                             // roof
                             // this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
                     }
@@ -837,7 +840,7 @@ namespace Render {
                         this.drawSprite(this.sprites[v[3]], v[1], v[2])
                     else if (v[0] === 1)
                         this.drawWall(v[1], v[2], v[3])
-                    this.tempScreen.print(v[4] + "", v[1] + TileSize * 1, v[2], 2)
+                    // this.tempScreen.print(v[4] + "", v[1] + TileSize * 1, v[2], 2)
             })
 
             drawingSprites.forEach((v) => this.drawSprite_SayText(this.sprites[v[3]], v[1], v[2]))
