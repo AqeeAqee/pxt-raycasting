@@ -7,7 +7,6 @@ controller.moveSprite(rcRender.sprSelf, 66, 0)
 
 // let trans16 = image.create(16, 16)
 
-Render.setSpriteAnimations(rcRender.sprSelf, Render.createAnimations(150, assets.animation`heroWalk`))
 
 const tm = tiles.createTilemap(hex`1000100003040506070102010201020102010201010201020102010201020102010201020201020102010201020102010201020101020102010201020102000201020102020102010201020102010201020102010102010201020102010201020102010202010201020102010201020102010201010201020102010201020102010201020201020102010201020102010201020101020102010201020102010201020102020102010201020102010201020102010102010201020102010201020102010202010201020102010201020102010201010201020102010201020102010201020201020102010201020102010201020101020102010201020102010201020102`, img`
     . . . . . . . . . . . . . . . .
@@ -35,14 +34,14 @@ const tm = tiles.createTilemap(hex`100010000304050607010201020102010201020101020
 
 tiles.setCurrentTilemap(tilemap`level0`)
 const spawnTile = sprites.castle.tileGrass1
-Render.setViewAngleInDegree(-45)
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
 rcRender.sprSelf.setPosition(1 * tilemapScale, 8 * tilemapScale)
 rcRender.sprSelf.ay=500
 
-let angle = -45
+let angle = 45
 Render.setViewAngleInDegree(angle)
+Render.setSpriteAnimations(rcRender.sprSelf, Render.createAnimations(150, texturesHero[0], texturesHero[1], texturesHero[2], texturesHero[3]))
 
 
 // effects.blizzard.startScreenEffect(99999999, 99)
@@ -220,7 +219,8 @@ game.onUpdate(() => {
         Render.setViewAngleInDegree(--angle)
     if (controller.down.isPressed())
         Render.setViewAngleInDegree(++angle)
-
+    
+    controller.moveSprite(rcRender.sprSelf, 55 * (rcRender.viewAngle < Math.PI?1:-1), 0)
 
     if (false && isAdjusting) {
         // zOffset -= controller.dy(10)
