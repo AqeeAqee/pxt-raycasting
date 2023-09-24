@@ -34,7 +34,7 @@ const tm = tiles.createTilemap(hex`100010000304050607010201020102010201020101020
 // const spawnTile = sprites.castle.tileDarkGrass3
 
 tiles.setCurrentTilemap(tilemap`level0`)
-const spawnTile = sprites.castle.tileDarkGrass2
+const spawnTile = sprites.castle.tileGrass1
 Render.setViewAngleInDegree(-45)
 
 const tilemapScale = 1 << game.currentScene().tileMap.scale
