@@ -49,7 +49,7 @@ namespace Render {
     let AD_BC_Fpx2 = (one2 / Scale_Square) | 0 //= (Math.SQRT1_2/2)**2 == (A * D - B * C)
     let A_Fpx = 0
     let B_Fpx = 0
-
+    
     export function changeScale(delta: number){
         setScale(TileImgScale + delta * 0.5)
     }
@@ -802,11 +802,11 @@ namespace Render {
                         const t = this.map.getTile(j, i)
                         if (this.map.isWall(j, i)) {
                             Walls.push([1, offsetX, offsetY, t,
-                                (D_px_Fpx < 0 ? i : this.map.height - 1 - i) * this.map.height +
-                                (B_px_Fpx > 0 ? j : this.map.width - 1 - j)
+                                (this.map.height - 1 - i) * this.map.height //always bottom to up
+                                + (B_px_Fpx > 0 ? j : this.map.width - 1 - j)
                             ])
-                        }else //wall sides
-                            this.drawWallSide_Tex(this.tempScreen, offsetX + (B_px_Fpx >> fpx), offsetY - (A_px_Fpx >> fpx) / (TileImgScaleX / TileImgScaleY) + 1 , this.map.getTileset()[t], B_Fpx*A_Fpx>=0? 0:1)
+                        } else //wall sides
+                            this.drawWallSide_Tex(this.tempScreen, offsetX - (C_px_Fpx >> fpx) * (A_px_Fpx > 0 ? 1 : -1), offsetY - (D_px_Fpx >> fpx) * (A_px_Fpx > 0 ? 1 : -1) / (TileImgScaleX / TileImgScaleY) + 1, this.map.getTileset()[t], C_px_Fpx * D_px_Fpx > 0 ? 1 : 0)
                             // roof
                             // this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
                     }
@@ -823,7 +823,7 @@ namespace Render {
                 const offsetY = ScreenCenterY + ((rowYStep * (spr.y - this.sprSelf.y) + B_px_Fpx * (spr.x - this.sprSelf.x)) >> (TileMapScale + fpx))/(TileImgScaleX/TileImgScaleY)
                 const j = (spr.x / TileSize) | 0, i = (spr.y / TileSize) | 0
                 return [0, offsetX, offsetY, index,
-                    (D_px_Fpx < 0 ? i : this.map.height - 1 - i) * this.map.height +
+                    (this.map.height - 1 - i) * this.map.height +
                     (B_px_Fpx > 0 ? j : this.map.width - 1 - j) 
                     // + ((spr.layer-1)<<10)
                     ]
