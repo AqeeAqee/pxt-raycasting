@@ -921,9 +921,10 @@ namespace Render {
 
             drawingSprites.forEach((v) => this.drawSprite_SayText(this.sprites[v[3]], v[1], v[2]))
 
-            game.currentScene().particleSources.forEach((p)=>{
-                if(this.spriteParticles.indexOf(p)<0)p.__draw(game.currentScene().camera)
-            })
+            if (game.currentScene().particleSources)
+                game.currentScene().particleSources.forEach((p)=>{
+                    if(this.spriteParticles.indexOf(p)<0)p.__draw(game.currentScene().camera)
+                })
 
         });info.setScore(ms) // this.tempScreen.print(ms.toString(), 0, 20)
         }
