@@ -211,11 +211,13 @@ let adjusted=false
 controller.menu.onEvent(ControllerButtonEvent.Pressed, () => {
     isAdjusting = true
     adjusted=false
+    controller.moveSprite(rcRender.sprSelf, 0, 0)
 })
 controller.menu.onEvent(ControllerButtonEvent.Released, () => {
     isAdjusting = false
     if (!adjusted)
         Render.toggleViewMode()
+    controller.moveSprite(rcRender.sprSelf, (rcRender.viewAngle < Math.PI ? 55 : -55), 0)
 })
 
 controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
@@ -242,14 +244,12 @@ game.onUpdate(() => {
             angle-=5
             if(angle<0) angle+=360
             Render.setViewAngleInDegree(angle)
-            controller.moveSprite(rcRender.sprSelf, (rcRender.viewAngle < Math.PI ? 55 : -55), 0)
         }
         if (controller.right.isPressed()){
             adjusted = true
             angle += 5
             angle %= 360
             Render.setViewAngleInDegree(angle)
-            controller.moveSprite(rcRender.sprSelf, (rcRender.viewAngle < Math.PI ? 55 : -55), 0)
         }
     }
 })

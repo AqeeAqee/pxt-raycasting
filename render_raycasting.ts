@@ -937,7 +937,7 @@ namespace Render {
         drawSprite(spr: Sprite, x: number, y: number) {
             const widthSpr = spr.width * Scale
             const heightSpr = spr.height * Scale
-            const dir = (Math.atan2(spr._vx as any as number, spr._vy as any as number) - this._angle) / Math.PI / 2 + .5
+            const dir = (((spr._vx as any as number)>0?Math.PI:0) - this._angle) / Math.PI / 2 + .25
             const texSpr = !this.spriteAnimations[spr.id] ? spr.image : this.spriteAnimations[spr.id].getFrameByDir(dir)
             helpers.imageBlit(this.tempScreen, x - (widthSpr >> 1), y - heightSpr , widthSpr, heightSpr,
                 texSpr, 0, 0, spr.image.width, spr.image.height, true, false)
