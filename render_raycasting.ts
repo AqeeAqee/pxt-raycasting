@@ -466,12 +466,16 @@ namespace Render {
 //            })
 
             game.addScenePushHandler((oldScene) => {
+                this.tempScreen=screen.clone()
                 this.tempBackground = oldScene.background.addLayer(this.tempScreen, 0, BackgroundAlignment.Center)
                 control.__screen.setupUpdate(() => { updateScreen(screen) })
             })
             game.addScenePopHandler((oldScene) => {
-                ((oldScene.background as any)._layers as scene.BackgroundLayer[]).removeElement(this.tempBackground)
+                const layers = ((game.currentScene().background as any)._layers as scene.BackgroundLayer[])
+                layers.removeElement(this.tempBackground)
+                info.player3.setScore(layers.length)
                 this.tempBackground=undefined
+                this.tempScreen=screen;
                 control.__screen.setupUpdate(() => {
                     if (this.viewMode == ViewMode.isometricView)
                         updateScreen(this.tempScreen)

@@ -180,7 +180,7 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
     sprite.sayText("No!", 2000)
     sprite.startEffect(effects.fire, 3000)
     createCoin()
-    // game.showLongText(sprite.id+" "+otherSprite.id, DialogLayout.Bottom)
+    game.showLongText(sprite.id+" "+otherSprite.id, DialogLayout.Bottom)
 })
 
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Enemy, function (sprite, otherSprite) {
