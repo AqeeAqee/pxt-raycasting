@@ -1,4 +1,4 @@
-namespace userconfig {
+namespace userconfig1 {
     //dimensions
     export const DISPLAY_WIDTH = 320; //D0
     export const DISPLAY_HEIGHT = 240; //98
@@ -58,8 +58,8 @@ namespace Render {
         const ratio = TileImgScale / TileImgScaleY
         TileImgScale = Math.clamp(1, 4, value)
         setScaleY(TileImgScale / ratio)
+        // info.player3.setScore(TileImgScale*100)
 
-        info.player3.setScore(TileImgScale*100)
         HalfTileImgScale = TileImgScale / 2 ///>> 1
         TileImgScaleX = TileImgScale
         Scale = TileImgScale / Math.SQRT2, Scale_Square = TileImgScale ** 2 / 2
@@ -75,7 +75,8 @@ namespace Render {
     
     function setScaleY(value: number){
         TileImgScaleY = Math.clamp(1 / 8, TileImgScaleX / (IsConsole && TileImgScaleX > 2 ? 2 : 1), value)
-        info.player4.setScore(TileImgScaleY*100)
+        // info.player4.setScore(TileImgScaleY*100)
+        
         raycastingRender.lastRenderAngle = -1 // force refresh
     }
 
@@ -380,7 +381,7 @@ namespace Render {
             let frameCallback_draw = sc.eventContext.registerFrameHandler(scene.RENDER_SPRITES_PRIORITY + 1, () => {
                 if (this._viewMode == ViewMode.isometricView) {
                     if (!this.tempBackground) {
-                        this.tempScreen.drawImage(game.currentScene().background.image, 0, 0)
+                        game.currentScene().background.draw() //to screen
                         this.render()
                         // screen.fill(0)
                         this.sprites2D.forEach(spr => spr.__draw(sc.camera))
@@ -388,7 +389,7 @@ namespace Render {
                         // this.tempScreen.drawTransparentImage(screen, 0, 0)
                     }
                 } else {
-                    screen.drawImage(game.currentScene().background.image, 0, 0)
+                    game.currentScene().background.draw() //to screen
                     this.oldRender.__drawCore(sc.camera)
                     this.sprites.forEach(spr => spr.__draw(sc.camera))
                     this.sprSelf.__draw(sc.camera)
@@ -418,7 +419,7 @@ namespace Render {
 
             //self sprite
             this.sprSelf = sprites.create(image.create(this.tilemapScaleSize >> 1, this.tilemapScaleSize >> 1), SpriteKind.Player)
-            this.sprSelf.setImage(sprites.castle.heroWalkBack1)
+            this.sprSelf.setImage(sprites.castle.heroWalkFront1)
             this.sprSelf.scale=0.5
             this.takeoverSceneSprites()
             // this.sprites.removeElement(this.sprSelf)
