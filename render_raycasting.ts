@@ -699,16 +699,20 @@ namespace Render {
 
             const p0x = this.corners[startCornerIndex].x
             const width = this.corners[startCornerIndex + 1].x - p0x + 1
+            const p0y = this.corners[startCornerIndex].y, p1y = this.corners[startCornerIndex + 1].y
+            const y=startCornerIndex==0? p0y:p1y
+            const height=WallHeight+ (startCornerIndex==0? p1y-p0y: p0y-p1y)
+
             const im = this.rotatedTexWalls[t]
            
-            helpers.imageBlit(this.tempScreen, offsetX + p0x, offsetY , width, im.height,
-                im, p0x, 0, width, im.height, true, false)
+            helpers.imageBlit(this.tempScreen, offsetX + p0x, offsetY + y , width, height,
+                im, p0x, y, width, height, true, false)
         }
 
         drawWall(offsetX: number, offsetY: number, tileIndex: number) {
             // this.drawWall(offsetX, offsetY)
-            this.tempScreen.drawTransparentImage(this.rotatedTexWalls[tileIndex], offsetX, offsetY - WallHeight)
-            this.tempScreen.drawTransparentImage(this.rotatedTiles[tileIndex], offsetX, offsetY - WallHeight)
+            this.tempScreen.drawTransparentImage(this.rotatedTexWalls[tileIndex], offsetX, offsetY)
+            this.tempScreen.drawTransparentImage(this.rotatedTiles[tileIndex], offsetX, offsetY)
         }
 
         updateCorners(){
@@ -860,7 +864,7 @@ namespace Render {
 
         let ms = control.benchmark(() => {
             const Walls = []
-            let offsetX0_Fpx = (((HalfTileSize - this.sprSelf.y) * rowXStep + A_px_Fpx * (HalfTileSize - this.sprSelf.x) ) >>TileMapScale ) + (left_CenterTile<<fpx)
+            let offsetX0_Fpx = (((HalfTileSize - this.sprSelf.y) * rowXStep + A_px_Fpx * (HalfTileSize - this.sprSelf.x)) >> TileMapScale) + (left_CenterTile << fpx)
             let offsetY0_Fpx = (((HalfTileSize - this.sprSelf.y) * rowYStep + B_px_Fpx * (HalfTileSize - this.sprSelf.x)) >> TileMapScale) + (top_CenterTile << fpx) * (TileImgScaleX / TileImgScaleY)
             for (let i = 0; i < this.map.height; i++) {
                 let offsetX_Fpx = offsetX0_Fpx
@@ -871,7 +875,7 @@ namespace Render {
                     if (offsetX > -TileSize * TileImgScaleX && offsetX < screen.width && offsetY > -TileSize * TileImgScaleY && offsetY < screen.height + TileSize * TileImgScaleY + WallHeight) {
                         const t = this.map.getTile(j, i)
                         if (this.map.isWall(j, i)) {
-                            Walls.push([1, offsetX, offsetY, t,
+                            Walls.push([1, offsetX, offsetY - WallHeight, t,
                                 (this.map.height - 1 - i) * this.map.height //always bottom to up
                                 + (B_px_Fpx > 0 ? j : this.map.width - 1 - j)
                             ])
