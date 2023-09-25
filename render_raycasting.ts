@@ -597,6 +597,29 @@ namespace Render {
             // info.player2.setScore(ms)
         }
 
+        rotate(inImg:Image, outImg:Image, A_Fpx: number, B_Fpx: number) {
+            let D_Fpx = A_Fpx
+            let C_Fpx = -B_Fpx
+            let xIn0_FX = (A_Fpx * (H - X0)) + (B_Fpx * (V - Y0)) + (X0 << fpx)
+            let yIn0_FX = (C_Fpx * (H - X0)) + (D_Fpx * (V - Y0)) + (Y0 << fpx)
+            B_Fpx *= (TileImgScaleX / TileImgScaleY) // skip 1 every 1, shrink to 64x32
+            D_Fpx *= (TileImgScaleX / TileImgScaleY) // ...
+            const TileSize_Fpx = TileSize << fpx
+
+            for (let xOut = 0; xOut < TileSize * TileImgScaleX; xOut++) {
+                let xIn_FX = xIn0_FX
+                let yIn_FX = yIn0_FX
+                for (let yOut = 0; yOut < TileSize * TileImgScaleY; yOut++) {
+                    if (0 <= xIn_FX && xIn_FX < TileSize_Fpx && 0 <= yIn_FX && yIn_FX < TileSize_Fpx) 
+                        outImg.setPixel(xOut, yOut, inImg.getPixel(xIn_FX >> fpx, yIn_FX >> fpx))
+                    xIn_FX += B_Fpx
+                    yIn_FX += D_Fpx
+                }
+                xIn0_FX += A_Fpx
+                yIn0_FX += C_Fpx
+            }
+        }
+
         shearDoubleX(inImg: Image, degree: number, i = 0){
             //fix 45°
             const size = Math.max(inImg.width, inImg.height)
@@ -650,23 +673,66 @@ namespace Render {
             }
         }
 
-        rotatedTexWalls: Image[] = []
+        cacheWallSide_All(startCornerIndex: number) {
+            const inImgs = this.map.getTileset()
+            const outImgs = this.rotatedTexWalls
+            const p0x = this.corners[startCornerIndex].x,     p0y = this.corners[startCornerIndex].y
+            const p1x = this.corners[startCornerIndex + 1].x, p1y = this.corners[startCornerIndex + 1].y
+            let y = (p0y + 1) << fpx
+            const diffX0_1 = p1x - p0x
+            if (diffX0_1 <= 0) return
+            let texX = 0
+            const texXStep = Math.idiv(((TileSize) << fpx) - 1, diffX0_1)
+            const yStep = Math.idiv((p1y - p0y) * fpx_scale, diffX0_1)
+            for (let x = 0; x <= diffX0_1; x++) {
+                // this.tempScreen.print(y+"", 100,60+x*10)
+                for(let i=0;i<inImgs.length;i++)
+                    helpers.imageBlitRow(outImgs[i], x + p0x, (y >> fpx) - 1, // "y-1" a workaround of gap between roof and wallside
+                        inImgs[i], texX >> fpx, WallHeight + 1) // "WallHeight+1" a workaround of gap between roof and wallside
+                texX += texXStep
+                y += yStep
+            }
+        }
+
+        drawWall_side(targetImg: Image, offsetX: number, offsetY: number, t:number, startCornerIndex: number){
+            // this.tempScreen.drawTransparentImage(this.rotatedTexWalls[t], offsetX, offsetY)
+
+            const p0x = this.corners[startCornerIndex].x
+            const width = this.corners[startCornerIndex + 1].x - p0x + 1
+            const im = this.rotatedTexWalls[t]
+           
+            helpers.imageBlit(this.tempScreen, offsetX + p0x, offsetY , width, im.height,
+                im, p0x, 0, width, im.height, true, false)
+        }
+
         drawWall(offsetX: number, offsetY: number, tileIndex: number) {
             // this.drawWall(offsetX, offsetY)
-            let texWall = this.rotatedTexWalls[tileIndex]
-            if (!texWall) {
-                // let ms = control.benchmark(() => {
-                texWall = image.create(TileSize * Max_TileImgScaleX, TileSize * Max_TileImgScaleY + WallHeight)
-                    this.drawWallSide_Tex(texWall, 0, WallHeight, this.map.getTileset()[tileIndex], 0)
-                    this.drawWallSide_Tex(texWall, 0, WallHeight, this.map.getTileset()[tileIndex], 1)
-                    texWall.drawTransparentImage(this.rotatedTiles[tileIndex], 0, 0)
-                    this.rotatedTexWalls[tileIndex] = texWall
-                // }); info.player4.setLife(ms) // this.tempScreen.print(ms.toString(), 0, 110)
-            }
-            this.tempScreen.drawTransparentImage(texWall, offsetX, offsetY - WallHeight)
+            this.tempScreen.drawTransparentImage(this.rotatedTexWalls[tileIndex], offsetX, offsetY - WallHeight)
+            this.tempScreen.drawTransparentImage(this.rotatedTiles[tileIndex], offsetX, offsetY - WallHeight)
+        }
+
+        updateCorners(){
+            //tile corners, for drawing wall
+            // ms=control.benchmark(()=> {
+            this.corners.splice(0, this.corners.length)
+            this.corners = [
+                rotatePoint(0, 0, A_Fpx, B_Fpx),
+                rotatePoint(0, 15.99, A_Fpx, B_Fpx),
+                rotatePoint(15.99, 15.99, A_Fpx, B_Fpx),
+                rotatePoint(15.99, 0, A_Fpx, B_Fpx),
+            ]
+
+            const topCornerId = this.corners.reduce((tId, p, i) => { return p.y < this.corners[tId].y ? i : tId }, 0)
+            this.corners.removeAt(topCornerId)
+            if (topCornerId) //not necessary if removed [0]
+                for (let i = 0; i < 3 - topCornerId; i++) //rolling reorder, keep original loop order, start from the next corner of toppest one to the last, then start from beginning
+                    this.corners.insertAt(0, this.corners.pop())
+                    // this.corners[1].x -= 1
+                // }); info.player2.setScore(ms)
         }
 
         rotatedTiles:Image[]
+        rotatedTexWalls: Image[]
         lastRenderAngle=-1
         selfSprAniId=0
         corners: { x: number, y: number }[] = [] //[{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }]
@@ -688,6 +754,12 @@ namespace Render {
                     this.rotatedTiles.push(image.create(TileSize * Max_TileImgScaleX, TileSize * Max_TileImgScaleY))
             }
 
+            if (!this.rotatedTexWalls) {
+                this.rotatedTexWalls = []
+                for (let i = 0; i < this.map.getTileset().length; i++)
+                    this.rotatedTexWalls.push(image.create(TileSize * Max_TileImgScaleX, TileSize * Max_TileImgScaleY + WallHeight))
+            }
+
             //update tiles and parameters
             if(this.lastRenderAngle!=this._angle)
             {
@@ -697,38 +769,31 @@ namespace Render {
                 // A_Fpx = Math.sqrt(AD_BC_Fpx2 - B_Fpx * B_Fpx)
                 // B_Fpx = Math.sqrt(AD_BC_Fpx2 - A_Fpx * A_Fpx)
 
-                for (let i = 0; i < this.rotatedTiles.length; i++)
+                for (let i = 0; i < this.rotatedTiles.length; i++){
                     this.rotatedTiles[i].fill(0)
+                    this.rotatedTexWalls[i].fill(0)
+                }
 
                 let ms: number
                 ms = control.benchmark(() => {
                     this.rotateAll(this.map.getTileset(), A_Fpx, B_Fpx)
                     //a workaround avoiding gaps between tiles
                     // this.rotatedTiles.forEach((t)=> t.drawTransparentImage(t, -1, -1))
-                    this.rotatedTexWalls.splice(0, this.rotatedTexWalls.length)
+
+                    this.updateCorners()
+
+                    // for (let i = 0; i < this.map.getTileset().length; i++) {
+                    //     // let ms = control.benchmark(() => {
+                    //     this.drawWallSide_Tex(this.rotatedTexWalls[i], 0, WallHeight, this.map.getTileset()[i], 0)
+                    //     this.drawWallSide_Tex(this.rotatedTexWalls[i], 0, WallHeight, this.map.getTileset()[i], 1)
+                    //     // }); info.player4.setLife(ms) // this.tempScreen.print(ms.toString(), 0, 110)
+                    // }
+
+                    this.cacheWallSide_All(0)
+                    this.cacheWallSide_All(1)
+
                 }); info.setLife(ms/this.rotatedTiles.length) // this.tempScreen.print(ms.toString(), 0, 110)
 
-
-                // this.rotatedTiles.forEach((v, i) =>{
-                //     this.tempScreen.drawImage(v, (i % 3) * 64, 32+32*((i/3)|0))})
-
-                //tile corners, for drawing wall
-                // ms=control.benchmark(()=> {
-                    this.corners.splice(0, this.corners.length)
-                    this.corners = [
-                        rotatePoint(0, 0, A_Fpx, B_Fpx),
-                        rotatePoint(0, 15.99, A_Fpx, B_Fpx),
-                        rotatePoint(15.99, 15.99, A_Fpx, B_Fpx),
-                        rotatePoint(15.99, 0, A_Fpx, B_Fpx),
-                    ]
-
-                    const topCornerId = this.corners.reduce((tId, p, i) => { return p.y < this.corners[tId].y ? i : tId }, 0)
-                    this.corners.removeAt(topCornerId)
-                    if (topCornerId) //not necessary if removed [0]
-                        for (let i = 0; i < 3 - topCornerId; i++) //rolling reorder, keep original loop order, start from the next corner of toppest one to the last, then start from beginning
-                            this.corners.insertAt(0, this.corners.pop())
-                    // this.corners[1].x -= 1
-                // }); info.player2.setScore(ms)
 
                 //shear doubled, manually, for reference
                 // this.tempScreen.drawImage(assets.image`shearDoubleX_reference`, 50, 0)
@@ -783,8 +848,13 @@ namespace Render {
                 return
             }
 
+            const tileOffsetX = (- (C_px_Fpx >> fpx) * (A_px_Fpx > 0 ? 1 : -1))|0
+            const tileOffsetY = (- WallHeight - (D_px_Fpx >> fpx) * (A_px_Fpx > 0 ? 1 : -1) / (TileImgScaleX / TileImgScaleY) + 1) |0
+            const tileCorner = C_px_Fpx * D_px_Fpx > 0 ? 1 : 0
+
             const left_CenterTile = ScreenCenterX - (HalfTileSize * TileImgScaleX)
             const top_CenterTile =  ScreenCenterY - (HalfTileSize * TileImgScaleY)
+
             const rowXStep = 0 //C_px_Fpx
             const rowYStep = (WallHeight << fpx) * (TileImgScaleX / TileImgScaleY)  //D_px_Fpx
 
@@ -806,7 +876,9 @@ namespace Render {
                                 + (B_px_Fpx > 0 ? j : this.map.width - 1 - j)
                             ])
                         } else //wall sides
-                            this.drawWallSide_Tex(this.tempScreen, offsetX - (C_px_Fpx >> fpx) * (A_px_Fpx > 0 ? 1 : -1), offsetY - (D_px_Fpx >> fpx) * (A_px_Fpx > 0 ? 1 : -1) / (TileImgScaleX / TileImgScaleY) + 1, this.map.getTileset()[t], C_px_Fpx * D_px_Fpx > 0 ? 1 : 0)
+                            this.drawWall_side(this.tempScreen, offsetX + tileOffsetX, offsetY + tileOffsetY, t, tileCorner)
+                        // this.drawWall_side(this.tempScreen, offsetX, offsetY - WallHeight, t, C_px_Fpx * D_px_Fpx > 0 ? 1 : 0)
+                            // this.drawWallSide_Tex(this.tempScreen, offsetX - (C_px_Fpx >> fpx) * (A_px_Fpx > 0 ? 1 : -1), offsetY - (D_px_Fpx >> fpx) * (A_px_Fpx > 0 ? 1 : -1) / (TileImgScaleX / TileImgScaleY) + 1, this.map.getTileset()[t], C_px_Fpx * D_px_Fpx > 0 ? 1 : 0)
                             // roof
                             // this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
                     }
