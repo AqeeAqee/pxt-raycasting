@@ -691,7 +691,7 @@ namespace Render {
             const yStep = Math.idiv((p1y - p0y) * fpx_scale, diffX0_1)
             for (let x = 0; x <= diffX0_1; x++) {
                 // this.tempScreen.print(y+"", 100,60+x*10)
-                for(let i=0;i<inImgs.length;i++)
+                for (let i = 1; i < inImgs.length; i++)
                     helpers.imageBlitRow(outImgs[i], x + p0x, (y >> fpx) - 1, // "y-1" a workaround of gap between roof and wallside
                         inImgs[i], texX >> fpx, WallHeight + 1) // "WallHeight+1" a workaround of gap between roof and wallside
                 texX += texXStep
@@ -759,14 +759,14 @@ namespace Render {
 
             if (!this.rotatedTiles) {
                 this.rotatedTiles = []
-                for (let i = 0; i < this.map.getTileset().length; i++)
-                    this.rotatedTiles.push(image.create(TileSize * Max_TileImgScaleX, TileSize * Max_TileImgScaleY))
+                for (let i = 1; i < this.map.getTileset().length; i++)
+                    this.rotatedTiles[i]=(image.create(TileSize * Max_TileImgScaleX, TileSize * Max_TileImgScaleY))
             }
 
             if (!this.rotatedTexWalls) {
                 this.rotatedTexWalls = []
-                for (let i = 0; i < this.map.getTileset().length; i++)
-                    this.rotatedTexWalls.push(image.create(TileSize * Max_TileImgScaleX, TileSize * Max_TileImgScaleY + WallHeight))
+                for (let i = 1; i < this.map.getTileset().length; i++)
+                    this.rotatedTexWalls[i] =(image.create(TileSize * Max_TileImgScaleX, TileSize * Max_TileImgScaleY + WallHeight))
             }
 
             //update tiles and parameters
@@ -778,7 +778,7 @@ namespace Render {
                 // A_Fpx = Math.sqrt(AD_BC_Fpx2 - B_Fpx * B_Fpx)
                 // B_Fpx = Math.sqrt(AD_BC_Fpx2 - A_Fpx * A_Fpx)
 
-                for (let i = 0; i < this.rotatedTiles.length; i++){
+                for (let i = 1; i < this.rotatedTiles.length; i++){
                     this.rotatedTiles[i].fill(0)
                     this.rotatedTexWalls[i].fill(0)
                 }
@@ -879,17 +879,19 @@ namespace Render {
                     const offsetY = (offsetY_Fpx >> (fpx))/(TileImgScaleX / TileImgScaleY)
                     if (offsetX > -TileSize * TileImgScaleX && offsetX < screen.width && offsetY > -TileSize * TileImgScaleY && offsetY < screen.height + TileSize * TileImgScaleY + WallHeight) {
                         const t = this.map.getTile(j, i)
-                        if (this.map.isWall(j, i)) {
-                            Walls.push([1, offsetX, offsetY - WallHeight, t,
-                                (this.map.height - 1 - i) * this.map.height //always bottom to up
-                                + (B_px_Fpx > 0 ? j : this.map.width - 1 - j)
-                            ])
-                        } else //wall sides
-                            this.drawWall_side(this.tempScreen, offsetX + tileOffsetX, offsetY + tileOffsetY, t, tileCorner)
+                        if(t){
+                            if (this.map.isWall(j, i)) {
+                                Walls.push([1, offsetX, offsetY - WallHeight, t,
+                                    (this.map.height - 1 - i) * this.map.height //always bottom to up
+                                    + (B_px_Fpx > 0 ? j : this.map.width - 1 - j)
+                                ])
+                            } else //wall sides
+                                this.drawWall_side(this.tempScreen, offsetX + tileOffsetX, offsetY + tileOffsetY, t, tileCorner)
                         // this.drawWall_side(this.tempScreen, offsetX, offsetY - WallHeight, t, C_px_Fpx * D_px_Fpx > 0 ? 1 : 0)
                             // this.drawWallSide_Tex(this.tempScreen, offsetX - (C_px_Fpx >> fpx) * (A_px_Fpx > 0 ? 1 : -1), offsetY - (D_px_Fpx >> fpx) * (A_px_Fpx > 0 ? 1 : -1) / (TileImgScaleX / TileImgScaleY) + 1, this.map.getTileset()[t], C_px_Fpx * D_px_Fpx > 0 ? 1 : 0)
                             // roof
                             // this.tempScreen.drawTransparentImage(this.rotatedTiles[t], offsetX, offsetY)
+                        }
                     }
                     offsetX_Fpx+=A_px_Fpx
                     offsetY_Fpx+=B_px_Fpx
