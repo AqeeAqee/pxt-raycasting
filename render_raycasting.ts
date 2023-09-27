@@ -609,14 +609,13 @@ namespace Render {
         shear(inImg: Image, outImg: Image, startCornerIndex: number) {
             const p0x = this.corners[startCornerIndex].x, p0y = this.corners[startCornerIndex].y
             const p1x = this.corners[startCornerIndex + 1].x, p1y = this.corners[startCornerIndex + 1].y
-            let y = (p0y - WallHeight + 1) << fpx
+            let y = (p0y + 1) << fpx
             const diffX0_1 = p1x - p0x
             if (diffX0_1 <= 0) return
             let texX = 0
             const texXStep = Math.idiv(((TileSize) << fpx) - 1, diffX0_1)
             const yStep = Math.idiv((p1y - p0y) * fpx_scale, diffX0_1)
             for (let x = 0; x <= diffX0_1; x++) {
-                // this.tempScreen.print(y+"", 100,60+x*10)
                 helpers.imageBlitRow(outImg, x + p0x, (y >> fpx) - 1, // "y-1" a workaround of gap between roof and wallside
                     inImg, texX >> fpx, WallHeight + 1) // "WallHeight+1" a workaround of gap between roof and wallside
                 texX += texXStep
@@ -634,7 +633,6 @@ namespace Render {
             const texXStep = Math.idiv(((TileSize) << fpx) - 1, diffX0_1)
             const yStep = Math.idiv((p1y - p0y) * fpx_scale, diffX0_1)
             for (let x = 0; x <= diffX0_1; x++) {
-                // this.tempScreen.print(y+"", 100,60+x*10)
                 for (let i = 1; i < inImgs.length; i++)
                     helpers.imageBlitRow(outImgs[i], x + p0x, (y >> fpx) - 1, // "y-1" a workaround of gap between roof and wallside
                         inImgs[i], texX >> fpx, WallHeight + 1) // "WallHeight+1" a workaround of gap between roof and wallside
@@ -651,13 +649,19 @@ namespace Render {
             const height=WallHeight+ (startCornerIndex==0? p1y-p0y: p0y-p1y)
 
             helpers.imageBlit(this.tempScreen, offsetX + p0x, offsetY + y , width, height,
-                this.wallSides[tileIndex], p0x, y, width, height, true, false)
+                this.shearedTiles[tileIndex], p0x, y, width, height, true, false)
         }
 
         pasteWall(offsetX: number, offsetY: number, tileIndex: number) {
             // this.drawWall(offsetX, offsetY)
-            this.tempScreen.drawTransparentImage(this.wallSides[tileIndex], offsetX, offsetY)
-            this.tempScreen.drawTransparentImage(this.wallRoof[tileIndex], offsetX, offsetY)
+            // this.tempScreen.drawTransparentImage(this.shearedTiles[tileIndex], offsetX, offsetY)
+            if(!this.wallCached[tileIndex]){
+                this.shear(this.map.getTileset()[tileIndex], this.wholeWalls[tileIndex], 0)
+                this.shear(this.map.getTileset()[tileIndex], this.wholeWalls[tileIndex], 1)
+                this.rotate(this.map.getTileset()[tileIndex], this.wholeWalls[tileIndex])
+                this.wallCached[tileIndex] = true
+            }
+            this.tempScreen.drawTransparentImage(this.wholeWalls[tileIndex], offsetX, offsetY)
         }
 
         updateCorners(){
@@ -675,8 +679,9 @@ namespace Render {
                     this.corners.insertAt(0, this.corners.pop())
         }
 
-        wallRoof:Image[]
-        wallSides: Image[]
+        shearedTiles: Image[]
+        wholeWalls:Image[]
+        wallCached: boolean[]
         lastRenderAngle=-1
         corners: { x: number, y: number }[] = []
         render() {
@@ -687,16 +692,19 @@ namespace Render {
             info.player2.setScore(this._angle*180/Math.PI)
             const angle = this._angle - Math.PI / 2
 
-            if (!this.wallRoof) {
-                this.wallRoof = []
-                for (let i = 1; i < this.map.getTileset().length; i++)
-                    this.wallRoof[i]=(image.create(TileSize * Max_TileImgScaleX, TileSize * Max_TileImgScaleY))
+            if (!this.wholeWalls) {
+                this.wholeWalls = []
+                this.wallCached = []
+                for (let i = 1; i < this.map.getTileset().length; i++){
+                    this.wholeWalls[i] = (image.create(TileSize * Max_TileImgScaleX, TileSize * Max_TileImgScaleY + WallHeight))
+                    this.wallCached.push(false)
+                }
             }
 
-            if (!this.wallSides) {
-                this.wallSides = []
+            if (!this.shearedTiles) {
+                this.shearedTiles = []
                 for (let i = 1; i < this.map.getTileset().length; i++)
-                    this.wallSides[i] =(image.create(TileSize * Max_TileImgScaleX, TileSize * Max_TileImgScaleY + WallHeight))
+                    this.shearedTiles[i] =(image.create(TileSize * Max_TileImgScaleX, TileSize * Max_TileImgScaleY + WallHeight))
             }
 
             //update tiles and parameters
@@ -709,17 +717,18 @@ namespace Render {
                     D_Fpx = A_Fpx
                     C_Fpx = -B_Fpx
 
-                    for (let i = 1; i < this.wallRoof.length; i++){
-                        this.wallRoof[i].fill(0)
-                        this.wallSides[i].fill(0)
+                    for (let i = 1; i < this.wholeWalls.length; i++){
+                        this.shearedTiles[i].fill(0)
+                        this.wholeWalls[i].fill(0)
+                        this.wallCached[i] = false
                     }
 
-                    this.rotateAll(this.map.getTileset(), this.wallRoof)
+                    // this.rotateAll(this.map.getTileset(), this.wholeWalls)
 
                     this.updateCorners()
 
-                    this.shearAndCache_AllTiles(this.map.getTileset(), this.wallSides, 0)
-                    this.shearAndCache_AllTiles(this.map.getTileset(), this.wallSides, 1)
+                    this.shearAndCache_AllTiles(this.map.getTileset(), this.shearedTiles, 0)
+                    this.shearAndCache_AllTiles(this.map.getTileset(), this.shearedTiles, 1)
 
                 }); info.setLife(ms/this.map.getTileset().length) // this.tempScreen.print(ms.toString(), 0, 110)
 
