@@ -656,12 +656,28 @@ namespace Render {
             // this.drawWall(offsetX, offsetY)
             // this.tempScreen.drawTransparentImage(this.shearedTiles[tileIndex], offsetX, offsetY)
             if(!this.wallCached[tileIndex]){
-                this.shear(this.map.getTileset()[tileIndex], this.wholeWalls[tileIndex], 0)
-                this.shear(this.map.getTileset()[tileIndex], this.wholeWalls[tileIndex], 1)
+                const texture=this.customSideTex[tileIndex] || this.customSideTex[0] || this.map.getTileset()[tileIndex]
+                this.shear(texture, this.wholeWalls[tileIndex], 0)
+                this.shear(texture, this.wholeWalls[tileIndex], 1)
                 this.rotate(this.map.getTileset()[tileIndex], this.wholeWalls[tileIndex])
                 this.wallCached[tileIndex] = true
             }
             this.tempScreen.drawTransparentImage(this.wholeWalls[tileIndex], offsetX, offsetY)
+        }
+
+        protected customSideTex: Image[] = []
+        public setWallSideTexture(tex: Image, forTile?: Image) {
+            if (!tex) return
+            if (!forTile) {
+                this.customSideTex[0] = tex
+            } else {
+                this.map.getTileset().forEach((t, i) => {
+                    if (forTile.equals(t)) {
+                        this.customSideTex[i] = tex
+                        return
+                    }
+                })
+            }
         }
 
         updateCorners(){
