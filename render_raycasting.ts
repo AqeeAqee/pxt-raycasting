@@ -743,9 +743,8 @@ namespace Render {
 
                     this.updateCorners()
 
-                    this.shearAndCache_AllTiles(this.map.getTileset(), this.shearedTiles, 0)
-                    this.shearAndCache_AllTiles(this.map.getTileset(), this.shearedTiles, 1)
-
+                    this.shearAndCache_AllTiles(this.map.getTileset(), this.shearedTiles, A_Fpx * B_Fpx >= 0 ? 0 : 1)
+                    
                 }); info.setLife(ms/this.map.getTileset().length) // this.tempScreen.print(ms.toString(), 0, 110)
 
                 this.lastRenderAngle=this._angle
