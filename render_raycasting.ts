@@ -8,6 +8,21 @@ enum ViewMode {
     isometricView,
 }
 
+function print_gcStats() {
+    game.consoleOverlay.setVisible(true, 2)
+    control.gc()
+    const gcStats = control.gcStats()
+    if (gcStats) {
+        console.log(gcStats.numGC + "")
+        console.log(gcStats.numBlocks + "")
+        console.log(gcStats.totalBytes + "")
+        console.log(gcStats.lastFreeBytes + "")
+        console.log(gcStats.lastMaxBlockBytes + "")
+        console.log(gcStats.minFreeBytes + "")
+    }
+}
+
+
 namespace Render {
     const SH = screen.height, SHHalf = SH / 2
     const SW = screen.width, SWHalf = SW / 2
@@ -698,6 +713,7 @@ namespace Render {
                 for (let i = 1; i < this.map.getTileset().length; i++){
                     this.wholeWalls[i] = (image.create(TileSize * Max_TileImgScaleX, TileSize * Max_TileImgScaleY + WallHeight))
                     this.wallCached.push(false)
+                    // print_gcStats()
                 }
             }
 

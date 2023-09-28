@@ -68,22 +68,22 @@ rcRender.setWallSideTexture(img`
     4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
     f f f f f f f f f f f f f f f f
 `, img`
-. 4 4 4 4 4 4 4 4 4 4 4 4 4 4 . 
-4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f 
-4 5 f 5 5 5 5 5 5 5 5 5 5 f 5 f 
-4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
-4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
-4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
-4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
-4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
-4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
-4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
-4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
-4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
-4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
-4 5 f 5 5 5 5 5 5 5 5 5 5 f 5 f
-4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
-f f f f f f f f f f f f f f f f 
+    . 4 4 4 4 4 4 4 4 4 4 4 4 4 4 .
+    4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+    4 5 f 5 5 5 5 5 5 5 5 5 5 f 5 f
+    4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+    4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+    4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+    4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+    4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+    4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+    4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+    4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+    4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+    4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+    4 5 f 5 5 5 5 5 5 5 5 5 5 f 5 f
+    4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+    f f f f f f f f f f f f f f f f
 `)
 
 rcRender.setWallSideTexture(img`
@@ -147,6 +147,7 @@ let sprPlane = createSprite(9, 7, 6, 10, texturesPlane, SpriteKind.Enemy)
 // let cake = createSprite(2, 2, 4, 2, texturesBigCake, SpriteKind.Enemy)
 let fish = createSprite(7, 9, 0, 0, texturesFish, SpriteKind.Enemy)
 
+
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
     otherSprite.destroy()
     music.baDing.play()
@@ -201,6 +202,32 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
 controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
     if (!isAdjusting)
         Render.changeScale(-1)
+})
+
+scene.onHitWall(SpriteKind.Player, function(sprite: Sprite, location: tiles.Location) {
+    if (sprite.isHittingTile(CollisionDirection.Top) && tiles.tileAtLocationEquals(location, img`
+. 4 4 4 4 4 4 4 4 4 4 4 4 4 4 .
+4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+4 5 f 5 5 5 5 5 5 5 5 5 5 f 5 f
+4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+4 5 f 5 5 5 5 5 5 5 5 5 5 f 5 f
+4 5 5 5 5 5 5 5 5 5 5 5 5 5 5 f
+f f f f f f f f f f f f f f f f
+    `))
+    {
+        music.baDing.play()
+        let spr = createSprite(location.col, location.row-1, 0, -100, texturesCoin, SpriteKind.Food)
+        spr.lifespan=500
+    }
 })
 
 game.onUpdate(() => {
