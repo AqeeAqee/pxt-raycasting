@@ -1,3 +1,7 @@
+namespace userconfig { //other console
+    export const ARCADE_SCREEN_WIDTH = 320
+    export const ARCADE_SCREEN_HEIGHT = 240
+}
 
 game.stats = true
 
@@ -90,13 +94,13 @@ rcRender.setWallSideTexture(img`
     d d d d d 1 d d d d d d d 1 d d
     d d d d d 1 d d d d d d d 1 d d
     d d d d d 1 d d d d d d d 1 d d
-    1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-    d 1 d d d d d d d 1 d d d d d d
-    d 1 d d d d d d d 1 d d d d d d
-    d 1 d d d d d d d 1 d d d d d d
-    1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-    . . . d d 1 d d d d d d d . . .
-    . . . . . 1 d d d . . . . . . .
+    7 7 1 1 1 1 1 1 1 1 1 1 1 1 7 7
+    7 7 7 d d 1 d d d d 7 7 7 7 7 7
+    7 5 7 7 7 1 d 7 7 7 7 4 7 7 7 7
+    7 7 7 7 7 7 7 7 7 7 7 7 7 1 7 7
+    . . . . . 7 7 7 7 7 . . . . . .
+    . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
 `)

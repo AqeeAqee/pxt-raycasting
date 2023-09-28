@@ -1,17 +1,3 @@
-namespace userconfig1 {
-    //dimensions
-    export const DISPLAY_WIDTH = 320; //D0
-    export const DISPLAY_HEIGHT = 240; //98
-    //search: 20 B4 A0 20 78 21
-
-    //for sim, accordantly
-    export const ARCADE_SCREEN_WIDTH = DISPLAY_WIDTH
-    export const ARCADE_SCREEN_HEIGHT = DISPLAY_HEIGHT
-
-    //other defines
-    // export const SPEAKER_VOLUME=99
-}
-
 //% shim=pxt::updateScreen
 function updateScreen(img: Image) { }
 
@@ -21,8 +7,6 @@ enum ViewMode {
     //% block="Isometric Mode"
     isometricView,
 }
-
-
 
 namespace Render {
     const SH = screen.height, SHHalf = SH / 2
@@ -39,9 +23,9 @@ namespace Render {
     //for Isometric
     const ScreenCenterX = screen.width >> 1, ScreenCenterY = screen.height * 3 >> 2
     const TileMapScale = 4, TileSize = 1 << TileMapScale, HalfTileSize = TileSize >> 1
-    let TileImgScale = 4, HalfTileImgScale = TileImgScale / 2 ///>> 1
-    let TileImgScaleX = TileImgScale, TileImgScaleY = 2 //16x16 Rotate&Scale to 64x64, then shrink to 64x32
-    const IsConsole = control.ramSize() < 1024 * 1024, Max_TileImgScaleX = 4, Max_TileImgScaleY = IsConsole ? 2 : 4
+    const IsConsole = control.ramSize() < 1024 * 1024, Max_TileImgScaleX = IsConsole ? 2 : 4, Max_TileImgScaleY = IsConsole ? 2 : 4
+    let TileImgScale = Max_TileImgScaleX, HalfTileImgScale = TileImgScale / 2 ///>> 1
+    let TileImgScaleX = TileImgScale, TileImgScaleY = Max_TileImgScaleY/2 //16x16 Rotate&Scale to 64x64, then shrink to 64x32
     let Scale = TileImgScale / Math.SQRT2, Scale_Square = TileImgScale ** 2 / 2 // = Scale**2 //8 // =
     let WallScale = HalfTileImgScale, WallHeight = TileSize * WallScale
     const X0 = TileSize >> 1, Y0 = X0
@@ -58,7 +42,7 @@ namespace Render {
 
     function setScale(value: number){
         const ratio = TileImgScale / TileImgScaleY
-        TileImgScale = Math.clamp(1, 4, value)
+        TileImgScale = Math.clamp(1, Max_TileImgScaleX, value)
         setScaleY(TileImgScale / ratio)
         // info.player3.setScore(TileImgScale*100)
 
@@ -76,7 +60,7 @@ namespace Render {
     }
     
     function setScaleY(value: number){
-        TileImgScaleY = Math.clamp(1 / 8, TileImgScaleX / (IsConsole && TileImgScaleX > 2 ? 2 : 1), value)
+        TileImgScaleY = Math.clamp(1 / 8, Math.min(TileImgScaleX, Max_TileImgScaleY), value)
         // info.player4.setScore(TileImgScaleY*100)
         
         raycastingRender.lastRenderAngle = -1 // force refresh
