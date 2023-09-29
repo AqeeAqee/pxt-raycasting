@@ -133,7 +133,6 @@ function createSprite(x: number, y: number, vx: number, vy: number, textures: Im
 function createCoin() {
     let spr = createSprite(4, 7, Math.randomRange(5, 10), Math.randomRange(3, 10), texturesCoin, SpriteKind.Food)
     tiles.placeOnRandomTile(spr, spawnTile)
-    rcRender.setZOffset(spr, .5)
 }
 
 // createSprite(8, 7, 6, 10, texturesDuck, SpriteKind.Enemy)
