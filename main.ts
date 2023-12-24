@@ -106,7 +106,7 @@ rcRender.setWallSideTexture(img`
 `)
 
 
-Render.moveWithController(0, 0, 0)
+// Render.moveWithController(0, 0, 0)
 controller.moveSprite(rcRender.sprSelf, 55, 0)
 rcRender.sprSelf.setScale(1)
 rcRender.sprSelf.ay=500

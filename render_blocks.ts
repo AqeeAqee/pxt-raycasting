@@ -18,8 +18,8 @@ namespace Render {
         view_pitch,
         dirX,
         dirY,
-        fov,
-        wallZScale,
+        // fov,
+        // wallZScale,
     }
 
     /**
@@ -244,7 +244,6 @@ namespace Render {
     /**
      * Get default FOV (field of view) value
      * @param viewMode
-     */
     //% group="Basic"
     //% block="defaultFov"
     //% blockId=rcRender_getDefaultFov
@@ -253,6 +252,7 @@ namespace Render {
     export function getDefaultFov(): number {
         return defaultFov
     }
+     */
 
     /**
      * Set view angle
@@ -285,7 +285,6 @@ namespace Render {
      * @param sprite
      * @param Zoffset Negative floats down, affirmative goes up
      * @param duration moving time, 0 for immediately, unit: ms
-     */
     //% blockId=rcRender_setZOffset block="set Sprite %spr=variables_get(mySprite) floating %offset pixels|| duration $duration=timePicker|ms "
     //% offset.min=-100 offset.max=100 offset.defl=8
     //% duration.min=0 duration.max=5000 duration.defl=0
@@ -296,12 +295,12 @@ namespace Render {
     export function setZOffset(sprite: Sprite, offset: number, duration?: number) {
         raycastingRender.setZOffset(sprite, offset, duration)
     }
+     */
 
     /**
      * Set arribute of a Sprite
      * @param spr Sprite
      * @param attr RCSpriteAttribute
-     */
     //% group="Dimension Z"
     //% block="set Sprite %spr=variables_get(mySprite) %attribute = %value"
     //% blockId=rcRender_setSpriteAttribute
@@ -324,12 +323,12 @@ namespace Render {
             default:
         }
     }
+     */
 
     /**
      * Get arribute of a Sprite
      * @param spr Sprite
      * @param attr RCSpriteAttribute
-     */
     //% group="Dimension Z"
     //% block="get Sprite %spr=variables_get(mySprite) %attribute"
     //% blockId=rcRender_getSpriteAttribute
@@ -349,13 +348,13 @@ namespace Render {
                 return 0
         }
     }
+     */
 
     /**
      * Check if 2 sprites overlaps each another in Z dimension
      * Best work together with sprites.onOverlap(kind1, kind2)
      * @param sprite1
      * @param sprite2
-     */
     //% blockId=rcRender_isSpritesOverlapZ
     //% block="is sprites $sprite1=variables_get(mySprite) and $sprite2=variables_get(mySprite2) overlaps in Z dimension"
     //% group="Dimension Z"
@@ -364,6 +363,7 @@ namespace Render {
     export function isSpritesOverlapZ(sprite1: Sprite, sprite2: Sprite): boolean {
         return raycastingRender.isOverlapZ(sprite1, sprite2)
     }
+     */
 
     /**
      * Make sprite jump, with specific height and duration
@@ -371,7 +371,6 @@ namespace Render {
      * @param sprite
      * @param height jump height in pixel
      * @param duration hover time span, unit: ms
-     */
     //% blockId=rcRender_jumpWithHeightAndDuration block="Sprite %spr=variables_get(mySprite) jump, with height $height duration $duration=timePicker|ms "
     //% height.min=0 height.max=100 height.defl=16
     //% duration.min=50 duration.max=5000 duration.defl=500
@@ -381,6 +380,7 @@ namespace Render {
     export function jumpWithHeightAndDuration(sprite: Sprite, height: number, duration: number) {
         raycastingRender.jumpWithHeightAndDuration(sprite, height, duration)
     }
+     */
 
     /**
      * Make sprite jump, with specific speed and acceleration
@@ -388,7 +388,6 @@ namespace Render {
      * @param sprite
      * @param v vetical speed, unit: pixel/s
      * @param a vetical acceleration, unit: pixel/s²
-     */
     //% blockId=rcRender_jump block="Sprite %spr=variables_get(mySprite) jump||, with speed $v=spriteSpeedPicker acceleration $a"
     //% v.min=-100 v.max=100 v.defl=60
     //% a.min=-1000 a.max=1000 a.defl=-250
@@ -398,13 +397,13 @@ namespace Render {
     export function jump(sprite: Sprite, v?: number, a?: number) {
         raycastingRender.jump(sprite, v, a)
     }
+     */
 
     /**
      * Make sprite jump, with specific speed and acceleration
      * @param sprite
      * @param v vetical speed, unit: pixel/s
      * @param a vetical acceleration, unit: pixel/s²
-     */
     //% blockId=rcRender_move block="Sprite %spr=variables_get(mySprite) move, with speed $v=spriteSpeedPicker|| acceleration $a"
     //% v.min=-200 v.max=200 v.defl=60
     //% a.min=-1000 a.max=1000 a.defl=-250
@@ -414,6 +413,8 @@ namespace Render {
     export function move(sprite: Sprite, v?: number, a?: number) {
         raycastingRender.move(sprite, v, a)
     }
+     */
+
 
     /**
      * Control the self sprite using the direction buttons from the controller. 
@@ -421,7 +422,6 @@ namespace Render {
      *
      * @param v The velocity used for forward/backword movement when up/down is pressed, in pixel/s
      * @param va The angle velocity used for turn view direction when left/right is pressed, in radian/s.
-     */
     //% blockId="rcRender_moveWithController" block="move with buttons velocity $v|| turn speed $va camera sway$cameraSway pixels"
     //% weight=60
     //% expandableArgumentMode="toggle"
@@ -436,6 +436,7 @@ namespace Render {
         if(cameraSway!=undefined)
             raycastingRender.cameraSway=cameraSway|0
     }
+     */
 
     /**
      * Render takeover all sprites in current scene
@@ -456,7 +457,6 @@ namespace Render {
      * Just using with other animation extensions, to set proper Image for sprite.
      * Not required, if you have used the set animations block provided.
      * @param dir It is a float number, 0~1 corresponds to 0~360°, suggest use Math.round(dir*dirAniTotalCount)%dirAniTotalCount to get index of direction
-     */
     //% blockId=rcRender_registerOnSpriteDirectionUpdateHandler
     //% block="run code when sprite $spr dirction updated to $dir"
     //% draggableParameters
@@ -466,4 +466,5 @@ namespace Render {
     export function registerOnSpriteDirectionUpdateHandler(handler: (spr: Sprite, dir: number) => void) {
         raycastingRender.registerOnSpriteDirectionUpdate(handler)
     }
+     */
 }
