@@ -8,14 +8,34 @@ enum RCSpriteAttribute{
  * A 2.5D Screen Render, using Raycasting algorithm
  **/
 //% color=#03AA74 weight=1 icon="\uf1b2" //cube f1b2 , fold f279
-//% groups='["Instance","Basic", "Dimension Z", "Animate", "Advanced"]'
+//% groups='["Instance","Basic","Tile", "Dimension Z", "Animate", "Advanced"]'
 //% block="3D Render"
 namespace Render {
     export enum attribute {
+        //% block="Zoom"
+        view_zoom,
+        //% block="Pitch"
+        view_pitch,
         dirX,
         dirY,
         fov,
         wallZScale,
+    }
+
+    /**
+ * set side a texture for a kind of tile. Set for all walls as side texture, if no target tile specific."
+ * @param tex
+ * @param forTile
+ */
+    //% blockId=set_texture_for_tile block="set side texture$tex|| for tile $forTile"
+    //% tex.shadow=tileset_tile_picker
+    //% tex.decompileIndirectFixedInstances=true
+    //% forTile.shadow=tileset_tile_picker
+    //% forTile.decompileIndirectFixedInstances=true
+    //% group="Tile"
+    //% weight=100
+    export function setTileAt(tex: Image, forTile?:Image): void {
+        raycastingRender.setWallSideTexture(tex, forTile)
     }
 
     export class Animations {
@@ -165,14 +185,20 @@ namespace Render {
     //% help=github:pxt-raycasting/docs/get-attribute
     export function getAttribute(attr: attribute): number {
         switch (attr) {
+            case attribute.view_zoom:
+                return getScale()
+            case attribute.view_pitch:
+                return getScaleY()
             case attribute.dirX:
                 return raycastingRender.dirX
             case attribute.dirY:
                 return raycastingRender.dirY
+        /*
             case attribute.fov:
                 return raycastingRender.fov
             case attribute.wallZScale:
                 return raycastingRender.wallZScale
+        */
             default:
                 return 0
         }
@@ -189,12 +215,19 @@ namespace Render {
     //% help=github:pxt-raycasting/docs/set-attribute
     export function setAttribute(attr: attribute, value: number) {
         switch (attr) {
+            case attribute.view_zoom:
+                setScale(value)
+                break
+            case attribute.view_pitch:
+                setScaleY(value)
+                break
             case attribute.dirX:
                 raycastingRender.dirX = value
                 break
             case attribute.dirY:
                 raycastingRender.dirY = value
                 break
+        /*
             case attribute.fov:
                 if (value < 0) value = 0
                 raycastingRender.fov = value
@@ -203,6 +236,7 @@ namespace Render {
                 if (value < 0) value = 0
                 raycastingRender.wallZScale = value
                 break
+        */
             default:
         }
     }

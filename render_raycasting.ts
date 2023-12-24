@@ -51,11 +51,13 @@ namespace Render {
     let D_Fpx = 0
     let C_Fpx = 0
 
+    export function getScale(){
+        return TileImgScale
+    }
     export function changeScale(delta: number){
         setScale(TileImgScale + delta * 0.5)
     }
-
-    function setScale(value: number){
+    export function setScale(value: number){
         const ratio = TileImgScale / TileImgScaleY
         TileImgScale = Math.clamp(1, Max_TileImgScaleX, value)
         setScaleY(TileImgScale / ratio)
@@ -70,14 +72,15 @@ namespace Render {
         raycastingRender.lastRenderAngle=-1 // force refresh
     }
 
+    export function getScaleY(){
+        return TileImgScaleY
+    }
     export function changeScaleY(delta:number){
         setScaleY(TileImgScaleY + delta /8)
     }
-    
-    function setScaleY(value: number){
+    export function setScaleY(value: number){
         TileImgScaleY = Math.clamp(1 / 8, Math.min(TileImgScaleX, Max_TileImgScaleY), value)
         // info.player4.setScore(TileImgScaleY*100)
-        
         raycastingRender.lastRenderAngle = -1 // force refresh
     }
 
@@ -196,6 +199,16 @@ namespace Render {
             return Fx.add(spr._y, Fx.div(spr._height, Fx.twoFx8)) as any as number / this.tilemapScaleSize
         }
 
+        get viewAngle(): number {
+            return this._angle
+        }
+        set viewAngle(angle: number) {
+            this._angle = angle
+            // this.setVectors()
+            // this.updateSelfImage()
+        }
+
+/*
         get fov(): number {
             return this._fov
         }
@@ -205,22 +218,13 @@ namespace Render {
             this.setVectors()
         }
 
-        get viewAngle(): number {
-            return this._angle
-        }
-        set viewAngle(angle: number) {
-            this._angle = angle
-            this.setVectors()
-            // this.updateSelfImage()
-        }
-
         get wallZScale(): number {
             return this._wallZScale
         }
         set wallZScale(v: number) {
             this._wallZScale = v
         }
-
+*/
         getMotionZ(spr: Sprite, offsetZ: number = 0) {
             let motionZ = this.spriteMotionZ[spr.id]
             if (!motionZ) {
@@ -406,7 +410,7 @@ namespace Render {
 
         constructor() {
             this._angle = Math.PI/4
-            this.fov = defaultFov
+            // this.fov = defaultFov
             this.camera = new scene.Camera()
 
             const sc = game.currentScene()
@@ -428,7 +432,7 @@ namespace Render {
             // this.updateSelfImage()
 
             game.onUpdate(function () {
-                this.updateControls()
+                // this.updateControls() //not applied for sideview.
                 this.updateSprite()
             })
 
@@ -485,6 +489,7 @@ namespace Render {
             })
         }
 
+/*
         private setVectors() {
             const sin = Math.sin(this._angle)
             const cos = Math.cos(this._angle)
@@ -493,7 +498,7 @@ namespace Render {
             this.planeX = tofpx(sin * this._fov)
             this.planeY = tofpx(cos * -this._fov)
         }
-
+*/
         //todo, pre-drawn dirctional image
         public updateSelfImage() {
             const img = this.sprSelf.image
@@ -503,6 +508,7 @@ namespace Render {
             img.fillRect(arrowLength - 1, arrowLength - 1, 2, 2, 2)
         }
 
+/*
         updateControls() {
             if (this.velocityAngle !== 0) {
                 const dx = controller.dx(this.velocityAngle)
@@ -522,6 +528,7 @@ namespace Render {
                 }
             }
         }
+*/
 
         updateSprite(){
             const dt = game.eventContext().deltaTime
@@ -666,6 +673,7 @@ namespace Render {
 
         protected customSideTex: Image[] = []
         public setWallSideTexture(tex: Image, forTile?: Image) {
+            if (!this.map) return
             if (!tex) return
             if (!forTile) {
                 this.customSideTex[0] = tex
