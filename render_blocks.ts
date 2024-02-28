@@ -154,6 +154,25 @@ namespace Render {
     }
 
     /**
+     * Set a location in the map (column, row) to a tile.
+     * @param loc
+     * @param tile
+     */
+    //% blockId=rcRender_setTileAt
+    //% block="set $tile at $loc=mapgettile"
+    //% tile.shadow=tileset_tile_picker
+    //% tile.decompileIndirectFixedInstances=true
+    //% group="Basic"
+    //% weight=86
+    //% help=github:pxt-raytracing/docs/set-tile-at
+    export function setTileAt(loc: tiles.Location, tile: Image): void {
+        tiles.setTileAt(loc, tile)
+
+        getRCRenderInstance().map = game.currentScene().tileMap.data
+        getRCRenderInstance().mapData = ((getRCRenderInstance().map as any).data as Buffer).toArray(NumberFormat.Int8LE)
+    }
+
+    /**
      * Get render arribute
      * @param viewMode
      */
