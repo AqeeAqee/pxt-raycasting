@@ -1,6 +1,6 @@
 {
     "name": "pxt-raycasting",
-    "version": "0.3.18",
+    "version": "0.3.19",
     "description": "",
     "dependencies": {
         "device": "*"
@@ -31,7 +31,8 @@
         "docs/takeover-scene-sprites.md",
         "docs/register-on-sprite-direction-update-handler.md",
         "docs/get-sprite-attribute.md",
-        "docs/set-sprite-attribute.md"
+        "docs/set-sprite-attribute.md",
+        "docs/refresh-tilemap"
     ],
     "testFiles": [
         "main.ts",
@@ -41,11 +42,8 @@
         "images.g.ts"
     ],
     "targetVersions": {
-        "branch": "v0.14.3",
-        "tag": "v0.14.3",
-        "commits": "https://github.com/microsoft/pxt-arcade/commits/aef27bb278de89a83ecb6ab02af5319c06d617e2",
-        "target": "1.12.39",
-        "pxt": "5.21.6",
+        "target": "1.12.53",
+        "pxt": "8.5.63",
         "targetId": "arcade"
     },
     "supportedTargets": [

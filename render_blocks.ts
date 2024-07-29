@@ -246,6 +246,19 @@ namespace Render {
     }
 
     /**
+     * Refresh the 3D tilemap after changing the 2D tilemap
+     */
+    //% blockId=rcRender_refreshTilemap
+    //% block
+    //% group="Basic"
+    //% weight=86
+    //% help=github:pxt-raytracing/docs/refresh-tilemap
+    export function refreshTilemap(): void {
+        getRCRenderInstance().map = game.currentScene().tileMap.data
+        getRCRenderInstance().mapData = ((getRCRenderInstance().map as any).data as Buffer).toArray(NumberFormat.Int8LE)
+    }
+
+    /**
      * Set floating offset height for a sprite at Z direction
      * @param sprite
      * @param Zoffset Negative floats down, affirmative goes up
