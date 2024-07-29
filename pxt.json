@@ -32,7 +32,7 @@
         "docs/register-on-sprite-direction-update-handler.md",
         "docs/get-sprite-attribute.md",
         "docs/set-sprite-attribute.md",
-        "docs/refresh-tilemap"
+        "docs/refresh-tilemap.md"
     ],
     "testFiles": [
         "main.ts",
